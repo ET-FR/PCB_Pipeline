@@ -3,8 +3,10 @@ version: 1
 
 rules:
   - id: SYM-001
-    description: Every non-passive symbol has an MPN field.
+    description: Every non-passive symbol has an MPN field (symbols excluded from the BOM are skipped).
     severity: major
+    params:
+      ignore_ref_prefixes: [LOGO, FID]   # board graphics and fiducials
 
   - id: PIN-001
     description: Pins marked no_float or must_connect are connected to a net with at least one other node.

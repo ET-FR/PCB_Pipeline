@@ -1,0 +1,22 @@
+(kicad_pcb
+	(version 20241229)
+	(generator "pcbnew")
+	(paper "A4")
+	(footprint "test:R_0603"
+		(layer "F.Cu")
+		(at 20 30 90)
+		(property "Reference" "R1" (at 0 -1.5 90))
+		(property "Value" "10k" (at 0 1.5 90))
+		(pad "1" smd rect (at -1 0 90) (size 0.8 0.8) (layers "F.Cu"))
+		(pad "2" smd rect (at 1 0 90) (size 0.8 0.8) (layers "F.Cu"))
+	)
+	(footprint "test:SOT"
+		(layer "B.Cu")
+		(at 40 30)
+		(property "Reference" "U1" (at 0 0 0))
+		(property "Value" "BOX" (at 0 0 0))
+		(property "MPN" "EXAMPLE-BUCK-01" (at 0 0 0))
+		(attr smd dnp)
+		(pad "1" smd rect (at 0 0) (size 1 2) (layers "B.Cu"))
+	)
+)

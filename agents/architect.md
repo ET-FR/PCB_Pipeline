@@ -46,8 +46,8 @@ compute a power budget or check an I2C address by hand.
    item is answered in the spec, accepted as not applicable with a reason, or added to
    `open_questions`.
 10. **Render.** Run `pcb-pipeline render-spec design/spec.yaml` and give the user the
-    PDF. The gate `architecture_review` passes when the user signs it off: set
-    `project.status: signed_off`.
+    PDF, then `pcb-pipeline dashboard` (power tree and datasheet status). The gate `architecture_review` passes when the user signs it off: set
+    `project.status: signed_off` and add the gate to `review/gates.yaml`.
 11. **Improve the pipeline.** Propose additions to `architecture_checklist.md` and
     `preferred_parts.yaml` from what you learned (see `agents/memory.md`, end of run).
 

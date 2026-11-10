@@ -1,7 +1,7 @@
 """Command line interface.
 
 pcb-pipeline init | check-spec | fetch-datasheets | render-spec | spec-diff | check |
-validate-sheet | validate-notes | report
+dashboard | validate-sheet | validate-notes | report
 """
 
 from __future__ import annotations
@@ -203,6 +203,20 @@ def cmd_spec_diff(args) -> int:
     return 0
 
 
+def cmd_dashboard(args) -> int:
+    from .dashboard import write_dashboard
+
+    kicad_cli = args.kicad_cli or _pipeline_config().get("inputs", {}).get("kicad_cli", "kicad-cli")
+    index = write_dashboard(Path(args.project), Path(args.out) if args.out else None, kicad_cli,
+                            use_kicad=not args.no_kicad,
+                            library_dirs=[Path(d) for d in args.library] if args.library else None)
+    print(f"dashboard written to {index}")
+    if args.open:
+        import webbrowser
+        webbrowser.open(index.resolve().as_uri())
+    return 0
+
+
 def cmd_init(args) -> int:
     created, skipped = init_project(Path(args.path), args.name)
     for p in created:
@@ -305,6 +319,15 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--against", default="HEAD", help="git revision of the old spec (default HEAD)")
     sd.add_argument("-o", "--output", help="write the impact report to this file")
     sd.set_defaults(fn=cmd_spec_diff)
+
+    db = sub.add_parser("dashboard", help="HTML dashboard of a hardware project (status, PRD, power tree, drawings)")
+    db.add_argument("project", nargs="?", default=".", help="project repo (default: current folder)")
+    db.add_argument("--out", help="default: <project>/out/dashboard")
+    db.add_argument("--kicad-cli", help="kicad-cli path (default from pipeline.yaml)")
+    db.add_argument("--no-kicad", action="store_true", help="skip KiCad exports and schematic checks")
+    db.add_argument("--library", action="append", help="component sheet directory (repeatable)")
+    db.add_argument("--open", action="store_true", help="open the page in the default browser")
+    db.set_defaults(fn=cmd_dashboard)
 
     v = sub.add_parser("validate-sheet", help="validate component sheets against the schema")
     v.add_argument("paths", nargs="+")

@@ -1,0 +1,6 @@
+# Gates passed, shown on the dashboard. Written when the user signs a phase off.
+# - id: architecture_review     # definition | architecture_review | schematic_review | pre_fabrication
+#   passed: 2026-11-10
+#   revision: A.1               # spec revision (or git commit) that was reviewed
+#   by: user
+gates: []

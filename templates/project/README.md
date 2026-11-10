@@ -9,7 +9,10 @@ Hardware project designed with [PCB_Pipeline](https://github.com/ET-FR/PCB_Pipel
 | 2. Schematic | `/review` | `review/<run>/` |
 | 3. Layout | `/review` | `review/<run>/` |
 
-Working loop: edit in KiCad, save, run the command, accept or reject each proposed fix.
+Working loop: edit in KiCad 10, save, run the command, accept or reject each proposed fix.
+
+Dashboard: `pcb-pipeline dashboard --open` builds `out/dashboard/index.html` (status,
+PRD, power tree, datasheets, findings, schematic and layout with findings highlighted).
 
 ## Layout
 
@@ -19,4 +22,5 @@ Working loop: edit in KiCad, save, run the command, accept or reject each propos
 | `design/` | `prd.md`, `spec.yaml`, generated `spec.pdf` |
 | `datasheets/` | Local PDFs (not committed) and `index.yaml` (committed) |
 | `kicad/` | The KiCad project |
-| `review/` | Review runs, `decisions.yaml`, `missed.yaml`, `notes.yaml` |
+| `review/` | Review runs, `decisions.yaml`, `missed.yaml`, `notes.yaml`, `gates.yaml` |
+| `out/` | Generated, not committed: check outputs and the dashboard |

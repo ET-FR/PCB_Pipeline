@@ -58,7 +58,10 @@ class RuleEngine:
         return self.f
 
     def sym_001(self):
+        skip = tuple(self.param("SYM-001", "ignore_ref_prefixes", ["LOGO", "FID"]))
         for ref, c in sorted(self.n.components.items()):
+            if "exclude_from_bom" in c.fields or ref.upper().startswith(skip):
+                continue                       # board graphics, holes, fiducials: not bought
             if not c.is_passive and not c.mpn:
                 self.f.add("SYM", self.sev("SYM-001"), f"{ref} has no MPN field", [ref],
                            [{"kind": "rule", "rule_id": "SYM-001",

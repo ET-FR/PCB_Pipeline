@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__ · PCB_Pipeline</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #1b1f24; --muted: #5e6875; --line: #e2e5ea; --soft: #eef1f5;
+  --accent: #2f6fde; --accent-soft: #e5eefc;
+  --critical: #d1242f; --major: #d9822b; --minor: #b9a400; --info: #3b82c4;
+  --ok: #2e9d58; --warn: #d9822b; --over: #d1242f; --none: #9aa3ad;
+  --paper: #ffffff; --shadow: 0 1px 2px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418; --panel: #191d23; --ink: #e6e9ee; --muted: #9aa4b0; --line: #2a3038; --soft: #20252c;
+    --accent: #6ea0ff; --accent-soft: #1f2a3d; --paper: #f4f4f1; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --panel: #191d23; --ink: #e6e9ee; --muted: #9aa4b0; --line: #2a3038; --soft: #20252c;
+  --accent: #6ea0ff; --accent-soft: #1f2a3d; --paper: #f4f4f1; --shadow: none;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: flex; }
+a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+nav { width: 210px; flex: none; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+nav .brand { font-weight: 700; font-size: 15px; padding: 4px 10px 2px; }
+nav .sub { color: var(--muted); font-size: 12px; padding: 0 10px 14px; }
+nav button { all: unset; cursor: pointer; padding: 7px 10px; border-radius: 7px; display: flex; justify-content: space-between; align-items: center; color: var(--ink); }
+nav button:hover { background: var(--soft); }
+nav button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+nav .count { font-size: 11px; border-radius: 9px; padding: 0 7px; background: var(--soft); color: var(--muted); }
+nav .count.critical { background: var(--critical); color: #fff; }
+nav .spacer { flex: 1; }
+nav .foot { color: var(--muted); font-size: 11px; padding: 8px 10px; }
+main { flex: 1; min-width: 0; overflow: auto; padding: 22px 26px; }
+main.full { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+h1 { font-size: 20px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 22px 0 10px; } h3 { font-size: 14px; margin: 14px 0 6px; }
+.muted { color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow); }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.phases { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.phase { border-top: 4px solid var(--none); }
+.phase.done { border-top-color: var(--ok); } .phase.in_progress { border-top-color: var(--accent); } .phase.disabled { opacity: .55; }
+.phase .st { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.kpi { font-size: 26px; font-weight: 700; } .kpi.small { font-size: 18px; }
+.sev { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 9px; color: #fff; text-transform: uppercase; letter-spacing: .02em; }
+.sev.critical { background: var(--critical); } .sev.major { background: var(--major); } .sev.minor { background: var(--minor); } .sev.info { background: var(--info); }
+.tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 9px; background: var(--soft); color: var(--muted); }
+.tag.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+.tag.bad { background: color-mix(in srgb, var(--critical) 15%, transparent); color: var(--critical); }
+.tag.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; color: var(--muted); font-weight: 600; background: var(--soft); }
+tr:last-child td { border-bottom: none; }
+tr.click { cursor: pointer; } tr.click:hover td { background: var(--soft); }
+.warnbox { border-left: 4px solid var(--warn); background: color-mix(in srgb, var(--warn) 10%, var(--panel)); padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; }
+.prd { max-width: 900px; } .prd table { margin: 8px 0; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+.chip { all: unset; cursor: pointer; font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
+.chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.refs a { margin-right: 6px; font-family: ui-monospace, monospace; font-size: 12px; }
+.ev { font-size: 12px; color: var(--muted); margin: 2px 0; }
+/* power tree */
+.ptree-wrap { overflow: auto; padding: 6px 2px; }
+.ptree .edge { fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .6; }
+.ptree .box { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+.ptree .rail { cursor: pointer; } .ptree .rail:hover .box, .ptree .rail.sel .box { stroke: var(--accent); stroke-width: 2.5; }
+.ptree .t1 { font-weight: 700; font-size: 14px; fill: var(--ink); } .ptree .v { font-weight: 600; fill: var(--accent); }
+.ptree .t2 { font-size: 12px; fill: var(--muted); } .ptree .t3 { font-size: 12px; fill: var(--ink); }
+.ptree .track { fill: var(--soft); }
+.ptree .ok .fill { fill: var(--ok); } .ptree .warn .fill { fill: var(--warn); } .ptree .over .fill { fill: var(--over); }
+.ptree .over .box { stroke: var(--over); }
+/* drawing viewer */
+.toolbar { display: flex; gap: 8px; align-items: center; padding: 10px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.toolbar select, .toolbar input { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.toolbar label { display: flex; gap: 5px; align-items: center; font-size: 13px; color: var(--muted); }
+.toolbar button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.workspace { flex: 1; display: flex; min-height: 0; }
+.viewer { flex: 1; position: relative; overflow: hidden; background: var(--soft); cursor: grab; touch-action: none; }
+.viewer.dragging { cursor: grabbing; }
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: var(--paper); box-shadow: 0 2px 12px rgba(0,0,0,.15); }
+.stage img { display: block; width: 100%; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.stage svg.ov { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* --px is one screen pixel in drawing units (mm), updated on every zoom */
+.ov rect { fill: transparent; stroke: none; cursor: pointer; }
+.ov rect:hover { fill: rgba(47,111,222,.08); stroke: var(--accent); stroke-width: calc(var(--px) * 1.5); }
+.ov.flags rect.f-critical { stroke: var(--critical); stroke-width: calc(var(--px) * 2); fill: rgba(209,36,47,.06); }
+.ov.flags rect.f-major { stroke: var(--major); stroke-width: calc(var(--px) * 2); fill: rgba(217,130,43,.06); }
+.ov.flags rect.f-minor { stroke: var(--minor); stroke-width: calc(var(--px) * 1.5); }
+.ov rect.hl { stroke: var(--accent) !important; stroke-width: calc(var(--px) * 3) !important; fill: rgba(47,111,222,.14) !important; animation: pulse 1.2s ease-in-out 2; }
+@keyframes pulse { 50% { fill: rgba(47,111,222,.38); } }
+.side { width: 320px; flex: none; background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 14px; }
+.empty { padding: 40px; color: var(--muted); text-align: center; }
+.hint { font-size: 12px; color: var(--muted); }
+.list-item { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.list-item:last-child { border-bottom: none; }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+@media (max-width: 860px) {
+  body { flex-direction: column; } nav { width: auto; flex-direction: row; overflow-x: auto; padding: 8px; }
+  nav .brand, nav .sub, nav .spacer, nav .foot { display: none; } nav button { white-space: nowrap; }
+  main { padding: 16px; } .phases { grid-template-columns: 1fr 1fr; } .side { display: none; }
+}
+</style>
+</head>
+<body>
+<nav id="nav"></nav>
+<main id="main"></main>
+<script>
+const D = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const SEV = ["critical", "major", "minor", "info"];
+const sevRank = s => SEV.indexOf(s);
+const state = { tab: "status", sheet: 0, view: 0, sev: new Set(["critical", "major", "minor", "info"]), origin: "all", select: null };
+try { Object.assign(state, JSON.parse(localStorage.getItem("pcbp-dash") || "{}"), { sev: new Set(JSON.parse(localStorage.getItem("pcbp-sev") || '["critical","major","minor","info"]')) }); } catch (e) {}
+const save = () => { try { localStorage.setItem("pcbp-dash", JSON.stringify({ tab: state.tab, sheet: state.sheet, view: state.view, origin: state.origin })); localStorage.setItem("pcbp-sev", JSON.stringify([...state.sev])); } catch (e) {} };
+
+const open = D.findings.filter(f => f.decision !== "rejected" && f.decision !== "accepted");
+const count = s => open.filter(f => f.severity === s).length;
+const findingsByRef = {};
+for (const f of open) for (const r of f.kicad_refs || []) (findingsByRef[r] ||= []).push(f);
+const worst = r => (findingsByRef[r] || []).reduce((a, f) => a === "none" || sevRank(f.severity) < sevRank(a) ? f.severity : a, "none");
+
+const TABS = [
+  ["status", "Status"], ["prd", "PRD"], ["power", "Power tree"], ["datasheets", "Datasheets"],
+  ["schematic", "Schematic"], ["layout", "Layout"], ["findings", "Findings"], ["memory", "Notes and lessons"],
+];
+
+function renderNav() {
+  const badge = { findings: count("critical") ? `<span class="count critical">${count("critical")}</span>` : `<span class="count">${open.length}</span>`,
+                  datasheets: `<span class="count">${D.datasheets.filter(d => d.pdf).length}/${D.datasheets.length}</span>` };
+  $("#nav").innerHTML = `<div class="brand">${esc(D.project.name)}</div>
+    <div class="sub">spec ${esc(D.project.spec_revision || "none")} · ${esc(D.project.spec_status || "no spec")}</div>
+    ${TABS.map(([id, label]) => `<button data-tab="${id}" class="${state.tab === id ? "active" : ""}">${label}${badge[id] || ""}</button>`).join("")}
+    <div class="spacer"></div>
+    <div class="foot">Generated ${esc(D.project.generated_at)}<br>${D.project.kicad ? "KiCad " + esc(D.project.kicad) : "KiCad not found"}<br>
+    <a href="#" id="theme">Toggle theme</a></div>`;
+  for (const b of document.querySelectorAll("nav button")) b.onclick = () => go(b.dataset.tab);
+  $("#theme").onclick = e => { e.preventDefault(); const r = document.documentElement;
+    const dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    r.dataset.theme = dark ? "light" : "dark"; try { localStorage.setItem("pcbp-theme", r.dataset.theme); } catch (e) {} };
+}
+try { const t = localStorage.getItem("pcbp-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+function go(tab, opts = {}) { state.tab = tab; Object.assign(state, opts); save(); renderNav(); render(); }
+
+function render() {
+  const m = $("#main"); m.className = ["schematic", "layout"].includes(state.tab) ? "full" : "";
+  ({ status, prd, power, datasheets, schematic, layout, findings, memory })[state.tab](m);
+}
+
+/* ---------- status ---------- */
+function status(m) {
+  const ph = D.phases;
+  const current = ph.find(p => p.status !== "done" && p.status !== "disabled");
+  const missing = D.datasheets.filter(d => !d.pdf).length, nosheet = D.datasheets.filter(d => !d.sheet).length;
+  const questions = [...D.prd_open.map(q => ["PRD", q]), ...D.open_questions.map(q => ["Spec", q])];
+  m.innerHTML = `
+    ${D.warnings.map(w => `<div class="warnbox">${esc(w)}</div>`).join("")}
+    <h1>${esc(D.project.name)}</h1>
+    <div class="muted">${esc(D.project.dir)}${current ? ` · current phase: <b>${esc(current.title)}</b>, next gate: ${esc(current.gate)}` : ""}</div>
+    <h2>Phases</h2>
+    <div class="phases">${ph.map(p => `<div class="card phase ${p.status}"><b>${esc(p.title)}</b>
+      <div class="st">${{ done: "Done", in_progress: "In progress", todo: "Not started", disabled: "Not developed" }[p.status]}
+      ${p.gate_passed ? `<br>Gate passed ${esc(p.gate_passed)}` : ""}${p.command ? `<br><code>${esc(p.command)}</code>` : ""}</div></div>`).join("")}</div>
+    <h2>Open findings</h2>
+    <div class="grid">${SEV.map(s => `<div class="card click" data-sev="${s}" style="cursor:pointer"><span class="sev ${s}">${s}</span><div class="kpi">${count(s)}</div></div>`).join("")}</div>
+    <h2>Project</h2>
+    <div class="grid">
+      <div class="card"><div class="muted">Datasheets</div><div class="kpi small">${D.datasheets.length - missing} / ${D.datasheets.length}</div>
+        ${missing ? `<span class="tag warn">${missing} missing</span>` : `<span class="tag ok">all present</span>`}
+        ${nosheet ? ` <span class="tag warn">${nosheet} without sheet</span>` : ""}</div>
+      <div class="card"><div class="muted">Open questions</div><div class="kpi small">${questions.length}</div></div>
+      <div class="card"><div class="muted">Decisions recorded</div><div class="kpi small">${D.decisions.length}</div></div>
+      <div class="card"><div class="muted">Missed issues</div><div class="kpi small">${D.missed.length}</div></div>
+      <div class="card"><div class="muted">Agent notes</div><div class="kpi small">${D.notes.length}</div></div>
+    </div>
+    <h2>Last changes</h2>
+    <table><tr><th>File</th><th>Updated</th></tr>${Object.entries(D.project.updated).map(([k, v]) => `<tr><td>${k}</td><td>${esc(v || "missing")}</td></tr>`).join("")}</table>
+    ${questions.length ? `<h2>Open questions</h2><table><tr><th>From</th><th>Question</th></tr>${questions.map(([k, q]) => `<tr><td>${k}</td><td>${esc(q)}</td></tr>`).join("")}</table>` : ""}`;
+  for (const c of m.querySelectorAll("[data-sev]")) c.onclick = () => { state.sev = new Set([c.dataset.sev]); go("findings"); };
+}
+
+/* ---------- PRD ---------- */
+function prd(m) {
+  m.innerHTML = D.prd_html ? `<div class="card prd">${D.prd_html}</div>` : `<div class="empty">No PRD yet. Run <code>/define</code> in Claude Code.</div>`;
+}
+
+/* ---------- power tree ---------- */
+function power(m) {
+  if (!D.power_tree_svg) { m.innerHTML = `<div class="empty">No valid spec yet. Run <code>/architecture</code> in Claude Code.</div>`; return; }
+  m.innerHTML = `<h1>Power tree</h1><div class="muted">Worst case budget per rail: loads plus the input current of the rails it feeds. Click a rail for its loads.</div>
+    <div class="card ptree-wrap" style="margin-top:12px">${D.power_tree_svg}</div><div id="rail"></div>
+    <h2>Rails</h2><table><tr><th>Rail</th><th>Net</th><th>Min</th><th>Nominal</th><th>Max</th><th>Transient</th><th>Source</th><th>Budget</th><th>Capacity</th></tr>
+    ${D.rails.map(r => `<tr class="click" data-rail="${esc(r.id)}"><td><b>${esc(r.id)}</b></td><td class="mono">${esc(r.net)}</td><td>${r.min_v ?? ""}</td><td>${r.nominal_v} V</td><td>${r.max_v ?? ""}</td><td>${r.transient_max_v ?? ""}</td>
+      <td>${esc(r.source.type)}${r.source.part ? " · " + esc(r.source.part) : ""}</td><td>${r.budget_a != null ? r.budget_a.toFixed(3) + " A" : ""}</td><td>${r.capacity_a != null ? r.capacity_a + " A" : ""}</td></tr>`).join("")}</table>`;
+  const show = id => {
+    for (const g of m.querySelectorAll(".rail")) g.classList.toggle("sel", g.dataset.rail === id);
+    const r = D.rails.find(x => x.id === id); if (!r) return;
+    const fs = open.filter(f => (f.refs || []).includes(id));
+    $("#rail").innerHTML = `<h2>${esc(id)} loads</h2>${(r.loads || []).length ? `<table><tr><th>Load</th><th>Typ</th><th>Max</th><th>Sleep</th><th>Notes</th></tr>
+      ${r.loads.map(l => `<tr><td>${esc(l.part)}</td><td>${l.current.typ_a ?? ""}</td><td>${l.current.max_a} A</td><td>${l.current.sleep_a ?? ""}</td><td>${esc(l.notes || "")}</td></tr>`).join("")}</table>` : `<div class="muted">No direct load.</div>`}
+      ${fs.length ? `<h3>Findings</h3>${fs.map(findingLine).join("")}` : ""}`;
+  };
+  for (const el of m.querySelectorAll("[data-rail]")) el.onclick = () => show(el.dataset.rail);
+}
+
+/* ---------- datasheets ---------- */
+function datasheets(m) {
+  if (!D.datasheets.length) { m.innerHTML = `<div class="empty">No selected parts yet.</div>`; return; }
+  m.innerHTML = `<h1>Datasheets</h1><div class="muted">PDFs in <code>datasheets/</code>, component sheets from the library. Missing PDFs: <code>pcb-pipeline fetch-datasheets design/spec.yaml</code></div>
+    <table style="margin-top:12px"><tr><th>Part</th><th>Ref</th><th>MPN</th><th>Block</th><th>Revision</th><th>PDF</th><th>Component sheet</th></tr>
+    ${D.datasheets.map(d => `<tr><td>${esc(d.part)}</td><td class="mono">${esc(d.ref)}</td><td class="mono">${esc(d.mpn)}</td><td>${esc(d.block)}</td><td>${esc(d.revision)}</td>
+      <td>${d.pdf ? `<a href="${esc(d.pdf)}" target="_blank">open</a>` : `<span class="tag bad">missing</span>${d.url ? ` <a href="${esc(d.url)}" target="_blank">source</a>` : ""}`}</td>
+      <td>${d.sheet ? `<span class="tag ${d.score >= 7 ? "ok" : "warn"}">score ${d.score}</span> ${d.validated ? '<span class="tag ok">validated</span>' : '<span class="tag">not validated</span>'}${d.gaps ? ` <span class="tag warn">${d.gaps} gaps</span>` : ""}` : `<span class="tag warn">none</span>`}</td></tr>`).join("")}</table>`;
+}
+
+/* ---------- findings ---------- */
+function evidenceLine(e) {
+  const bits = [e.mpn && (e.page ? `${e.mpn} p.${e.page}` : e.mpn), e.net && `net ${e.net}`, e.spec_path && `spec ${e.spec_path}`, e.rule_id].filter(Boolean).join(", ");
+  const text = esc(e.calculation || e.summary || "");
+  const head = e.href ? `<a href="${esc(e.href)}" target="_blank">${esc(bits)}</a>` : esc(bits);
+  return `<div class="ev"><b>${esc(e.kind)}</b>${bits ? " (" + head + ")" : ""}${text ? ": " + text : ""}</div>`;
+}
+function refLinks(f) {
+  return (f.kicad_refs || []).map(r => `<a href="#" data-ref="${esc(r)}">${esc(r)}</a>`).join("");
+}
+function findingLine(f) {
+  return `<div class="list-item"><span class="sev ${f.severity}">${f.severity}</span> <b>${esc(f.id)}</b> ${esc(f.title)}
+    <div class="refs">${refLinks(f)}</div>${f.evidence.map(evidenceLine).join("")}${f.suggestion ? `<div class="ev">Suggestion: ${esc(f.suggestion)}</div>` : ""}</div>`;
+}
+function bindRefLinks(root) {
+  for (const a of root.querySelectorAll("a[data-ref]")) a.onclick = e => { e.preventDefault(); locate(a.dataset.ref); };
+}
+function findings(m) {
+  const origins = ["all", ...new Set(D.findings.map(f => f.origin))];
+  const list = D.findings.filter(f => state.sev.has(f.severity) && (state.origin === "all" || f.origin === state.origin));
+  m.innerHTML = `<h1>Findings</h1>
+    <div class="filters">${SEV.map(s => `<button class="chip ${state.sev.has(s) ? "on" : ""}" data-s="${s}">${s} ${D.findings.filter(f => f.severity === s).length}</button>`).join("")}
+      <span class="muted" style="margin-left:8px">Source</span>${origins.map(o => `<button class="chip ${state.origin === o ? "on" : ""}" data-o="${o}">${o}</button>`).join("")}</div>
+    ${list.length ? `<table><tr><th>Severity</th><th>Finding</th><th>Refs</th><th>Evidence</th><th>Source</th></tr>
+    ${list.map(f => `<tr><td><span class="sev ${f.severity}">${f.severity}</span>${f.decision ? `<br><span class="tag">${esc(f.decision)}</span>` : ""}</td>
+      <td><b>${esc(f.id)}</b> ${esc(f.title)}${f.description ? `<div class="ev">${esc(f.description)}</div>` : ""}${f.suggestion ? `<div class="ev">Suggestion: ${esc(f.suggestion)}</div>` : ""}</td>
+      <td class="refs">${refLinks(f)}</td><td>${f.evidence.map(evidenceLine).join("")}</td><td><span class="tag">${esc(f.origin)}</span></td></tr>`).join("")}</table>`
+    : `<div class="empty">No finding with these filters.</div>`}`;
+  for (const c of m.querySelectorAll("[data-s]")) c.onclick = () => { const s = c.dataset.s; state.sev.has(s) ? state.sev.delete(s) : state.sev.add(s); save(); render(); };
+  for (const c of m.querySelectorAll("[data-o]")) c.onclick = () => { state.origin = c.dataset.o; save(); render(); };
+  bindRefLinks(m);
+}
+
+/* ---------- notes ---------- */
+function memory(m) {
+  const sect = (title, rows, cols) => `<h2>${title}</h2>` + (rows.length ? `<table><tr>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr>
+    ${rows.map(r => `<tr>${cols.map(c => `<td>${esc(typeof c[1] === "function" ? c[1](r) : r[c[1]])}</td>`).join("")}</tr>`).join("")}</table>` : `<div class="muted">None yet.</div>`);
+  m.innerHTML = `<h1>Notes and lessons</h1>
+    ${sect("Agent notes", D.notes, [["Id", "id"], ["Kind", "kind"], ["Scope", "scope"], ["Topic", "topic"], ["Statement", "statement"], ["Status", "status"]])}
+    ${sect("Decisions", D.decisions, [["Run", "run"], ["Finding", "finding"], ["Title", "title"], ["Decision", "decision"], ["Reason", "reason"]])}
+    ${sect("Missed issues", D.missed, [["Id", "id"], ["Found", "found"], ["By", "found_by"], ["Phase", "phase_that_should_catch"], ["Description", "description"], ["Lesson", "lesson"]])}`;
+}
+
+/* ---------- drawing viewer (schematic and layout) ---------- */
+class Viewer {
+  constructor(el, stage, pageW) {
+    Object.assign(this, { el, stage, pageW, s: 1, x: 0, y: 0 });
+    el.addEventListener("wheel", e => { e.preventDefault(); const r = el.getBoundingClientRect();
+      this.zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+    let drag = null;
+    el.addEventListener("pointerdown", e => { if (e.button !== 0) return; drag = { x: e.clientX, y: e.clientY, ox: this.x, oy: this.y, moved: false }; el.setPointerCapture(e.pointerId); });
+    el.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; el.classList.add("dragging"); }
+      this.x = drag.ox + dx; this.y = drag.oy + dy; this.apply(); });
+    el.addEventListener("pointerup", e => { this.justDragged = drag && drag.moved; drag = null; el.classList.remove("dragging"); });
+    el.addEventListener("dblclick", () => this.fit());
+  }
+  base() { return this.stage.offsetWidth / this.pageW; }      // px per mm at scale 1
+  apply() { this.stage.style.transform = `translate(${this.x}px,${this.y}px) scale(${this.s})`;
+    this.stage.style.setProperty("--px", 1 / (this.base() * this.s)); }
+  zoomAt(mx, my, k) { const ns = Math.min(60, Math.max(0.2, this.s * k)); this.x = mx - (mx - this.x) * ns / this.s; this.y = my - (my - this.y) * ns / this.s; this.s = ns; this.apply(); }
+  fit() { const w = this.el.clientWidth, h = this.el.clientHeight, sw = this.stage.offsetWidth, sh = this.stage.offsetHeight || sw * 0.7;
+    this.s = Math.min(w / sw, h / sh) * 0.96; this.x = (w - sw * this.s) / 2; this.y = (h - sh * this.s) / 2; this.apply(); }
+  focus(b) { const k = this.base(), w = this.el.clientWidth, h = this.el.clientHeight;
+    const bw = Math.max((b[2] - b[0]) * k, 1), bh = Math.max((b[3] - b[1]) * k, 1);
+    this.s = Math.max(Math.min(Math.min(w / bw, h / bh) * 0.25, 8), 1);
+    const cx = (b[0] + b[2]) / 2 * k, cy = (b[1] + b[3]) / 2 * k; this.x = w / 2 - cx * this.s; this.y = h / 2 - cy * this.s; this.apply(); }
+}
+
+function drawing(m, kind) {
+  const sch = kind === "schematic";
+  const pages = sch ? D.schematic : (D.board.views || []).map(v => ({ name: v.name, svg: v.svg, page: D.board.page, items: D.board.items }));
+  if (!pages.length || !pages.some(p => p.svg || p.items.length)) {
+    m.innerHTML = `<div class="empty">${sch ? "No schematic found in kicad/." : "No layout found in kicad/, or kicad-cli could not export it."}${D.project.kicad ? "" : "<br>kicad-cli was not found: install KiCad 10."}</div>`; return; }
+  const key = sch ? "sheet" : "view";
+  if (state[key] >= pages.length) state[key] = 0;
+  const pg = pages[state[key]];
+  const items = sch ? pg.items : pg.items.filter(i => pg.name === "Top" ? i.side !== "back" : pg.name === "Bottom" ? i.side === "back" : true);
+  const flagged = items.filter(i => findingsByRef[i.ref]).length;
+  m.innerHTML = `<div class="toolbar"><b>${sch ? "Schematic" : "Layout"}</b>
+      <select id="page">${pages.map((p, n) => `<option value="${n}" ${n === state[key] ? "selected" : ""}>${esc(p.name)}${sch ? ` (${p.items.length})` : ""}</option>`).join("")}</select>
+      <input id="q" placeholder="Find a reference, e.g. U1" size="22" list="refs"><datalist id="refs">${items.map(i => `<option value="${esc(i.ref)}">`).join("")}</datalist>
+      <label><input type="checkbox" id="flags" checked> Show findings (${flagged})</label>
+      <button id="fit">Fit</button><span class="hint">Scroll to zoom, drag to pan, double click to fit.</span></div>
+    <div class="workspace"><div class="viewer" id="viewer"><div class="stage" id="stage">
+      ${pg.svg ? `<img src="${esc(pg.svg)}" alt="">` : `<div style="aspect-ratio:${pg.page[0]}/${pg.page[1]};display:grid;place-items:center" class="muted">No image: kicad-cli missing</div>`}
+      <svg class="ov flags" id="ov" viewBox="0 0 ${pg.page[0]} ${pg.page[1]}" preserveAspectRatio="none">
+      ${items.map(i => `<rect data-ref="${esc(i.ref)}" class="f-${worst(i.ref)}" x="${i.bbox[0]}" y="${i.bbox[1]}" width="${i.bbox[2] - i.bbox[0]}" height="${i.bbox[3] - i.bbox[1]}"><title>${esc(i.ref)} ${esc(i.value)}</title></rect>`).join("")}
+      </svg></div></div><aside class="side" id="side"></aside></div>`;
+  const stage = $("#stage"), viewer = $("#viewer");
+  stage.style.width = Math.min(viewer.clientWidth * 0.95, 1800) + "px";
+  const v = new Viewer(viewer, stage, pg.page[0]);
+  const img = stage.querySelector("img");
+  const ready = () => { v.fit(); if (state.select) select(state.select, true); };
+  img && !img.complete ? img.addEventListener("load", ready, { once: true }) : requestAnimationFrame(ready);
+  $("#page").onchange = e => { state[key] = +e.target.value; state.select = null; save(); render(); };
+  $("#flags").onchange = e => $("#ov").classList.toggle("flags", e.target.checked);
+  $("#fit").onclick = () => v.fit();
+  $("#q").onchange = e => { const r = e.target.value.trim().toUpperCase(); if (r) locate(r); };
+  for (const r of stage.querySelectorAll("rect[data-ref]")) r.onclick = e => { if (v.justDragged) return; e.stopPropagation(); select(r.dataset.ref, false); };
+
+  function select(ref, zoom) {
+    state.select = ref;
+    for (const r of stage.querySelectorAll("rect.hl")) r.classList.remove("hl");
+    const rect = stage.querySelector(`rect[data-ref="${CSS.escape(ref)}"]`);
+    const item = items.find(i => i.ref === ref);
+    if (rect) { rect.classList.add("hl"); if (zoom && item) v.focus(item.bbox); }
+    sidePanel(ref, item, sch, items);
+  }
+  if (!state.select) sidePanel(null, null, sch, items);
+}
+
+function sidePanel(ref, item, sch, items) {
+  const side = $("#side"); if (!side) return;
+  if (!ref) {
+    const here = new Set((items || []).map(i => i.ref));
+    const flagged = Object.keys(findingsByRef).filter(r => here.has(r)).sort((a, b) => sevRank(worst(a)) - sevRank(worst(b)) || a.localeCompare(b, undefined, { numeric: true }));
+    side.innerHTML = `<h3>Components with findings on this ${sch ? "sheet" : "view"}</h3>${flagged.length ? flagged.map(r => `<div class="list-item"><span class="sev ${worst(r)}">${worst(r)}</span> <a href="#" data-ref="${esc(r)}">${esc(r)}</a> <span class="muted">${findingsByRef[r].length} finding(s)</span></div>`).join("") : `<div class="muted">None.</div>`}
+      <p class="hint">Click a component on the drawing to see its details.</p>`;
+    bindRefLinks(side); return;
+  }
+  const part = D.parts.find(p => p.ref === ref);
+  const ds = D.datasheets.find(d => d.ref === ref || (item && item.mpn && d.mpn === item.mpn));
+  const other = sch ? (D.board.items || []).some(i => i.ref === ref) : D.schematic.some(s => s.items.some(i => i.ref === ref));
+  side.innerHTML = `<h3>${esc(ref)}</h3>
+    <div>${esc(item ? item.value : "")}${item && item.dnp ? ' <span class="tag warn">DNP</span>' : ""}${item && item.side ? ` <span class="tag">${esc(item.side)}</span>` : ""}</div>
+    ${item && item.mpn ? `<div class="mono">${esc(item.mpn)}</div>` : `<div class="tag warn">no MPN field</div>`}
+    ${part ? `<div class="ev">Spec part <b>${esc(part.id)}</b>, block ${esc(part.block)}</div>` : ""}
+    ${ds && ds.pdf ? `<div class="ev"><a href="${esc(ds.pdf)}" target="_blank">Datasheet</a></div>` : ""}
+    ${other ? `<p><a href="#" id="swap">Show in ${sch ? "layout" : "schematic"}</a></p>` : ""}
+    <h3>Findings</h3>${(findingsByRef[ref] || []).map(findingLine).join("") || `<div class="muted">None.</div>`}
+    <p><a href="#" id="clear">Back to the list</a></p>`;
+  const sw = $("#swap"); if (sw) sw.onclick = e => { e.preventDefault(); locate(ref, sch ? "layout" : "schematic"); };
+  $("#clear").onclick = e => { e.preventDefault(); state.select = null; render(); };
+  bindRefLinks(side);
+}
+
+function locate(ref, prefer) {
+  const inSch = D.schematic.findIndex(s => s.items.some(i => i.ref === ref));
+  const item = (D.board.items || []).find(i => i.ref === ref);
+  const target = prefer || (state.tab === "layout" && item ? "layout" : inSch >= 0 ? "schematic" : item ? "layout" : null);
+  if (target === "schematic" && inSch >= 0) go("schematic", { sheet: inSch, select: ref });
+  else if (target === "layout" && item) { const views = (D.board.views || []).map(v => v.name);
+    const want = item.side === "back" ? "Bottom" : "Top"; go("layout", { view: Math.max(0, views.indexOf(want)), select: ref }); }
+  else alert(`${ref} is not in the schematic or the layout yet.`);
+}
+
+const schematic = m => drawing(m, "schematic");
+const layout = m => drawing(m, "layout");
+if (!TABS.some(t => t[0] === state.tab)) state.tab = "status";
+state.select = null;
+renderNav(); render();
+</script>
+</body>
+</html>

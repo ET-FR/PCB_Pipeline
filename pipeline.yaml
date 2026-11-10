@@ -6,6 +6,7 @@ version: 2
 
 inputs:
   kicad_cli: kicad-cli            # path to kicad-cli
+  kicad_version: 10               # the pipeline is built and tested with KiCad 10
   required_symbol_fields: [MPN]   # missing fields are reported as findings
   recommended_symbol_fields: [Voltage, Tolerance]
 
@@ -152,6 +153,14 @@ phases:
   - id: simulation
     title: "Phase 4: simulation"
     enabled: false                # placeholder, not developed yet
+
+# Read-only project page: status, PRD, power tree, datasheets, findings, schematic and
+# layout (SVG from kicad-cli) with findings highlighted. No AI inside: agents run in Claude Code.
+dashboard:
+  command: pcb-pipeline dashboard
+  output: out/dashboard/index.html
+  regenerate_after: [define, architecture, review, check-spec, fetch-datasheets]
+  gates_file: review/gates.yaml   # gates passed, shown as phase status
 
 # Agents write notes while they work so the next run skips work already done.
 # Rules in agents/memory.md, format in schemas/notes.schema.json.

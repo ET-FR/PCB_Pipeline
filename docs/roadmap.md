@@ -18,6 +18,8 @@ Ordered by value: the earlier phases catch the most expensive errors.
   `knowledge/architecture_checklist.md`, `knowledge/preferred_parts.yaml`,
   `fetch-datasheets` (index, manual fallback), ratings against component sheets
   (RAT-001 to RAT-004), `render-spec` (Markdown and PDF), `spec-diff` (PRD change impact).
+- [x] **Dashboard V1** (`pcb-pipeline dashboard`): status, PRD, power tree, datasheets,
+  findings, schematic and layout from KiCad 10 with findings highlighted.
 - [x] **Deterministic schematic core**: netlist graph, functional groups, rules
   SYM-001, PIN-001/002, CAP-001, ABS-001, EQ-001, trapped project, Markdown report.
 
@@ -41,10 +43,11 @@ Ordered by value: the earlier phases catch the most expensive errors.
 - [ ] **10. Phase 3**: net classes and `.kicad_dru` export from the spec, DRC through
   `kicad-cli`, layout agent with pcbsight.
 - [ ] **11. Footprint agent**.
-- [ ] **12. HTML report**.
+- [ ] **12. Dashboard V2**: `pcb-pipeline serve` with automatic refresh on save, and
+  accept, reject or defer buttons on findings writing `review/decisions.yaml`.
 
 ## Later
 
 - [ ] Phase 4: SPICE agent (ngspice, then LTspice).
 - [ ] Theorist agent and document base.
-- [ ] KiCad highlight plugin (optional).
+- [ ] KiCad highlight plugin (optional, the dashboard covers most of the need).

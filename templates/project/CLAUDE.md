@@ -12,3 +12,6 @@ This is the hardware project `{{name}}`, designed with PCB_Pipeline.
 - Follow `{{pipeline}}/agents/memory.md`: read `review/notes.yaml` before working,
   write notes while working.
 - When something should have been caught earlier, add it to `review/missed.yaml`.
+- The project uses KiCad 10. After every run, regenerate the dashboard with
+  `pcb-pipeline dashboard` (output in `out/dashboard/index.html`).
+- When the user signs a phase off, add the gate to `review/gates.yaml`.

@@ -59,6 +59,9 @@ pcb-pipeline fetch-datasheets ../my_board/design/spec.yaml    # into ../my_board
 pcb-pipeline render-spec ../my_board/design/spec.yaml         # spec.md and spec.pdf
 pcb-pipeline spec-diff ../my_board/design/spec.yaml --against HEAD   # impact of a change
 
+# Project page: status, PRD, power tree, datasheets, findings on schematic and layout
+pcb-pipeline dashboard ../my_board --open
+
 # Phase 2: schematic checks, rail voltages taken from the spec
 pcb-pipeline check ../my_board/kicad/my_board.kicad_sch --spec ../my_board/design/spec.yaml
 
@@ -75,7 +78,23 @@ pcb-pipeline validate-sheet library/component_sheets/MY-MPN.json
 The full agent review is launched from Claude Code with the `/review` command
 (see [`.claude/commands/review.md`](.claude/commands/review.md)).
 
+## Dashboard
+
+```bash
+pcb-pipeline dashboard ../my_board --open
+```
+
+Builds `out/dashboard/index.html` in the project: phases and gates, PRD, interactive
+power tree with the budget per rail, datasheet and component sheet status, findings
+with clickable evidence (datasheet opened at the cited page), and the schematic and
+layout exported by `kicad-cli`, with the components that have findings outlined. Click
+a finding's reference to jump to the part on the schematic, then to the layout. Read
+only, no AI inside: the agents run in Claude Code, the page shows their results.
+
 ## Requirements on the KiCad side
+
+The pipeline is built and tested with **KiCad 10** (`kicad-cli` must be on the PATH, or
+set `inputs.kicad_cli` in `pipeline.yaml`).
 
 Every symbol should carry these fields, otherwise most automatic checks are impossible:
 

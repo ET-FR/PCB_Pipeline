@@ -1,0 +1,20 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(uuid "33333333-3333-3333-3333-333333333333")
+	(paper "A3" portrait)
+	(lib_symbols
+		(symbol "test:BOX"
+			(symbol "BOX_0_1" (rectangle (start -5 2) (end 5 -2)))
+		)
+	)
+	(symbol
+		(lib_id "test:BOX")
+		(at 20 30 0)
+		(mirror y)
+		(property "Reference" "U?" (at 0 0 0))
+		(property "Value" "LDO" (at 0 0 0))
+		(dnp yes)
+		(instances (project "mini" (path "/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222" (reference "U3") (unit 1))))
+	)
+)

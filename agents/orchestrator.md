@@ -31,3 +31,5 @@ You lead a design review of a KiCad project. You do not analyze circuits yoursel
 6. Validate `review/notes.yaml` (`pcb-pipeline validate-notes`), copy the `missed` notes
    to `review/missed.yaml`, and list the new `pipeline` notes and `missed` entries for
    the user to accept or reject.
+7. Run `pcb-pipeline dashboard` so the user sees the findings on the schematic and the
+   layout.
