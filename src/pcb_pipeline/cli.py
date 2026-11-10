@@ -1,4 +1,4 @@
-"""Command line interface: pcb-pipeline check | validate-sheet | report."""
+"""Command line interface: pcb-pipeline check | validate-sheet | validate-notes | report."""
 
 from __future__ import annotations
 
@@ -111,6 +111,20 @@ def cmd_validate_sheet(args) -> int:
     return status
 
 
+def cmd_validate_notes(args) -> int:
+    status = 0
+    for path in args.paths:
+        errors = validate("notes", yaml.safe_load(Path(path).read_text()) or {})
+        if errors:
+            status = 1
+            print(f"{path}: INVALID")
+            for e in errors:
+                print(f"  {e}")
+        else:
+            print(f"{path}: ok")
+    return status
+
+
 def cmd_report(args) -> int:
     doc = json.loads(Path(args.findings).read_text())
     errors = validate("findings", doc)
@@ -141,6 +155,10 @@ def main(argv: list[str] | None = None) -> int:
     v = sub.add_parser("validate-sheet", help="validate component sheets against the schema")
     v.add_argument("paths", nargs="+")
     v.set_defaults(fn=cmd_validate_sheet)
+
+    n = sub.add_parser("validate-notes", help="validate agent notes (YAML) against the schema")
+    n.add_argument("paths", nargs="+")
+    n.set_defaults(fn=cmd_validate_notes)
 
     r = sub.add_parser("report", help="render findings.json to Markdown")
     r.add_argument("findings")

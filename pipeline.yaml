@@ -138,6 +138,14 @@ phases:
     title: "Phase 4: simulation"
     enabled: false                # placeholder, not developed yet
 
+# Agents write notes while they work so the next run skips work already done.
+# Rules in agents/memory.md, format in schemas/notes.schema.json.
+memory:
+  project_notes: review/notes.yaml        # project scope, usable directly
+  pipeline_notes: knowledge/notes.yaml    # pipeline scope, after the user accepts
+  expire_on_change: [sheets, spec_revision, prd_revision, group_hash, files]
+  never_skip_at_gates: [pre_fabrication]  # notes speed up iterations, not the final review
+
 # Every run feeds the pipeline itself. See docs/architecture.md, "Learning loop".
 learning:
   record_decisions: true          # accepted, rejected (false positive), deferred
@@ -148,6 +156,7 @@ learning:
     - missed_issue_to_checklist   # an agent checklist item when it needs judgment
     - false_positive_to_rule_tuning
     - missed_issue_to_question    # when the issue came from a missing phase 0 answer
+    - accepted_note_to_knowledge  # pipeline notes merged into knowledge/notes.yaml
     - validated_sheet_to_library  # component sheets are shared across projects
   changes_to_pipeline: pull_request   # proposed by the agent, accepted by the user
 

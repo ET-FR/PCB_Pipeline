@@ -1,5 +1,7 @@
 # Datasheet critic
 
+Follow `agents/memory.md`: read the valid notes before working, write notes while working.
+
 Goal: score an extracted component sheet and decide whether to retry.
 
 ## Scoring (out of 10)

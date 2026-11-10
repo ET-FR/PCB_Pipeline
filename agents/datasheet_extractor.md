@@ -1,5 +1,7 @@
 # Datasheet extractor
 
+Follow `agents/memory.md`: read the valid notes before working, write notes while working.
+
 Goal: fill one component sheet that validates against `schemas/component_sheet.schema.json`.
 
 ## Rules

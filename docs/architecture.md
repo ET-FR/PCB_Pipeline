@@ -157,6 +157,7 @@ The pipeline must get better with every project. Four sources of lessons:
 | Problem found later (bring-up, another review, fabrication) | `review/missed.yaml` | A new trap in the trapped project, plus a deterministic rule if the check is mechanical, or a checklist item for the agent if it needs judgment |
 | Problem caused by a missing or wrong requirement | `review/missed.yaml` | A new or reworded question in `knowledge/phase0_questions.md` |
 | Phase 0 interview | `design/prd.md` | Questions added, lowered or retired, user defaults |
+| Notes written by agents during a run | `review/notes.yaml` | Project memory for the next run; pipeline notes merged into `knowledge/notes.yaml` once accepted |
 | Validated component sheet | `library/component_sheets/` | Reused as is by the next projects |
 | Component choice and its reasons | `design/spec.yaml` | Preferred parts list for the next selections |
 
@@ -166,6 +167,36 @@ trap to `tests/fixtures/`, so the same mistake can never come back unnoticed.
 
 The decision history also measures the pipeline: findings per rule, false positive rate
 per rule and per agent, issues missed per phase.
+
+## Agent memory
+
+Agents do not wait for the end of a project to learn. While they work, they write
+notes (`schemas/notes.schema.json`, rules in `agents/memory.md`) so the next run does
+not redo the same reasoning:
+
+- `verified`: a check already done and passed, for example the feedback divider of
+  `power/buck_5v`.
+- `decision`: a choice made with the user and its reason.
+- `pitfall`, `datasheet_quirk`, `shortcut`: a trap, a datasheet error, where to find
+  something fast.
+- `question`: a phase 0 question that was missing.
+- `missed`: something an earlier phase or run should have caught.
+
+Two scopes:
+
+- **project** notes go to `review/notes.yaml` in the project repo and are used directly
+  by the next run.
+- **pipeline** notes are proposed there too, then merged into `knowledge/notes.yaml`
+  by pull request once the user accepts them. Until then they are only hints.
+
+Safeguards:
+
+- **No proof, no note.** Every note has evidence.
+- **Notes expire.** `verified` and `decision` notes record what they depend on
+  (sheet revision, spec revision, functional group hash, file hashes). If any of it
+  changes, the note expires and the work is done again.
+- **Gates are never shortened.** At the pre-fabrication gate every check runs again,
+  whatever the notes say.
 
 ## The agents
 

@@ -1,5 +1,7 @@
 # Conformity agent
 
+Follow `agents/memory.md`: read the valid notes before working, write notes while working.
+
 Goal: compare one functional group of the schematic to the component sheets of its parts.
 
 ## Inputs

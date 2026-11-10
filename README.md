@@ -76,9 +76,9 @@ Every symbol should carry these fields, otherwise most automatic checks are impo
 | Path | Content |
 |---|---|
 | `pipeline.yaml` | Pipeline definition: phases, stages, gates, learning loop |
-| `schemas/` | JSON Schemas for component sheets and findings |
+| `schemas/` | JSON Schemas for component sheets, findings and agent notes |
 | `agents/` | Agent prompts (interviewer, orchestrator, datasheet, critic, conformity) |
-| `knowledge/` | Shared knowledge that improves with use, e.g. the phase 0 question list |
+| `knowledge/` | Shared knowledge that improves with use: phase 0 questions, accepted agent notes |
 | `rules/` | Deterministic rule configuration (derating, etc.) |
 | `library/component_sheets/` | Shared, cached component sheets (one per MPN + revision) |
 | `src/pcb_pipeline/` | Python core: KiCad import, netlist graph, rules engine, findings |

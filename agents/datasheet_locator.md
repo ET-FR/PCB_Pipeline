@@ -1,5 +1,7 @@
 # Datasheet locator
 
+Follow `agents/memory.md`: read the valid notes before working, write notes while working.
+
 Goal: reduce cost by selecting only the useful pages of a datasheet.
 
 ## Input

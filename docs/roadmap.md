@@ -7,6 +7,8 @@ Ordered by value: the earlier phases catch the most expensive errors.
 - [x] **Foundations**: repo structure, `pipeline.yaml`, `kicad-cli` import, pre-commit hook.
 - [x] **Formats (first draft)**: JSON Schemas for component sheets and findings.
 - [x] **Phase 0 question list** (`knowledge/phase0_questions.md`) and interviewer prompt.
+- [x] **Agent memory format**: `schemas/notes.schema.json`, `agents/memory.md`,
+  `pcb-pipeline validate-notes`.
 - [x] **Deterministic schematic core**: netlist graph, functional groups, rules
   SYM-001, PIN-001/002, CAP-001, ABS-001, EQ-001, trapped project, Markdown report.
 
@@ -26,7 +28,8 @@ Ordered by value: the earlier phases catch the most expensive errors.
   accepted fixes (symbol fields, values, footprints first), one commit per run.
 - [ ] **7. Phase 2 complete**: `spec_conformity` checks, conformity agent, consensus,
   orchestrator, `/review` command end to end.
-- [ ] **8. Learning loop**: `review/missed.yaml`, promotion of lessons into rules, traps
+- [ ] **8. Learning loop**: deterministic expiry of notes (hashes of groups and files),
+  `review/missed.yaml`, promotion of lessons into rules, traps
   and checklists by pull request, metrics per rule and per agent.
 - [ ] **9. Test existing tools**: kicad-happy and pcbsight on a finished project; what
   they miss becomes traps.

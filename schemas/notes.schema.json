@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ET-FR/PCB_Pipeline/schemas/notes.schema.json",
+  "title": "Agent notes (memory between runs)",
+  "description": "Written by agents during a run so the next run does not redo the same reasoning. Project notes live in the project repo (review/notes.yaml), pipeline notes in knowledge/notes.yaml.",
+  "type": "object",
+  "required": ["schema_version", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "scope", "kind", "topic", "statement", "evidence", "author", "status", "created"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^N-[0-9]{8}-[0-9]{3,}$", "description": "N-YYYYMMDD-NNN" },
+          "scope": {
+            "type": "string",
+            "enum": ["project", "pipeline"],
+            "description": "project: true for this board only. pipeline: true for every project, promoted to knowledge/ after the user accepts it."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["verified", "decision", "pitfall", "shortcut", "datasheet_quirk", "question", "missed"],
+            "description": "verified: a check already done and passed. decision: a choice made with the user and its reason. pitfall: a trap to look for. shortcut: where to find something fast. datasheet_quirk: an error or ambiguity in a datasheet. question: a phase 0 question to add. missed: something an earlier phase or run should have caught."
+          },
+          "topic": { "type": "string", "description": "Functional group, MPN, spec path or knowledge area, e.g. power/buck_5v, TPS62133@C, i2c_map" },
+          "statement": { "type": "string", "description": "What the next run can take as known, in one or two sentences." },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "description": "No proof, no note.",
+            "items": {
+              "type": "object",
+              "required": ["kind"],
+              "additionalProperties": false,
+              "properties": {
+                "kind": { "type": "string", "enum": ["datasheet", "netlist", "calculation", "spec", "user", "rule"] },
+                "mpn": { "type": "string" },
+                "page": { "type": "integer", "minimum": 1 },
+                "net": { "type": "string" },
+                "spec_path": { "type": "string" },
+                "summary": { "type": "string" }
+              }
+            }
+          },
+          "depends_on": {
+            "type": "object",
+            "description": "The note expires as soon as one of these changes.",
+            "additionalProperties": false,
+            "properties": {
+              "sheets": { "type": "array", "items": { "type": "string" }, "description": "MPN@revision" },
+              "spec_revision": { "type": "string" },
+              "prd_revision": { "type": "string" },
+              "group_hash": { "type": "string", "description": "Hash of the functional group subgraph" },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["path", "sha256"],
+                  "additionalProperties": false,
+                  "properties": { "path": { "type": "string" }, "sha256": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "author": { "type": "string", "description": "agent:<name> or user" },
+          "status": {
+            "type": "string",
+            "enum": ["proposed", "accepted", "rejected", "expired"],
+            "description": "Project notes are usable while proposed. Pipeline notes are only hints until accepted."
+          },
+          "created": { "type": "string", "format": "date" },
+          "run": { "type": "string", "description": "Run folder in review/ that produced the note" },
+          "promoted_to": { "type": "string", "description": "Pipeline file the note was merged into, e.g. rules/checklist.yaml#CAP-002" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "kind": { "enum": ["verified", "decision"] } } },
+            "then": { "required": ["depends_on"] }
+          }
+        ]
+      }
+    }
+  }
+}
