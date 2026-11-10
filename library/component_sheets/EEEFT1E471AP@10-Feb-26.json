@@ -11,44 +11,201 @@
     "sha256": "affbdbc3402d5d78e683944e78f5a641ae7f22906a4e77e24978388e491b41e2"
   },
   "absolute_maximum": [
-    { "param": "VR", "max": 25, "unit": "V", "conditions": "rated voltage; peak of DC plus superposed ripple must not exceed rated voltage (p8); use at or below rated voltage also for transients and pulses (p7)", "page": 4 },
-    { "param": "IRIPPLE", "max": 850, "unit": "mArms", "conditions": "rated ripple current, 100 kHz, +105 C", "page": 4 },
-    { "param": "V_reverse", "max": 0, "unit": "V", "conditions": "polarized: do not apply a reverse voltage", "page": 8 },
-    { "param": "TA", "min": -55, "max": 105, "unit": "C", "conditions": "category temperature range", "page": 1 }
+    {
+      "param": "VR",
+      "max": 25,
+      "unit": "V",
+      "conditions": "rated voltage; peak of DC plus superposed ripple must not exceed rated voltage (p8); use at or below rated voltage also for transients and pulses (p7)",
+      "page": 4
+    },
+    {
+      "param": "IRIPPLE",
+      "max": 850,
+      "unit": "mArms",
+      "conditions": "rated ripple current, 100 kHz, +105 C",
+      "page": 4
+    },
+    {
+      "param": "V_reverse",
+      "max": 0,
+      "unit": "V",
+      "conditions": "polarized: do not apply a reverse voltage",
+      "page": 8
+    },
+    {
+      "param": "TA",
+      "min": -55,
+      "max": 105,
+      "unit": "C",
+      "conditions": "category temperature range",
+      "page": 1
+    }
   ],
   "recommended_operating": [
-    { "param": "C", "typ": 470, "unit": "uF", "conditions": "tolerance +/-20 % (120 Hz, +20 C)", "page": 4 },
-    { "param": "C_tolerance", "min": -20, "max": 20, "unit": "%", "conditions": "120 Hz, +20 C", "page": 1 },
-    { "param": "ESR", "max": 0.08, "unit": "Ohm", "conditions": "100 kHz, +20 C", "page": 4 },
-    { "param": "tan_delta", "max": 0.14, "unit": "", "conditions": "120 Hz, +20 C", "page": 4 },
-    { "param": "I_leak", "max": 117.5, "unit": "uA", "conditions": "I <= 0.01 CV (uA) after 2 minutes, with C = 470 uF and V = 25 V", "page": 1 },
-    { "param": "endurance", "typ": 2000, "unit": "h", "conditions": "rated voltage at +105 C; after test cap change within +/-30 %, tan delta <= 200 % of initial limit, leakage within initial limit", "page": 4 },
-    { "param": "ripple_freq_factor_120Hz", "typ": 0.65, "unit": "", "conditions": "10 to 470 uF", "page": 1 },
-    { "param": "ripple_freq_factor_1kHz", "typ": 0.85, "unit": "", "conditions": "10 to 470 uF", "page": 1 },
-    { "param": "ripple_freq_factor_10kHz", "typ": 0.95, "unit": "", "conditions": "10 to 470 uF", "page": 1 },
-    { "param": "ripple_freq_factor_100kHz", "typ": 1.00, "unit": "", "conditions": "10 to 470 uF, 100 kHz and above", "page": 1 },
-    { "param": "case_diameter", "typ": 8.0, "unit": "mm", "conditions": "size code F, phi D +/-0.5", "page": 4 },
-    { "param": "case_length", "typ": 10.2, "unit": "mm", "conditions": "size code F standard product, L +/-0.3", "page": 1 },
-    { "param": "case_height", "max": 10.0, "unit": "mm", "conditions": "size code F, H max", "page": 1 },
-    { "param": "service_life_cap", "max": 15, "unit": "years", "conditions": "estimated service life not longer than 15 years (sealing rubber)", "page": 8 }
+    {
+      "param": "C",
+      "typ": 470,
+      "unit": "uF",
+      "conditions": "tolerance +/-20 % (120 Hz, +20 C)",
+      "page": 4
+    },
+    {
+      "param": "C_tolerance",
+      "min": -20,
+      "max": 20,
+      "unit": "%",
+      "conditions": "120 Hz, +20 C",
+      "page": 1
+    },
+    {
+      "param": "ESR",
+      "max": 0.08,
+      "unit": "Ohm",
+      "conditions": "100 kHz, +20 C",
+      "page": 4
+    },
+    {
+      "param": "tan_delta",
+      "max": 0.14,
+      "unit": "",
+      "conditions": "120 Hz, +20 C",
+      "page": 4
+    },
+    {
+      "param": "I_leak",
+      "max": 117.5,
+      "unit": "uA",
+      "conditions": "I <= 0.01 CV (uA) after 2 minutes, with C = 470 uF and V = 25 V",
+      "page": 1
+    },
+    {
+      "param": "endurance",
+      "typ": 2000,
+      "unit": "h",
+      "conditions": "rated voltage at +105 C; after test cap change within +/-30 %, tan delta <= 200 % of initial limit, leakage within initial limit",
+      "page": 4
+    },
+    {
+      "param": "ripple_freq_factor_120Hz",
+      "typ": 0.65,
+      "unit": "",
+      "conditions": "10 to 470 uF",
+      "page": 1
+    },
+    {
+      "param": "ripple_freq_factor_1kHz",
+      "typ": 0.85,
+      "unit": "",
+      "conditions": "10 to 470 uF",
+      "page": 1
+    },
+    {
+      "param": "ripple_freq_factor_10kHz",
+      "typ": 0.95,
+      "unit": "",
+      "conditions": "10 to 470 uF",
+      "page": 1
+    },
+    {
+      "param": "ripple_freq_factor_100kHz",
+      "typ": 1.0,
+      "unit": "",
+      "conditions": "10 to 470 uF, 100 kHz and above",
+      "page": 1
+    },
+    {
+      "param": "case_diameter",
+      "typ": 8.0,
+      "unit": "mm",
+      "conditions": "size code F, phi D +/-0.5",
+      "page": 4
+    },
+    {
+      "param": "case_length",
+      "typ": 10.2,
+      "unit": "mm",
+      "conditions": "size code F standard product, L +/-0.3",
+      "page": 1
+    },
+    {
+      "param": "case_height",
+      "max": 10.0,
+      "unit": "mm",
+      "conditions": "size code F, H max",
+      "page": 1
+    },
+    {
+      "param": "service_life_cap",
+      "max": 15,
+      "unit": "years",
+      "conditions": "estimated service life not longer than 15 years (sealing rubber)",
+      "page": 8
+    }
   ],
   "pins": [
-    { "number": "+", "name": "+", "type": "passive", "requirement": "must_connect", "notes": "Positive terminal. Datasheet gives no pin numbers; polarity marking is on the negative side.", "page": 1 },
-    { "number": "-", "name": "-", "type": "passive", "requirement": "must_connect", "notes": "Negative terminal, marked with the negative polarity marking (black band on the case top).", "page": 1 }
+    {
+      "number": "1",
+      "name": "+",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Positive terminal. Datasheet gives no pin numbers; polarity marking is on the negative side. Numbered 1 (positive) as in the KiCad C_Polarized symbol.",
+      "page": 1
+    },
+    {
+      "number": "2",
+      "name": "-",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Negative terminal, marked with the negative polarity marking (black band on the case top). Numbered 2 (negative) as in the KiCad C_Polarized symbol.",
+      "page": 1
+    }
   ],
   "equations": [
-    { "name": "leakage current limit after 2 minutes", "expression": "0.01 * C_UF * V_R", "unit": "uA",
-      "constants": { "C_UF": 470, "V_R": 25 }, "page": 1 },
-    { "name": "expected life at ambient T2", "expression": "L1 * 2 ** ((T1 - (T2 + DT)) / 10)", "unit": "h",
-      "constants": { "L1": 2000 }, "page": 8 }
+    {
+      "name": "leakage current limit after 2 minutes",
+      "expression": "0.01 * C_UF * V_R",
+      "unit": "uA",
+      "constants": {
+        "C_UF": 470,
+        "V_R": 25
+      },
+      "page": 1
+    },
+    {
+      "name": "expected life at ambient T2",
+      "expression": "L1 * 2 ** ((T1 - (T2 + DT)) / 10)",
+      "unit": "h",
+      "constants": {
+        "L1": 2000
+      },
+      "page": 8
+    }
   ],
   "layout_notes": [
-    { "text": "Standard product land pattern for size code F (phi 8 x 10.2 L): a = 3.1 mm, b = 4.0 mm, c = 2.0 mm; a larger 'a' may prevent a proper back fillet.", "page": 2 },
-    { "text": "Size code F dimensions: phi D 8.0, L 10.2 +/-0.3, A,B 8.3, H 10.0 max, I 3.4, W 0.90 +/-0.2, P 3.1, K 0.70 +/-0.2 (mm).", "page": 1 },
-    { "text": "Do not place a heating element on the back of the capacitor; in general a 10 C drop in temperature doubles the life.", "page": 7 },
-    { "text": "Parallel capacitors: use the same part number and avoid unequal trace impedances so ripple current does not concentrate on one capacitor. Do not use capacitors in series.", "page": 9 },
-    { "text": "On double-sided boards, do not route a wiring pattern directly underneath the capacitor (electrolyte leakage concern).", "page": 9 },
-    { "text": "Reflow: high temperature lead-free reflow, profile class (6) for this part; see the reflow profile page.", "page": 4 }
+    {
+      "text": "Standard product land pattern for size code F (phi 8 x 10.2 L): a = 3.1 mm, b = 4.0 mm, c = 2.0 mm; a larger 'a' may prevent a proper back fillet.",
+      "page": 2
+    },
+    {
+      "text": "Size code F dimensions: phi D 8.0, L 10.2 +/-0.3, A,B 8.3, H 10.0 max, I 3.4, W 0.90 +/-0.2, P 3.1, K 0.70 +/-0.2 (mm).",
+      "page": 1
+    },
+    {
+      "text": "Do not place a heating element on the back of the capacitor; in general a 10 C drop in temperature doubles the life.",
+      "page": 7
+    },
+    {
+      "text": "Parallel capacitors: use the same part number and avoid unequal trace impedances so ripple current does not concentrate on one capacitor. Do not use capacitors in series.",
+      "page": 9
+    },
+    {
+      "text": "On double-sided boards, do not route a wiring pattern directly underneath the capacitor (electrolyte leakage concern).",
+      "page": 9
+    },
+    {
+      "text": "Reflow: high temperature lead-free reflow, profile class (6) for this part; see the reflow profile page.",
+      "page": 4
+    }
   ],
   "extraction": {
     "critic_score": 8,
@@ -65,6 +222,13 @@
       "Usage pages 5-11 carry different dates (10-May-24, 1-Sep-25) from the catalog pages 1-4 (10-Feb-26)."
     ],
     "human_validated": false,
-    "pages_used": [1, 2, 4, 7, 8, 9]
+    "pages_used": [
+      1,
+      2,
+      4,
+      7,
+      8,
+      9
+    ]
   }
 }
