@@ -57,3 +57,37 @@ def test_draft_two_sheets_netlist(tmp_path):
     assert nets["+5V"] == {("L1", "2"), ("R1", "1")}                  # rotated part: pins not swapped
     assert nets["SIG"] == {("R1", "2"), ("R2", "1")}                 # global label across sheets
     assert any(("L1", "1") in v for k, v in nets.items() if k.endswith("SW"))
+
+
+def test_label_justify_follows_angle(tmp_path):
+    f = tmp_path / "s.kicad_sch"
+    f.write_text('(kicad_sch\n\t(label "A"\n\t\t(at 10 10 180)\n\t\t(effects\n\t\t\t(justify left bottom)\n\t\t)\n\t)\n'
+                 '\t(label "B"\n\t\t(at 10 20 0)\n\t\t(effects\n\t\t\t(justify left bottom)\n\t\t)\n\t)\n)\n', encoding="utf-8")
+    sd._fix_label_justify(f)
+    t = f.read_text(encoding="utf-8")
+    assert t.index("justify right bottom") < t.index('"B"') < t.index("justify left bottom")
+
+
+def test_overlap_and_text_boxes():
+    a = sd.text_box("12V_FRONT", (10, 10), 1.27, 0, "center")
+    b = sd.text_box("12V_FRONT", (20.16, 10), 1.27, 0, "center")
+    c = sd.text_box("12V_FRONT", (22.7, 10), 1.27, 0, "center")
+    assert sd.overlaps([("a", a, "1"), ("b", b, "2")])            # 10.16 mm pitch is too tight for 9 chars
+    assert not sd.overlaps([("a", a, "1"), ("c", c, "2")])
+    assert not sd.overlaps([("a", a, "1"), ("b", b, "1")])        # same owner is not compared
+
+
+@pytest.mark.skipif(not KICAD_CLI, reason="KiCad not installed")
+def test_flat_page_power_symbols_vertical_and_global_consistency(tmp_path):
+    prj = sd.Project(tmp_path, "F", power_nets={"GND": "power:GND", "+5V": "power:+5V"}, paper="A4")
+    s = prj.page()
+    s.part("Connector_Generic:Conn_01x02", "J1", "J", (50.8, 50.8), "", fields="right")
+    s.pins("J1", {"1": "+5V", "2": "SIG"}, labels=("2",))            # SIG global on the connector
+    s.part("Device:R", "R1", "1k", (101.6, 50.8), "Resistor_SMD:R_0603_1608Metric")
+    s.pins("R1", {"1": "SIG", "2": "GND"})                           # ... so global here too
+    prj.save()
+    t = (tmp_path / "F.kicad_sch").read_text(encoding="utf-8")
+    assert t.count('(global_label "SIG"') == 2 and '(label "SIG"' not in t
+    rots = re.findall(r'\(lib_id "power:(?:\+5V|GND)"\)\s*\(at [\d.\-]+ [\d.\-]+ (\d+)\)', t)
+    assert rots and all(r in ("0", "180") for r in rots)              # vertical power symbols only
+    assert not prj.issues()

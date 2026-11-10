@@ -56,6 +56,20 @@ class Conn:
     ref: str
     pin: str
     net: str | None           # None = no connect
+    stub: float | None = None  # wire length from the pin; default Project.stub
+    label: bool = False        # draw a power net as a global label (same name joins the power net)
+
+
+GROUND_LIBS = ("power:GND", "power:GNDPWR", "power:GNDA", "power:GNDD", "power:Earth")
+
+
+@dataclass
+class Placed:
+    lib_id: str
+    at: tuple[float, float]
+    rotation: float
+    fields: str               # right | left | top | bottom | topbottom | none
+    value: str
 
 
 @dataclass
@@ -67,26 +81,38 @@ class Sheet:
     sch: object = None
     conns: list[Conn] = field(default_factory=list)
     sheet_uuid: str = ""
+    placed: dict[str, Placed] = field(default_factory=dict)
+    field_pos: dict[str, dict[str, tuple]] = field(default_factory=dict)
+    boxes: list = field(default_factory=list)
+    issues: list = field(default_factory=list)
 
     def part(self, lib_id: str, ref: str, value: str, at: tuple[float, float], footprint: str = "",
-             rotation: float = 0, mpn: str = "", **fields_):
-        c = self.sch.components.add(lib_id, reference=ref, value=value, position=(snap(at[0]), snap(at[1])),
+             rotation: float = 0, mpn: str = "", fields: str = "auto", **fields_):
+        at = (snap(at[0]), snap(at[1]))
+        c = self.sch.components.add(lib_id, reference=ref, value=value, position=at,
                                     footprint=footprint, rotation=rotation)
         props = {"MPN": mpn, **{k.replace("_", " "): v for k, v in fields_.items()}}
         for k, v in props.items():
             if v:
                 c.set_property(k, str(v))
+        if fields == "auto":
+            x0, y0, x1, y1 = screen_box(lib_id, at, rotation)
+            w, hgt = x1 - x0, y1 - y0
+            fields = "right" if w < 10.5 else "corners"     # two-pin parts, transistors, connectors: right
+        self.placed[ref] = Placed(lib_id, at, rotation, fields, value)
         return c
 
-    def connect(self, ref: str, pin: str | int, net: str):
-        self.conns.append(Conn(ref, str(pin), net.lstrip("/")))
+    def connect(self, ref: str, pin: str | int, net: str, stub: float | None = None, label: bool = False):
+        self.conns.append(Conn(ref, str(pin), net.lstrip("/"), stub, label))
 
-    def pins(self, ref: str, mapping: dict):
+    def pins(self, ref: str, mapping: dict, stubs: dict | None = None, labels=()):
+        """labels: pins whose power net is drawn as a global label (crowded connector or IC sides)."""
+        labels = {str(x) for x in labels}
         for pin, net in mapping.items():
             if net is None:
                 self.nc(ref, pin)
             else:
-                self.connect(ref, pin, net)
+                self.connect(ref, pin, net, (stubs or {}).get(str(pin)), str(pin) in labels)
 
     def nc(self, ref: str, pin: str | int):
         self.conns.append(Conn(ref, str(pin), None))
@@ -95,25 +121,53 @@ class Sheet:
         """Sheet note, wrapped; kicad-sch-api centres texts on their position, so the default is the page top centre."""
         import textwrap
         lines = textwrap.wrap(text, width)
-        x, y = at if at else (148.59, 25.4)
+        x, y = at if at else (self.project.paper_w / 2, 22.86)
         for k, line in enumerate(lines):
-            self.sch.add_text(line, (snap(x), snap(y + k * 3.81)), size=size)
+            pos = (snap(x), snap(y + k * 2.54))
+            self.sch.add_text(line, pos, size=size)
+            self.boxes.append((f"note:{line[:12]}", text_box(line, pos, size, 0, "center"), "note"))
 
-    # ---- drawing ----
-    def _outward(self, ref: str, pin: str) -> tuple[tuple[float, float], tuple[float, float]]:
-        comp = self.sch.components.get(ref)
-        sym = ksa.get_symbol_info(comp.lib_id)
-        sp = next(p for p in sym.pins if p.number == pin)
+    # ---- geometry ----
+    def _outward(self, ref: str, pin: str) -> tuple[tuple[float, float], tuple[int, int]]:
+        p = self.placed[ref]
+        sym = ksa.get_symbol_info(p.lib_id)
+        sp = next(x for x in sym.pins if x.number == pin)
         d = (-math.cos(math.radians(sp.rotation)), -math.sin(math.radians(sp.rotation)))
-        rot = comp.rotation or 0
-        out = lib_to_screen(d, rot)
-        off = lib_to_screen((sp.position.x, sp.position.y), rot)
-        pos = (round(comp.position.x + off[0], 4), round(comp.position.y + off[1], 4))
-        return pos, (round(out[0]), round(out[1]))
+        out = lib_to_screen(d, p.rotation)
+        off = lib_to_screen((sp.position.x, sp.position.y), p.rotation)
+        return (round(p.at[0] + off[0], 4), round(p.at[1] + off[1], 4)), (round(out[0]), round(out[1]))
+
+    def _fields(self, ref: str, p: Placed):
+        if p.fields == "none" or ref.startswith("#"):
+            return
+        x0, y0, x1, y1 = screen_box(p.lib_id, p.at, p.rotation)
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        g = 0.762
+        if p.fields == "right":
+            pos = {"Reference": (x1 + g, cy - 0.889, 0, "left"), "Value": (x1 + g, cy + 0.889, 0, "left")}
+        elif p.fields == "left":
+            pos = {"Reference": (x0 - g, cy - 0.889, 0, "right"), "Value": (x0 - g, cy + 0.889, 0, "right")}
+        elif p.fields == "bottom":
+            pos = {"Reference": (cx, y1 + 1.27, 0, "center"), "Value": (cx, y1 + 2.794, 0, "center")}
+        elif p.fields == "corners":                     # ICs: outside the body, top-right and bottom-right
+            pos = {"Reference": (x1 + g, y0 - 0.635, 0, "left"), "Value": (x1 + g, y1 + 0.635, 0, "left")}
+        elif p.fields == "bottomright":                 # both fields below the body, right of the bottom pins
+            pos = {"Reference": (x1 + g, y1 + 0.635, 0, "left"), "Value": (x1 + g, y1 + 2.413, 0, "left")}
+        elif p.fields == "topbottom":
+            pos = {"Reference": (x0, y0 - 1.27, 0, "left"), "Value": (x0, y1 + 1.27, 0, "left")}
+        else:  # top
+            pos = {"Reference": (cx, y0 - 2.794, 0, "center"), "Value": (cx, y0 - 1.27, 0, "center")}
+        self.field_pos[ref] = pos
+        for name, (x, y, a, j) in pos.items():
+            txt = ref if name == "Reference" else p.value
+            self.boxes.append((f"{ref}.{name}", text_box(txt, (x, y), 1.27, a, j), ref + ":f"))
 
     def draw(self, power: set[str], globals_: set[str], power_lib: dict[str, str]):
         globals_out = []
         done: dict[tuple[str, float, float], str | None] = {}
+        for ref, p in self.placed.items():
+            self.boxes.append((ref, screen_box(p.lib_id, p.at, p.rotation), ref))
+            self._fields(ref, p)
         for c in self.conns:
             (px, py), (dx, dy) = self._outward(c.ref, c.pin)
             key = (c.ref, round(px, 2), round(py, 2))
@@ -123,37 +177,80 @@ class Sheet:
                 continue
             done[key] = c.net
             if c.net is None:
-                self.sch.no_connects.add(position=(px, py)) if hasattr(self.sch.no_connects, "add") else None
+                self.sch.no_connects.add(position=(px, py))
                 continue
-            ex, ey = snap(px + dx * STUB), snap(py + dy * STUB)
+            own = f"conn:{c.ref}.{c.pin}"
+            length = c.stub if c.stub is not None else self.project.stub
+            ex, ey = snap(px + dx * length), snap(py + dy * length)
             self.sch.add_wire((px, py), (ex, ey))
-            if c.net in power:
+            self.boxes.append((f"wire {c.ref}.{c.pin}", (min(px, ex) - 0.15, min(py, ey) - 0.15,
+                                                          max(px, ex) + 0.15, max(py, ey) + 0.15), own))
+            if c.net in power and not c.label:
                 self.project.pwr += 1
+                pref = f"#PWR{self.project.pwr:03d}"
                 lib = power_lib.get(c.net) or ("power:GND" if c.net.upper().endswith("GND") else "power:VCC")
-                body = (0, 1) if lib in ("power:GND", "power:GNDPWR", "power:GNDA", "power:GNDD") else (0, -1)
-                rot = next(a for a in (0, 90, 180, 270) if tuple(round(x) for x in _rot(body, -a)) == (dx, dy))
-                self.sch.components.add(lib, reference=f"#PWR{self.project.pwr:03d}", value=c.net,
-                                        position=(ex, ey), rotation=rot)
+                ground = lib in GROUND_LIBS
+                # always vertical: away from the part on a vertical stub, up (rail) / down (ground) on a side stub
+                if dy:
+                    rot = 0 if (dy > 0) == ground else 180
+                else:
+                    rot = 0
+                self.sch.components.add(lib, reference=pref, value=c.net, position=(ex, ey), rotation=rot)
+                down = ground == (rot == 0)
+                bx0, by0, bx1, by1 = screen_box(lib, (ex, ey), rot)
+                vy = by1 + 1.524 if down else by0 - 1.524
+                self.field_pos[pref] = {"Value": (ex, vy, 0, "center"), "Reference": (ex, vy, 0, "center")}
+                self.boxes.append((f"{pref}({c.net})", (bx0, by0, bx1, by1), own))
+                self.boxes.append((f"{pref}.Value({c.net})", text_box(c.net, (ex, vy), 1.27, 0, "center"), own))
             else:
                 rot = {(1, 0): 0, (0, -1): 90, (-1, 0): 180, (0, 1): 270}[(dx, dy)]
-                if c.net in globals_:
+                glob = c.label or c.net in globals_ or c.net in power
+                if glob:
                     globals_out.append((c.net, ex, ey, rot))
                 else:
                     self.sch.add_label(c.net, position=(ex, ey), rotation=rot)
+                self.boxes.append((f"label {c.net} ({c.ref}.{c.pin})",
+                                   text_box(c.net, (ex, ey), 1.27, rot, label="global" if glob else "local"), own))
+        self.issues = overlaps(self.boxes) + self._outside_page()
         return globals_out
+
+    def _outside_page(self):
+        """Items crossing the page frame or the title block (KiCad default frame: 10 mm margin)."""
+        w = self.project.paper_w
+        hgt = {"A4": 210.0, "A3": 297.0, "A2": 420.0}.get(self.project.paper, 210.0)
+        frame = (12.7, 12.7, w - 12.7, hgt - 12.7)
+        title = (w - 12.7 - 101.6, hgt - 12.7 - 33.02, w - 12.7, hgt - 12.7)
+        out = []
+        for name, (x0, y0, x1, y1), _ in self.boxes:
+            if x0 < frame[0] or y0 < frame[1] or x1 > frame[2] or y1 > frame[3]:
+                out.append((name, "page frame"))
+            elif x0 < title[2] and title[0] < x1 and y0 < title[3] and title[1] < y1:
+                out.append((name, "title block"))
+        return out
 
 
 class Project:
-    """A KiCad project drafted as a root sheet plus one sheet per block."""
+    """A KiCad project drafted either flat (one page, `page()`) or as a root sheet plus one sheet per block."""
 
-    def __init__(self, kicad_dir: Path, name: str, power_nets: dict[str, str] | None = None):
+    def __init__(self, kicad_dir: Path, name: str, power_nets: dict[str, str] | None = None,
+                 paper: str = "A4", stub: float = 2.54):
         self.dir = Path(kicad_dir)
         self.name = name
         self.root = ksa.create_schematic(name)
+        self.paper = paper
+        self.paper_w = {"A4": 297.0, "A3": 420.0, "A2": 594.0}.get(paper, 297.0)
+        self.root.set_paper_size(paper)
         self.sheets: list[Sheet] = []
+        self.flat: Sheet | None = None
         self.power_lib = dict(power_nets or {})       # net -> power symbol lib id
+        self.stub = stub
         self._pos = 0
         self.pwr = 0
+
+    def page(self, title: str = "") -> Sheet:
+        """Flat project: everything on the root page (small boards)."""
+        self.flat = Sheet(self, self.name, title or self.name, 1, self.root)
+        return self.flat
 
     def sheet(self, name: str, title: str) -> Sheet:
         page = len(self.sheets) + 2
@@ -162,37 +259,98 @@ class Project:
         sid = self.root.add_sheet(title, f"{name}.kicad_sch", (x, y), (45.72, 20.32),
                                   project_name=self.name, page_number=str(page))
         sch = ksa.create_schematic(title)
+        sch.set_paper_size(self.paper)
         sch.set_hierarchy_context(self.root.uuid, sid)
         s = Sheet(self, name, title, page, sch, sheet_uuid=sid)
         self.sheets.append(s)
         return s
 
+    def issues(self) -> list[tuple[str, str, str]]:
+        return [(s.title, a, b) for s in ([self.flat] if self.flat else []) + self.sheets for a, b in s.issues]
+
     def save(self) -> list[Path]:
         self.dir.mkdir(parents=True, exist_ok=True)
-        uses: dict[str, set[str]] = {}
-        for s in self.sheets:
-            for c in s.conns:
-                if c.net:
-                    uses.setdefault(c.net, set()).add(s.name)
         power = set(self.power_lib)
-        globals_ = {n for n, sh in uses.items() if len(sh) > 1 and n not in power}
         written = []
-        for s in self.sheets:
-            gl = s.draw(power, globals_, self.power_lib)
-            path = self.dir / f"{s.name}.kicad_sch"
-            s.sch.save(str(path))
-            _inject_global_labels(path, gl)
-            _tidy_properties(path)
-            written.append(path)
-        root_path = self.dir / f"{self.name}.kicad_sch"
-        self.root.save(str(root_path))
-        _drop_zero_wires(root_path)
-        written.append(root_path)
+        if self.flat:
+            root_path = self.dir / f"{self.name}.kicad_sch"
+            # a net drawn once as a global label must be global everywhere, or KiCad splits it
+            forced = {c.net for c in self.flat.conns if c.label and c.net and c.net not in power}
+            gl = self.flat.draw(power, forced, self.power_lib)
+            self.root.save(str(root_path))
+            _inject_global_labels(root_path, gl)
+            _tidy_properties(root_path)
+            _fix_label_justify(root_path)
+            _place_fields(root_path, self.flat.field_pos)
+            written.append(root_path)
+        else:
+            uses: dict[str, set[str]] = {}
+            for s in self.sheets:
+                for c in s.conns:
+                    if c.net:
+                        uses.setdefault(c.net, set()).add(s.name)
+            globals_ = {n for n, sh in uses.items() if len(sh) > 1 and n not in power}
+            globals_ |= {c.net for sh in self.sheets for c in sh.conns if c.label and c.net and c.net not in power}
+            for s in self.sheets:
+                gl = s.draw(power, globals_, self.power_lib)
+                path = self.dir / f"{s.name}.kicad_sch"
+                s.sch.save(str(path))
+                _inject_global_labels(path, gl)
+                _tidy_properties(path)
+                _fix_label_justify(path)
+                _place_fields(path, s.field_pos)
+                written.append(path)
+            root_path = self.dir / f"{self.name}.kicad_sch"
+            self.root.save(str(root_path))
+            _drop_zero_wires(root_path)
+            written.append(root_path)
         pro = self.dir / f"{self.name}.kicad_pro"
         if not pro.exists():
             pro.write_text(json.dumps({"meta": {"filename": pro.name, "version": 3}}, indent=2), encoding="utf-8")
             written.append(pro)
         return written
+
+
+def _place_fields(path: Path, positions: dict[str, dict[str, tuple]]):
+    """Write explicit Reference / Value positions (absolute, text angle, justify) for the placed symbols."""
+    text = path.read_text(encoding="utf-8")
+    start = text.find("(lib_symbols")
+    start = _block_end(text, start) if start >= 0 else 0
+    out, i = [text[:start]], start
+    for m in re.finditer(r'\(symbol\s*\n?\s*\(lib_id "[^"]+"\)', text[start:]):
+        a = start + m.start()
+        if a < i:
+            continue
+        b = _block_end(text, a)
+        block = text[a:b]
+        ref = re.search(r'\(property "Reference" "([^"]+)"', block)
+        pos = positions.get(ref.group(1)) if ref else None
+        srot = re.search(r'\(lib_id "[^"]+"\)\s*\(at [\-\d.]+ [\-\d.]+ ([\-\d.]+)\)', block)
+        srot = int(float(srot.group(1))) % 360 if srot else 0
+        if pos:
+            for name, (x, y, ang, just) in pos.items():
+                if srot in (90, 270):                      # keep the text horizontal on screen
+                    ang = (ang + 90) % 180
+                    if srot == 90 and just in ("left", "right"):
+                        just = "right" if just == "left" else "left"
+                pm = re.search(r'\(property "' + name + r'" "[^"]*"', block)
+                if not pm:
+                    continue
+                pe = _block_end(block, pm.start())
+                prop = block[pm.start():pe]
+                prop = re.sub(r"\(at [\-\d.]+ [\-\d.]+ [\-\d.]+\)", f"(at {x:.3f} {y:.3f} {ang})", prop, count=1)
+                prop = re.sub(r"\s*\(justify[^)]*\)", "", prop)
+                if just != "center":
+                    j = prop.find("(effects")
+                    if j >= 0:
+                        k = _block_end(prop, j)
+                        prop = prop[:k - 1] + f" (justify {just}))" + prop[k:]
+                block = block[:pm.start()] + prop + block[pe:]
+        out.append(text[i:a])
+        out.append(block)
+        i = b
+    out.append(text[i:])
+    path.write_text("".join(out), encoding="utf-8")
 
 
 def _inject_global_labels(path: Path, labels: list[tuple[str, float, float, int]]):
@@ -251,6 +409,19 @@ def _block_end(text: str, start: int) -> int:
 VISIBLE = {"Reference", "Value"}
 
 
+def _fix_label_justify(path: Path):
+    """Local labels at 180 / 270 degrees must be justified right, or KiCad draws them over the pin."""
+    text = path.read_text(encoding="utf-8")
+
+    def fix(m):
+        block = m.group(0)
+        ang = int(float(re.search(r"\(at [\-\d.]+ [\-\d.]+ ([\-\d.]+)\)", block).group(1))) % 360
+        side = "right" if ang in (180, 270) else "left"
+        return re.sub(r"\(justify [a-z ]+\)", f"(justify {side} bottom)", block, count=1)
+    text = re.sub(r'\t\(label "[^"]*"\s*\n.*?\n\t\)\n', fix, text, flags=re.S)
+    path.write_text(text, encoding="utf-8")
+
+
 def _tidy_properties(path: Path):
     """Drop the visible 'hierarchy_path' property kicad-sch-api adds, hide every field but Reference and Value."""
     text = path.read_text(encoding="utf-8")
@@ -290,12 +461,29 @@ def _f(size: float = 1.27, hide: bool = False) -> str:
 
 
 def symbol_sexpr(name: str, left: list[tuple], right: list[tuple], ref: str = "U", footprint: str = "",
-                 datasheet: str = "", description: str = "", width: float = 20.32) -> str:
-    """Rectangular symbol. left/right: (number, name, pin_type) from the component sheet, top to bottom."""
+                 datasheet: str = "", description: str = "", width: float = 20.32,
+                 top: list[tuple] = (), bottom: list[tuple] = (), pitch: float = 5.08) -> str:
+    """Rectangular symbol. left/right: (number, name, pin_type) top to bottom; top/bottom: left to right.
+
+    Put supply pins on top and ground pins at the bottom: their power symbols then stand vertically
+    without crossing the side pins (drafting rule 2).
+    """
     rows = max(len(left), len(right))
     h = snap((rows + 1) * 2.54 / 2) + 1.27
-    hw = width / 2
+    name_w = lambda lst: max((len(n) * 1.27 * CHAR_W for _, n, _ in lst), default=0)
+    span = max(len(top), len(bottom), 1) * pitch
+    width = max(width, snap(name_w(left) + name_w(right) + span + 2.54))
+    hw = snap(width / 2)
     pins = []
+    for side, lst in ((1, list(top)), (-1, list(bottom))):
+        x = -snap((len(lst) - 1) * pitch / 2)
+        for number, pname, ptype in lst:
+            ptype = ptype if ptype in PIN_TYPES else {"ground": "power_in"}.get(ptype, "passive")
+            y = side * (h + 5.08)
+            ang = 270 if side > 0 else 90
+            pins.append(f'			(pin {ptype} line (at {x:g} {y:g} {ang}) (length 5.08) '
+                        f'(name "{pname}" {_f()}) (number "{number}" {_f()}))')
+            x = round(x + pitch, 4)
     for side, lst in ((-1, left), (1, right)):
         y = snap((len(lst) - 1) * 2.54 / 2)
         for number, pname, ptype in lst:
@@ -333,3 +521,105 @@ def write_lib_tables(kicad_dir: Path, name: str, footprints: bool = False):
         (d / "fp-lib-table").write_text(
             f'(fp_lib_table\n  (version 7)\n  (lib (name "{name}")(type "KiCad")(uri "${{KIPRJMOD}}/{name}.pretty")(options "")(descr "Project footprints"))\n)\n',
             encoding="utf-8")
+
+
+# ---------- geometry of library symbols (for field placement and overlap checks) ----------
+
+_LIB_CACHE: dict[str, str] = {}
+
+
+def _lib_dirs() -> list[Path]:
+    import os
+    dirs = [Path(p) for p in os.environ.get("KICAD_SYMBOL_DIR", "").split(";") if p]
+    dirs += sorted(Path("C:/Program Files/KiCad").glob("*/share/kicad/symbols"), reverse=True)
+    dirs += [Path("/usr/share/kicad/symbols"), Path("/Applications/KiCad/KiCad.app/Contents/SharedSupport/symbols")]
+    return [d for d in dirs if d.exists()]
+
+
+def _symbol_block(lib_id: str) -> str:
+    lib, name = lib_id.split(":", 1)
+    if lib not in _LIB_CACHE:
+        for d in _lib_dirs():
+            f = d / f"{lib}.kicad_sym"
+            if f.exists():
+                _LIB_CACHE[lib] = f.read_text(encoding="utf-8")
+                break
+        else:
+            _LIB_CACHE[lib] = ""
+    text = _LIB_CACHE[lib]
+    m = re.search(r'\(symbol "' + re.escape(name) + r'"\s', text)
+    if not m:
+        return ""
+    block = text[m.start():_block_end(text, m.start())]
+    ext = re.search(r'\(extends "([^"]+)"\)', block)
+    return _symbol_block(f"{lib}:{ext.group(1)}") if ext else block
+
+
+def symbol_extent(lib_id: str) -> tuple[float, float, float, float]:
+    """Library-space box (x0, y0, x1, y1) of the drawing and pins of a symbol (y up)."""
+    block = _symbol_block(lib_id)
+    body, i = [], 0
+    for m in re.finditer(r'\(property "', block):      # drop the property blocks (fields), keep the drawing
+        if m.start() < i:
+            continue
+        body.append(block[i:m.start()])
+        i = _block_end(block, m.start())
+    body = "".join(body) + block[i:]
+    xs, ys = [], []
+    for m in re.finditer(r"\((?:xy|start|end|center|mid) ([\-\d.]+) ([\-\d.]+)\)", body):
+        xs.append(float(m.group(1)))
+        ys.append(float(m.group(2)))
+    for m in re.finditer(r"\(circle\s*\(center ([\-\d.]+) ([\-\d.]+)\)\s*\(radius ([\d.]+)\)", body):
+        x, y, r = map(float, m.groups())
+        xs += [x - r, x + r]
+        ys += [y - r, y + r]
+    for m in re.finditer(r"\(pin \w+ \w+(?: hide)?\s*\(at ([\-\d.]+) ([\-\d.]+) ([\d.]+)\)\s*\(length ([\d.]+)\)", body):
+        x, y, a, length = map(float, m.groups())
+        xs += [x, x + length * math.cos(math.radians(a))]
+        ys += [y, y + length * math.sin(math.radians(a))]
+    if not xs:
+        return (-1.27, -1.27, 1.27, 1.27)
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def screen_box(lib_id: str, at: tuple[float, float], rotation: float) -> tuple[float, float, float, float]:
+    x0, y0, x1, y1 = symbol_extent(lib_id)
+    pts = [lib_to_screen(p, rotation) for p in ((x0, y0), (x0, y1), (x1, y0), (x1, y1))]
+    return (at[0] + min(p[0] for p in pts), at[1] + min(p[1] for p in pts),
+            at[0] + max(p[0] for p in pts), at[1] + max(p[1] for p in pts))
+
+
+CHAR_W = 0.92      # KiCad stroke font advance per character, x text size (measured on KiCad 10 SVG)
+
+
+def text_box(text: str, at: tuple[float, float], size: float = 1.27, angle: int = 0,
+             justify: str = "left", label: str = "") -> tuple[float, float, float, float]:
+    """Screen box of a text anchored at `at`. label: '' plain text/field, 'local' or 'global' net label."""
+    w = len(text) * size * CHAR_W + (size * 2.2 if label == "global" else 0.3)
+    h = size * 1.3
+    x, y = at
+    if angle in (0, 180):
+        if label:                                    # labels: text above the wire, extends away from the anchor
+            x0, x1 = (x, x + w) if angle == 0 else (x - w, x)
+            return (x0, y - h - 0.3, x1, y + (h / 2 if label == "global" else 0.2))
+        x0 = x if justify == "left" else x - w if justify == "right" else x - w / 2
+        return (x0, y - h / 2, x0 + w, y + h / 2)
+    if label:
+        y0, y1 = (y - w, y) if angle == 90 else (y, y + w)
+        return (x - h - 0.3, y0, x + (h / 2 if label == "global" else 0.2), y1)
+    y0 = y - w if justify == "left" else y if justify == "right" else y - w / 2
+    return (x - h / 2, y0, x + h / 2, y0 + w)
+
+
+def overlaps(boxes: list[tuple[str, tuple[float, float, float, float], str]], margin: float = 0.25):
+    """Pairs of named boxes that overlap; boxes with the same owner (third item) are not compared."""
+    out = []
+    for i in range(len(boxes)):
+        na, a, oa = boxes[i]
+        for j in range(i + 1, len(boxes)):
+            nb, b, ob = boxes[j]
+            if oa and oa == ob:
+                continue
+            if a[0] < b[2] - margin and b[0] < a[2] - margin and a[1] < b[3] - margin and b[1] < a[3] - margin:
+                out.append((na, nb))
+    return out
