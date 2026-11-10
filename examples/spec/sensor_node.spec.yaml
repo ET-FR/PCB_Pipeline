@@ -1,0 +1,167 @@
+# Example design/spec.yaml for a small sensor node. Validates against
+# schemas/spec.schema.json and passes `pcb-pipeline check-spec` (one info finding:
+# LDO dissipation). EXAMPLE-* parts are fictional.
+schema_version: 1
+
+project:
+  name: sensor_node
+  revision: "A.1"
+  date: "2026-11-10"
+  status: draft
+  prd_revision: "A"
+
+blocks:
+  - id: power/input
+    function: 12 V input with reverse polarity and surge protection
+    criticality: power
+    connects_to: [power/buck_5v]
+    prd_refs: [Q-PWR-001, Q-PWR-002, Q-PWR-004]
+  - id: power/buck_5v
+    function: 12 V to 5 V buck for USB output and the LDO
+    criticality: power
+    connects_to: [power/ldo_3v3]
+  - id: power/ldo_3v3
+    function: 5 V to 3.3 V LDO for the MCU and sensors
+    criticality: power
+    connects_to: [mcu, sensors]
+  - id: mcu
+    function: Reads the sensors, logs, talks over UART
+    connects_to: [sensors]
+    prd_refs: [Q-PRC-001]
+  - id: sensors
+    function: Temperature and humidity
+
+parts:
+  - id: buck_5v
+    block: power/buck_5v
+    ref: U1
+    mpn: EXAMPLE-BUCK-01
+    status: selected
+    datasheet: { revision: "A", file: "datasheets/EXAMPLE-BUCK-01@A.pdf" }
+    reasons: ["4.5 V to 17 V input covers 9 V to 14 V with margin", "1 A output, SOT-23-6"]
+    alternatives:
+      - { mpn: EXAMPLE-BUCK-02, why_not: "Needs an external compensation network" }
+  - id: ldo_3v3
+    block: power/ldo_3v3
+    ref: U3
+    mpn: EXAMPLE-LDO-01
+    status: selected
+    reasons: ["500 mA, low quiescent current"]
+  - id: mcu
+    block: mcu
+    ref: U2
+    mpn: EXAMPLE-MCU-01
+    status: selected
+  - id: temp_sensor
+    block: sensors
+    mpn: EXAMPLE-TEMP-01
+    status: selected
+  - id: humidity_sensor
+    block: sensors
+    mpn: EXAMPLE-RH-01
+    status: selected
+  - id: usb_out
+    block: power/buck_5v
+    mpn: EXAMPLE-USBA-01
+    status: selected
+  - id: input_connector
+    block: power/input
+    mpn: EXAMPLE-TB-02
+    status: selected
+
+power_tree:
+  rails:
+    - id: vin
+      net: /VIN
+      nominal_v: 12
+      min_v: 9
+      max_v: 14
+      transient_max_v: 40
+      source: { type: external, description: "Vehicle 12 V through input_connector" }
+      prd_refs: [Q-PWR-002]
+    - id: 5v
+      net: /+5V
+      nominal_v: 5.0
+      min_v: 4.9
+      max_v: 5.1
+      source: { type: buck, part: buck_5v, from_rail: vin, efficiency: 0.9 }
+      capacity_a: 1.0
+      loads:
+        - part: usb_out
+          current: { typ_a: 0.1, max_a: 0.3 }
+    - id: 3v3
+      net: /+3V3
+      nominal_v: 3.3
+      min_v: 3.2
+      max_v: 3.4
+      source: { type: ldo, part: ldo_3v3, from_rail: 5v }
+      capacity_a: 0.5
+      loads:
+        - part: mcu
+          current: { typ_a: 0.02, max_a: 0.05, sleep_a: 0.000005 }
+        - part: temp_sensor
+          current: { max_a: 0.01 }
+        - part: humidity_sensor
+          current: { max_a: 0.01 }
+      sequencing: { after: [5v] }
+
+connectors:
+  - id: j1
+    part: input_connector
+    purpose: 12 V input
+    keyed: false
+    hot_plug: true
+    pins:
+      - { pin: "1", signal: VIN, net: /VIN_RAW, direction: power_in, max_v: 40, max_current_a: 1 }
+      - { pin: "2", signal: GND, net: GND, direction: ground }
+
+buses:
+  - id: i2c1
+    type: i2c
+    controller: mcu
+    voltage_v: 3.3
+    speed_hz: 400000
+    pullup_ohm: 2200
+    devices:
+      - { part: temp_sensor, address: "0x48", address_select: "A0 to GND" }
+      - { part: humidity_sensor, address: "0x40" }
+
+mcu_pins:
+  - { part: mcu, pin: PB6, function: I2C1_SCL, net: /I2C1_SCL }
+  - { part: mcu, pin: PB7, function: I2C1_SDA, net: /I2C1_SDA }
+  - { part: mcu, pin: PA9, function: USART1_TX, net: /UART_TX }
+  - { part: mcu, pin: PA10, function: USART1_RX, net: /UART_RX, default_state: pull_up }
+
+mechanical:
+  outline: { width_mm: 50, height_mm: 30 }
+  thickness_mm: 1.6
+  max_height_mm: { top: 10, bottom: 2 }
+  mounting_holes:
+    - { x_mm: 3, y_mm: 3, diameter_mm: 3.2, plated: true, net: GND }
+    - { x_mm: 47, y_mm: 27, diameter_mm: 3.2, plated: true, net: GND }
+  stackup: { layers: 4, copper_oz: 1, description: "SIG / GND / PWR / SIG" }
+
+design_rules:
+  electrical:
+    cap_voltage_ratio: 1.5
+    rail_load_ratio: 0.8
+    temperature_range_c: { min: -40, max: 85 }
+  manufacturer:
+    name: JLCPCB
+    min_track_mm: 0.127
+    min_clearance_mm: 0.127
+    min_drill_mm: 0.3
+  net_classes:
+    - { name: Power, nets: [/VIN, /VIN_RAW, /+5V], track_width_mm: 0.5, clearance_mm: 0.2, max_current_a: 1 }
+    - { name: Default, nets: ["*"], track_width_mm: 0.2, clearance_mm: 0.15 }
+  notes:
+    - Keep the buck switch node loop small, input capacitor next to VIN and GND pins.
+
+assumptions:
+  - statement: Board operates from -40 to 85 C
+    prd_refs: [Q-ENV-001]
+
+open_questions:
+  - question: Is the input connector keyed, or can it be plugged backwards?
+    owner: user
+    prd_refs: [Q-INT-004]

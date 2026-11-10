@@ -1,4 +1,4 @@
-"""Command line interface: pcb-pipeline check | validate-sheet | validate-notes | report."""
+"""Command line interface: pcb-pipeline init | check-spec | check | validate-sheet | validate-notes | report."""
 
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ from .netlist import functional_groups
 from .report import render_markdown
 from .rules.engine import load_rules, RuleEngine
 from .schemas import validate
+from .spec import check_spec, load_spec, spec_rails
+from .template import init_project
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -70,7 +72,9 @@ def cmd_check(args) -> int:
 
     findings = Findings(project)
     rules = load_rules(Path(args.rules) if args.rules else None)
-    RuleEngine(netlist, library, findings, rules, _parse_rails(args.rail)).run()
+    rails = spec_rails(load_spec(Path(args.spec))) if args.spec else {}
+    rails.update(_parse_rails(args.rail))   # --rail overrides the spec
+    RuleEngine(netlist, library, findings, rules, rails).run()
     doc = findings.to_doc()
 
     mpns = [c.mpn for c in netlist.components.values() if c.mpn]
@@ -82,18 +86,58 @@ def cmd_check(args) -> int:
     (out / "rules_findings.json").write_text(json.dumps(doc, indent=2, ensure_ascii=False))
     (out / "rules_report.md").write_text(render_markdown(doc))
 
-    counts = {s: sum(f["severity"] == s for f in doc["findings"]) for s in SEVERITY_ORDER}
     print(f"{project}: {len(netlist.components)} parts, {len(groups)} functional groups, "
           f"{len(library.missing(mpns))} MPN without sheet")
+    _print_findings(doc)
+    print(f"outputs in {out}/")
+    return 1 if _fails(doc, args.fail_on) else 0
+
+
+def _print_findings(doc: dict):
+    counts = {s: sum(f["severity"] == s for f in doc["findings"]) for s in SEVERITY_ORDER}
     print("findings: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
     for f in doc["findings"]:
-        print(f"  [{f['severity']}] {f['id']} {f['title']}")
-    print(f"outputs in {out}/")
+        rules = [e["rule_id"] for e in f["evidence"] if e.get("rule_id") and e["rule_id"] != f["id"]]
+        rule = f" ({', '.join(rules)})" if rules else ""
+        print(f"  [{f['severity']}] {f['id']}{rule} {f['title']}")
 
-    if args.fail_on:
-        limit = SEVERITY_ORDER[args.fail_on]
-        if any(SEVERITY_ORDER[f["severity"]] <= limit for f in doc["findings"]):
-            return 1
+
+def _fails(doc: dict, fail_on: str | None) -> bool:
+    if not fail_on:
+        return False
+    limit = SEVERITY_ORDER[fail_on]
+    return any(SEVERITY_ORDER[f["severity"]] <= limit for f in doc["findings"])
+
+
+def cmd_check_spec(args) -> int:
+    path = Path(args.spec)
+    spec = load_spec(path)
+    project = spec.get("project", {}).get("name", path.stem) if isinstance(spec.get("project"), dict) else path.stem
+    errors, findings = check_spec(spec, project, load_rules(Path(args.rules) if args.rules else None))
+    if errors:
+        print(f"{path}: INVALID")
+        for e in errors:
+            print(f"  {e}")
+        return 1
+    doc = findings.to_doc()
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "spec_findings.json").write_text(json.dumps(doc, indent=2, ensure_ascii=False))
+    (out / "spec_report.md").write_text(render_markdown(doc))
+    rails = spec.get("power_tree", {}).get("rails", [])
+    print(f"{project}: {len(spec.get('parts', []))} parts, {len(rails)} rails, {len(spec.get('buses', []))} buses")
+    _print_findings(doc)
+    print(f"outputs in {out}/")
+    return 1 if _fails(doc, args.fail_on) else 0
+
+
+def cmd_init(args) -> int:
+    created, skipped = init_project(Path(args.path), args.name)
+    for p in created:
+        print(f"  created {p}")
+    for p in skipped:
+        print(f"  kept    {p} (already exists)")
+    print(f"project ready in {args.path}. Next: put your documents in inputs/ and run /define in Claude Code.")
     return 0
 
 
@@ -149,8 +193,21 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--library", action="append", help="component sheet directory (repeatable)")
     c.add_argument("--rules", help="rules YAML (default rules/checklist.yaml)")
     c.add_argument("--rail", action="append", metavar="NET=VOLTS", help="declare a rail voltage")
+    c.add_argument("--spec", help="design/spec.yaml: rail voltages are taken from its power tree")
     c.add_argument("--fail-on", choices=list(SEVERITY_ORDER), help="non-zero exit at this severity or worse")
     c.set_defaults(fn=cmd_check)
+
+    i = sub.add_parser("init", help="create a hardware project repo from the template")
+    i.add_argument("path")
+    i.add_argument("--name", help="board name (default: folder name)")
+    i.set_defaults(fn=cmd_init)
+
+    s = sub.add_parser("check-spec", help="validate design/spec.yaml and run the spec rules")
+    s.add_argument("spec")
+    s.add_argument("--out", default="out")
+    s.add_argument("--rules", help="rules YAML (default rules/checklist.yaml)")
+    s.add_argument("--fail-on", choices=list(SEVERITY_ORDER), help="non-zero exit at this severity or worse")
+    s.set_defaults(fn=cmd_check_spec)
 
     v = sub.add_parser("validate-sheet", help="validate component sheets against the schema")
     v.add_argument("paths", nargs="+")

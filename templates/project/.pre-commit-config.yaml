@@ -1,0 +1,16 @@
+# Deterministic layer on every commit: seconds, no tokens.
+repos:
+  - repo: local
+    hooks:
+      - id: pcb-pipeline-spec
+        name: pcb-pipeline spec checks
+        entry: pcb-pipeline check-spec design/spec.yaml --fail-on critical
+        language: system
+        files: '^design/spec\.yaml$'
+        pass_filenames: false
+      - id: pcb-pipeline-check
+        name: pcb-pipeline schematic checks
+        entry: pcb-pipeline check kicad/{{name}}.kicad_sch --spec design/spec.yaml --fail-on critical
+        language: system
+        files: '\.kicad_sch$'
+        pass_filenames: false

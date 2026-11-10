@@ -1,0 +1,4 @@
+# Project memory written by the agents (see agents/memory.md in the pipeline repo).
+# Validate with: pcb-pipeline validate-notes review/notes.yaml
+schema_version: 1
+notes: []

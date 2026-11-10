@@ -1,0 +1,9 @@
+# One entry per datasheet. The PDFs stay local; this index is committed.
+# - mpn: TPS62133
+#   manufacturer: Texas Instruments
+#   revision: "C"
+#   date: "2015-06"
+#   url: https://www.ti.com/lit/gpn/tps62133
+#   file: TPS62133@C.pdf
+#   sha256: "..."
+datasheets: []

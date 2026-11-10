@@ -31,7 +31,47 @@ rules:
     params:
       tolerance_percent: 2
 
-# Rail voltages are not in the netlist. Declare them here or in the project spec.
+  # Spec rules (phase 1), run by `pcb-pipeline check-spec` on design/spec.yaml.
+  - id: SPEC-001
+    description: Every id referenced in the spec (block, part, rail) exists, and ids are unique.
+    severity: major
+
+  - id: BUS-001
+    description: No two devices share an I2C address on the same bus.
+    severity: critical
+
+  - id: BUS-002
+    description: Every I2C device has a declared address.
+    severity: minor
+
+  - id: MCU-001
+    description: Every MCU pin is assigned to one function only.
+    severity: critical
+
+  - id: PWR-001
+    description: Worst case rail load (loads plus child rails) stays below the source capacity.
+    severity: critical
+
+  - id: PWR-002
+    description: Worst case rail load stays below a margin of the source capacity.
+    severity: major
+    params:
+      max_ratio: 0.8        # overridden by design_rules.electrical.rail_load_ratio in the spec
+
+  - id: PWR-003
+    description: Every regulated rail with loads declares its source capacity.
+    severity: minor
+
+  - id: PWR-004
+    description: Rail voltages are consistent (min <= nominal <= max, buck and LDO below input, boost above).
+    severity: major
+
+  - id: PWR-005
+    description: LDO dissipation at maximum input voltage and worst case load (information for thermal design).
+    severity: info
+
+# Rail voltages are not in the netlist. Declare them here, with --rail, or with
+# --spec design/spec.yaml (max_v of each rail, or nominal_v).
 rails: {}
 #  "/+5V": 5.0
 #  "/VIN": 12.0

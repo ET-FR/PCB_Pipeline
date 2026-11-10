@@ -13,6 +13,8 @@ def _evidence_line(e: dict) -> str:
         bits.append(f"{e['mpn']} p.{e['page']}" if e.get("page") else e["mpn"])
     if e.get("net"):
         bits.append(f"net `{e['net']}`")
+    if e.get("spec_path"):
+        bits.append(f"spec `{e['spec_path']}`")
     if e.get("rule_id"):
         bits.append(e["rule_id"])
     text = e.get("calculation") or e.get("summary") or ""

@@ -33,13 +33,14 @@
               "required": ["kind"],
               "additionalProperties": false,
               "properties": {
-                "kind": { "type": "string", "enum": ["datasheet", "netlist", "calculation", "rule"] },
+                "kind": { "type": "string", "enum": ["datasheet", "netlist", "calculation", "rule", "spec"] },
                 "mpn": { "type": "string" },
                 "page": { "type": "integer", "minimum": 1 },
                 "summary": { "type": "string" },
                 "net": { "type": "string" },
                 "calculation": { "type": "string" },
-                "rule_id": { "type": "string" }
+                "rule_id": { "type": "string" },
+                "spec_path": { "type": "string", "description": "Path in design/spec.yaml, e.g. power_tree/5v" }
               }
             }
           },

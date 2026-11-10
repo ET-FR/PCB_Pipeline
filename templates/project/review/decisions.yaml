@@ -1,0 +1,8 @@
+# User decision on each finding, written after every review run.
+# - run: 2026-11-10_schematic
+#   finding: CAP-001
+#   title: C1 rated below applied voltage
+#   decision: accepted        # accepted | rejected | deferred
+#   reason: ""                # required when rejected: why it is a false positive
+#   applied_in: <commit sha>
+decisions: []

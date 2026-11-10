@@ -9,20 +9,21 @@ Ordered by value: the earlier phases catch the most expensive errors.
 - [x] **Phase 0 question list** (`knowledge/phase0_questions.md`) and interviewer prompt.
 - [x] **Agent memory format**: `schemas/notes.schema.json`, `agents/memory.md`,
   `pcb-pipeline validate-notes`.
+- [x] **Project template**: `templates/project/` and `pcb-pipeline init`.
+- [x] **Spec format**: `schemas/spec.schema.json`, example `examples/spec/sensor_node.spec.yaml`.
+- [x] **Deterministic spec checks**: `pcb-pipeline check-spec` (SPEC-001 references,
+  BUS-001/002 I2C addresses, MCU-001 pins, PWR-001 to PWR-005 power budget, voltages,
+  LDO dissipation), trapped spec, rail voltages from the spec for schematic checks.
 - [x] **Deterministic schematic core**: netlist graph, functional groups, rules
   SYM-001, PIN-001/002, CAP-001, ABS-001, EQ-001, trapped project, Markdown report.
 
 ## Next
 
-- [ ] **1. Project template**: the hardware project repo layout (`inputs/`, `design/`,
-  `datasheets/`, `kicad/`, `review/`) and a `pcb-pipeline init` command.
-- [ ] **2. Spec format**: JSON Schema for `design/spec.yaml` (blocks, parts and choice
-  reasons, power tree, interfaces, I2C map, MCU pins, mechanical, design rules).
-- [ ] **3. Phase 0**: `/define` command to run the interviewer agent, first real use to
-  refine `knowledge/phase0_questions.md`.
+- [ ] **3. Phase 0 first real use**: run `/define` on a real board, refine
+  `knowledge/phase0_questions.md`.
 - [ ] **4. Phase 1**: architect and component selector agents, `/architecture` command,
-  datasheet download with index and manual fallback, deterministic spec checks
-  (I2C conflicts, power budget, ratings), PDF rendering, PRD change impact analysis.
+  datasheet download with index and manual fallback, part ratings versus component
+  sheets (regulator input range, absolute max), PDF rendering, PRD change impact analysis.
 - [ ] **5. Datasheet agents wired**: locator, extractor, critic on 5 to 10 parts known by heart.
 - [ ] **6. Working loop**: proposed fixes in findings, `review/decisions.yaml`, apply
   accepted fixes (symbol fields, values, footprints first), one commit per run.

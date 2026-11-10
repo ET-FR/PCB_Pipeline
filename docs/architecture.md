@@ -60,7 +60,8 @@ Rules for applying fixes:
 
 ## Project repo layout
 
-The pipeline is a separate tool. Each board has its own repo:
+The pipeline is a separate tool. Each board has its own repo, created with
+`pcb-pipeline init <path>` from `templates/project/`:
 
 | Path | Content |
 |---|---|
@@ -107,8 +108,13 @@ Built from the PRD, in discussion with the user:
 - **Design rules**: electrical (derating, margins) and routing (track width per current,
   impedance, clearances, differential pairs, net classes).
 
-Deterministic checks on the spec: schema, I2C address conflicts, power budget per rail,
-regulator ratings versus the component sheets, MCU pins used twice.
+Deterministic checks on the spec (`pcb-pipeline check-spec`, format in
+`schemas/spec.schema.json`): schema, references between blocks, parts and rails, I2C
+address conflicts, MCU pins used twice, rail voltages consistent with their source,
+power budget per rail (loads plus the input current of child rails, with converter
+efficiency), margin against source capacity, LDO dissipation. Planned: regulator
+ratings versus the component sheets. Rail voltages from the spec also feed the
+schematic rules (`pcb-pipeline check --spec`).
 
 Output: `design/spec.yaml` and the generated `design/spec.pdf`.
 

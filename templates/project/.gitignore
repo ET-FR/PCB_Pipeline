@@ -1,0 +1,11 @@
+# Datasheets stay local (size, copyright). datasheets/index.yaml is committed.
+datasheets/*.pdf
+# Pipeline outputs
+out/
+# KiCad local files
+*.kicad_prl
+*.lck
+fp-info-cache
+*-backups/
+_autosave-*
+\#auto_saved_files#

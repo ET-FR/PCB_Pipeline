@@ -48,6 +48,15 @@ New traps are added here each time a real review misses something.
 ```bash
 pip install -e ".[dev]"
 
+# Create a hardware project repo (inputs/, design/, datasheets/, kicad/, review/)
+pcb-pipeline init ../my_board
+
+# Phase 1: validate design/spec.yaml and run the spec rules (I2C, power budget, pins)
+pcb-pipeline check-spec ../my_board/design/spec.yaml
+
+# Phase 2: schematic checks, rail voltages taken from the spec
+pcb-pipeline check ../my_board/kicad/my_board.kicad_sch --spec ../my_board/design/spec.yaml
+
 # Deterministic layer only (fast, free, runs on every commit)
 pcb-pipeline check path/to/project.kicad_sch
 
@@ -76,11 +85,13 @@ Every symbol should carry these fields, otherwise most automatic checks are impo
 | Path | Content |
 |---|---|
 | `pipeline.yaml` | Pipeline definition: phases, stages, gates, learning loop |
-| `schemas/` | JSON Schemas for component sheets, findings and agent notes |
+| `schemas/` | JSON Schemas for the spec, component sheets, findings and agent notes |
 | `agents/` | Agent prompts (interviewer, orchestrator, datasheet, critic, conformity) |
 | `knowledge/` | Shared knowledge that improves with use: phase 0 questions, accepted agent notes |
 | `rules/` | Deterministic rule configuration (derating, etc.) |
 | `library/component_sheets/` | Shared, cached component sheets (one per MPN + revision) |
+| `templates/project/` | Template of a hardware project repo, used by `pcb-pipeline init` |
+| `examples/` | Example component sheet and example `spec.yaml` |
 | `src/pcb_pipeline/` | Python core: KiCad import, netlist graph, rules engine, findings |
 | `tests/` | Unit tests and fixtures |
 

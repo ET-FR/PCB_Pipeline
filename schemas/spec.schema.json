@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ET-FR/PCB_Pipeline/schemas/spec.schema.json",
+  "title": "Board design spec (design/spec.yaml)",
+  "description": "Single source of truth for design intent, written in phase 1. Every later check compares the KiCad design to it. prd_refs link entries to phase 0 question IDs.",
+  "type": "object",
+  "required": ["schema_version", "project", "blocks", "parts", "power_tree"],
+  "additionalProperties": false,
+  "$defs": {
+    "prd_refs": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^Q-[A-Z]{3}-[0-9]{3}$" },
+      "description": "Phase 0 question IDs this entry answers"
+    },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_./-]*$" },
+    "current": {
+      "type": "object",
+      "required": ["max_a"],
+      "additionalProperties": false,
+      "properties": {
+        "typ_a": { "type": "number", "minimum": 0 },
+        "max_a": { "type": "number", "minimum": 0 },
+        "sleep_a": { "type": "number", "minimum": 0 }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": { "const": 1 },
+
+    "project": {
+      "type": "object",
+      "required": ["name", "revision", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "revision": { "type": "string", "description": "Spec revision, used by notes to expire" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "signed_off"] },
+        "prd_revision": { "type": "string" }
+      }
+    },
+
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "function"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/id", "description": "e.g. power/buck_5v, mcu, sensors/imu" },
+          "function": { "type": "string" },
+          "criticality": { "type": "string", "enum": ["standard", "power", "mains"], "default": "standard" },
+          "connects_to": { "type": "array", "items": { "type": "string" }, "description": "Other block ids" },
+          "prd_refs": { "$ref": "#/$defs/prd_refs" }
+        }
+      }
+    },
+
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "block", "mpn", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/id", "description": "Stable spec id, e.g. buck_5v, mcu, imu" },
+          "block": { "type": "string" },
+          "ref": { "type": "string", "description": "KiCad reference once placed in the schematic, e.g. U1" },
+          "mpn": { "type": "string" },
+          "manufacturer": { "type": "string" },
+          "description": { "type": "string" },
+          "status": { "type": "string", "enum": ["candidate", "selected", "rejected"] },
+          "datasheet": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "revision": { "type": "string" },
+              "file": { "type": "string", "description": "Path in datasheets/" }
+            }
+          },
+          "reasons": { "type": "array", "items": { "type": "string" }, "description": "Why this part was chosen" },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["mpn", "why_not"],
+              "additionalProperties": false,
+              "properties": { "mpn": { "type": "string" }, "why_not": { "type": "string" } }
+            }
+          },
+          "prd_refs": { "$ref": "#/$defs/prd_refs" }
+        }
+      }
+    },
+
+    "power_tree": {
+      "type": "object",
+      "required": ["rails"],
+      "additionalProperties": false,
+      "properties": {
+        "rails": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "net", "nominal_v", "source"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/id", "description": "e.g. vin, 5v, 3v3" },
+              "net": { "type": "string", "description": "KiCad net name, e.g. /+5V" },
+              "nominal_v": { "type": "number" },
+              "min_v": { "type": "number" },
+              "max_v": { "type": "number", "description": "Highest steady state voltage, used for derating" },
+              "transient_max_v": { "type": "number", "description": "Surge, load dump, hot plug" },
+              "source": {
+                "type": "object",
+                "required": ["type"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": { "type": "string", "enum": ["external", "buck", "boost", "buck_boost", "ldo", "load_switch", "charger", "other"] },
+                  "part": { "type": "string", "description": "Spec part id of the regulator or switch" },
+                  "from_rail": { "type": "string", "description": "Parent rail id" },
+                  "efficiency": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+                  "description": { "type": "string" }
+                }
+              },
+              "capacity_a": { "type": "number", "minimum": 0, "description": "Maximum current the source can deliver" },
+              "loads": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["part", "current"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "part": { "type": "string" },
+                    "current": { "$ref": "#/$defs/current" },
+                    "notes": { "type": "string" }
+                  }
+                }
+              },
+              "sequencing": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "after": { "type": "array", "items": { "type": "string" } },
+                  "delay_ms": { "type": "number", "minimum": 0 },
+                  "enable_net": { "type": "string" },
+                  "power_good_net": { "type": "string" }
+                }
+              },
+              "prd_refs": { "$ref": "#/$defs/prd_refs" }
+            }
+          }
+        }
+      }
+    },
+
+    "connectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "purpose", "pins"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "part": { "type": "string", "description": "Spec part id" },
+          "purpose": { "type": "string" },
+          "mates_with": { "type": "string" },
+          "keyed": { "type": "boolean" },
+          "hot_plug": { "type": "boolean" },
+          "pins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["pin", "signal"],
+              "additionalProperties": false,
+              "properties": {
+                "pin": { "type": "string" },
+                "signal": { "type": "string" },
+                "net": { "type": "string" },
+                "direction": { "type": "string", "enum": ["in", "out", "bidir", "power_in", "power_out", "ground", "nc"] },
+                "max_v": { "type": "number" },
+                "max_current_a": { "type": "number", "minimum": 0 },
+                "esd_protected": { "type": "boolean" }
+              }
+            }
+          },
+          "prd_refs": { "$ref": "#/$defs/prd_refs" }
+        }
+      }
+    },
+
+    "buses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "devices"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/id", "description": "e.g. i2c1" },
+          "type": { "type": "string", "enum": ["i2c", "spi", "uart", "can", "rs485", "usb", "ethernet", "other"] },
+          "controller": { "type": "string", "description": "Spec part id of the controller" },
+          "voltage_v": { "type": "number" },
+          "speed_hz": { "type": "number" },
+          "pullup_ohm": { "type": "number" },
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["part"],
+              "additionalProperties": false,
+              "properties": {
+                "part": { "type": "string" },
+                "address": { "type": "string", "pattern": "^0x[0-9A-Fa-f]{2}$", "description": "7-bit I2C address" },
+                "address_select": { "type": "string", "description": "How the address is set, e.g. ADDR pin to GND" },
+                "chip_select": { "type": "string", "description": "SPI chip select net" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "mcu_pins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["part", "pin", "function"],
+        "additionalProperties": false,
+        "properties": {
+          "part": { "type": "string" },
+          "pin": { "type": "string", "description": "Pin name, e.g. PA9" },
+          "function": { "type": "string", "description": "e.g. USART1_TX, I2C1_SDA, GPIO LED" },
+          "net": { "type": "string" },
+          "default_state": { "type": "string", "enum": ["pull_up", "pull_down", "floating_ok", "driven_high", "driven_low"] },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+
+    "mechanical": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "outline": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "width_mm": { "type": "number" },
+            "height_mm": { "type": "number" },
+            "file": { "type": "string", "description": "DXF or STEP outline" }
+          }
+        },
+        "thickness_mm": { "type": "number" },
+        "max_height_mm": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "top": { "type": "number" }, "bottom": { "type": "number" } }
+        },
+        "mounting_holes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["x_mm", "y_mm", "diameter_mm"],
+            "additionalProperties": false,
+            "properties": {
+              "x_mm": { "type": "number" }, "y_mm": { "type": "number" },
+              "diameter_mm": { "type": "number" },
+              "plated": { "type": "boolean" },
+              "net": { "type": "string" }
+            }
+          }
+        },
+        "keepouts": { "type": "array", "items": { "type": "string" } },
+        "stackup": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "layers": { "type": "integer", "minimum": 1 },
+            "copper_oz": { "type": "number" },
+            "description": { "type": "string" }
+          }
+        },
+        "prd_refs": { "$ref": "#/$defs/prd_refs" }
+      }
+    },
+
+    "design_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "electrical": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cap_voltage_ratio": { "type": "number", "minimum": 1, "description": "Rated voltage / max applied voltage" },
+            "rail_load_ratio": { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "Max load / source capacity" },
+            "resistor_power_ratio": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "temperature_range_c": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": { "min": { "type": "number" }, "max": { "type": "number" } }
+            }
+          }
+        },
+        "manufacturer": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "min_track_mm": { "type": "number" },
+            "min_clearance_mm": { "type": "number" },
+            "min_drill_mm": { "type": "number" },
+            "min_annular_ring_mm": { "type": "number" }
+          }
+        },
+        "net_classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "nets"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "nets": { "type": "array", "items": { "type": "string" }, "description": "Net names or patterns, e.g. /+5V, /USB_*" },
+              "track_width_mm": { "type": "number" },
+              "clearance_mm": { "type": "number" },
+              "via_diameter_mm": { "type": "number" },
+              "via_drill_mm": { "type": "number" },
+              "diff_pair_width_mm": { "type": "number" },
+              "diff_pair_gap_mm": { "type": "number" },
+              "impedance_ohm": { "type": "number" },
+              "max_current_a": { "type": "number", "description": "Used to size tracks" }
+            }
+          }
+        },
+        "notes": { "type": "array", "items": { "type": "string" }, "description": "Rules that are not numbers yet, e.g. keep the switch node small" }
+      }
+    },
+
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["statement"],
+        "additionalProperties": false,
+        "properties": { "statement": { "type": "string" }, "prd_refs": { "$ref": "#/$defs/prd_refs" } }
+      }
+    },
+
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question"],
+        "additionalProperties": false,
+        "properties": {
+          "question": { "type": "string" },
+          "owner": { "type": "string" },
+          "prd_refs": { "$ref": "#/$defs/prd_refs" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+# Problems the pipeline should have caught but did not (bring-up, another review,
+# fabrication, or found later by an agent). Each one feeds the learning loop.
+# - id: M-001
+#   found: 2026-12-01
+#   found_by: bring-up         # bring-up | review | fabrication | agent | user
+#   phase_that_should_catch: schematic   # definition | architecture | schematic | layout
+#   description: ""
+#   evidence: ""
+#   lesson: ""                 # rule, trap, checklist item or phase 0 question to add
+#   promoted_to: ""            # pipeline file once accepted
+missed: []
