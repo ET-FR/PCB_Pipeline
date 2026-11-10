@@ -14,7 +14,7 @@ TRAPPED = yaml.safe_load((ROOT / "tests/fixtures/spec_trapped.yaml").read_text()
 
 
 def run(spec):
-    errors, findings = check_spec(spec, "test", load_rules())
+    errors, findings, _ = check_spec(spec, "test", load_rules())
     assert errors == []
     return findings.to_doc()["findings"]
 
@@ -69,9 +69,42 @@ def test_power_tree_loop_is_reported():
 
 
 def test_schema_error_is_returned():
-    errors, _ = check_spec({"schema_version": 1}, "bad")
+    errors, _, _ = check_spec({"schema_version": 1}, "bad")
     assert errors
 
 
 def test_rails_for_rule_engine():
     assert spec_rails(EXAMPLE) == {"/VIN": 14, "/+5V": 5.1, "/+3V3": 3.4}
+
+
+# Ratings against component sheets --------------------------------------------------
+
+from pcb_pipeline.datasheet.library import SheetLibrary  # noqa: E402
+
+LIB = SheetLibrary(ROOT / "examples/component_sheets", ROOT / "tests/fixtures/component_sheets")
+
+
+def run_with_library(spec):
+    errors, findings, _ = check_spec(spec, "test", load_rules(), LIB)
+    assert errors == []
+    return findings.to_doc()["findings"]
+
+
+def test_trapped_ratings():
+    findings = run_with_library(TRAPPED)
+    by_rule = {e["rule_id"]: f for f in findings for e in f["evidence"] if e.get("rule_id")}
+    assert by_rule["RAT-001"]["severity"] == "critical"          # 40 V transient > 18 V absolute max
+    assert "40 V > absolute max 18 V" in by_rule["RAT-001"]["evidence"][1]["calculation"]
+    assert by_rule["RAT-001"]["evidence"][0] == {"kind": "datasheet", "mpn": "EXAMPLE-BUCK-01", "page": 3,
+                                                 "summary": "VIN ..18 V"}
+    assert by_rule["RAT-002"]["severity"] == "critical"          # 0.37 A > 0.25 A LDO rating
+    assert by_rule["RAT-003"]["refs"] == ["temp_sensor", "3v3"]  # 3.4 V > 3.3 V
+    assert "RAT-004" in by_rule                                  # parts without sheets are listed
+
+
+def test_example_ratings():
+    # The only serious finding is the test sheet trap: temperature sensor rated 3.3 V max on a 3.4 V rail.
+    findings = run_with_library(EXAMPLE)
+    serious = {e["rule_id"] for f in findings if f["severity"] in ("critical", "major")
+               for e in f["evidence"] if e.get("rule_id")}
+    assert serious == {"RAT-003"}

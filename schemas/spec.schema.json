@@ -76,7 +76,8 @@
             "additionalProperties": false,
             "properties": {
               "revision": { "type": "string" },
-              "file": { "type": "string", "description": "Path in datasheets/" }
+              "url": { "type": "string", "description": "Manufacturer URL of the PDF, used by fetch-datasheets" },
+              "file": { "type": "string", "description": "File name in datasheets/, default {mpn}@{revision}.pdf" }
             }
           },
           "reasons": { "type": "array", "items": { "type": "string" }, "description": "Why this part was chosen" },

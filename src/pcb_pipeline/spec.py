@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from .datasheet.library import SheetLibrary
 from .findings import Findings
 from .schemas import validate
 
@@ -14,6 +15,8 @@ DEFAULT_EFFICIENCY = 0.85
 PASS_THROUGH = {"ldo", "load_switch"}   # input current equals output current
 STEP_DOWN = {"buck", "ldo"}
 STEP_UP = {"boost"}
+CONVERTERS = {"buck", "boost", "buck_boost", "ldo", "load_switch", "charger"}
+SUPPLY_PARAMS = ("VDD", "VCC", "VIN", "VS", "VSUP", "VBAT")   # supply pin names, in lookup order
 
 
 def load_spec(path: Path) -> dict:
@@ -33,8 +36,10 @@ def _ev(path: str, summary: str, rule_id: str | None = None) -> list[dict]:
 
 
 class SpecChecker:
-    def __init__(self, spec: dict, findings: Findings, rules: dict | None = None):
+    def __init__(self, spec: dict, findings: Findings, rules: dict | None = None,
+                 library: SheetLibrary | None = None):
         self.s = spec
+        self.lib = library
         self.f = findings
         self.rules = (rules or {}).get("rules", {})
         self.parts = {p["id"]: p for p in spec.get("parts", [])}
@@ -55,6 +60,8 @@ class SpecChecker:
         self.mcu_pins()
         self.rail_voltages()
         self.power_budget()
+        if self.lib is not None:
+            self.ratings()
         return self.f
 
     # SPEC-001: every reference points to something that exists --------------------
@@ -231,11 +238,101 @@ class SpecChecker:
                            source="architecture", confidence="high")
 
 
-def check_spec(spec: dict, project: str, rules: dict | None = None) -> tuple[list[str], Findings]:
-    """Validate the schema, then run the deterministic checks. Returns (schema errors, findings)."""
+    # RAT-001 to RAT-004: selected parts against their component sheets ----------------
+
+    def _limit(self, sheet: dict, section: str, params: tuple[str, ...]) -> dict | None:
+        by_name = {x["param"].upper(): x for x in sheet.get(section, [])}
+        return next((by_name[p] for p in params if p in by_name), None)
+
+    def _rating(self, rule_id: str, default_sev: str, title: str, refs: list[str], sheet: dict,
+                limit: dict, path: str, calc: str, severity: str | None = None, **extra):
+        self.f.add("ARC", severity or self.sev(rule_id, default_sev), title, refs,
+                   [{"kind": "datasheet", "mpn": sheet["mpn"], "page": limit["page"],
+                     "summary": f"{limit['param']} {limit.get('min', '')}..{limit.get('max', '')} {limit['unit']}"},
+                    {"kind": "calculation", "calculation": calc},
+                    {"kind": "spec", "spec_path": path, "summary": "rail limits from the spec"},
+                    {"kind": "rule", "rule_id": rule_id}],
+                   source="architecture", **extra)
+
+    def ratings(self):
+        missing = []
+        for part in self.parts.values():
+            if part["status"] == "selected" and not self.lib.get(part["mpn"]):
+                missing.append(part)
+
+        for r in self.rails.values():
+            src, parent = r["source"], self.rails.get(r["source"].get("from_rail", ""))
+            part = self.parts.get(src.get("part", ""))
+            sheet = self.lib.get(part["mpn"]) if part else None
+            if sheet and parent and src["type"] in CONVERTERS:
+                self._input_ratings(r, parent, part, sheet)
+                lim = self._limit(sheet, "recommended_operating", ("IOUT", "ILOAD"))
+                i = self.currents.get(r["id"], 0.0)
+                if lim and "max" in lim and i > lim["max"]:
+                    self._rating("RAT-002", "critical", f"{part['id']} output current above its rating",
+                                 [part["id"], r["id"]], sheet, lim, f"power_tree/{r['id']}",
+                                 f"worst case load {i:.3f} A > {lim['max']} A")
+            for load in r.get("loads", []):
+                lpart = self.parts.get(load["part"])
+                lsheet = self.lib.get(lpart["mpn"]) if lpart else None
+                if lsheet:
+                    self._supply_ratings(r, lpart, lsheet)
+
+        for part in missing:
+            self.f.add("ARC", self.sev("RAT-004", "minor"), f"{part['id']} ({part['mpn']}) has no component sheet",
+                       [part["id"]], [{"kind": "spec", "spec_path": f"parts/{part['id']}",
+                                       "summary": "ratings cannot be checked until the datasheet pipeline runs"},
+                                      {"kind": "rule", "rule_id": "RAT-004"}],
+                       source="architecture", confidence="medium")
+
+    def _input_ratings(self, rail: dict, parent: dict, part: dict, sheet: dict):
+        """RAT-001: converter input range and absolute maximum against the parent rail."""
+        path = f"power_tree/{parent['id']}"
+        p_lo = parent.get("min_v", parent["nominal_v"])
+        p_hi = parent.get("max_v", parent["nominal_v"])
+        p_tr = parent.get("transient_max_v", p_hi)
+        rec = self._limit(sheet, "recommended_operating", ("VIN",))
+        if rec and "max" in rec and p_hi > rec["max"]:
+            self._rating("RAT-001", "major", f"{part['id']} input above its recommended range",
+                         [part["id"], parent["id"]], sheet, rec, path, f"{parent['id']} max {p_hi} V > {rec['max']} V")
+        if rec and "min" in rec and p_lo < rec["min"]:
+            self._rating("RAT-001", "major", f"{part['id']} input below its recommended range",
+                         [part["id"], parent["id"]], sheet, rec, path, f"{parent['id']} min {p_lo} V < {rec['min']} V")
+        absmax = self._limit(sheet, "absolute_maximum", ("VIN",))
+        if absmax and "max" in absmax and p_tr > absmax["max"]:
+            what = "transient" if "transient_max_v" in parent else "max"
+            self._rating("RAT-001", "critical", f"{part['id']} input exceeds its absolute maximum",
+                         [part["id"], parent["id"]], sheet, absmax, path,
+                         f"{parent['id']} {what} {p_tr} V > absolute max {absmax['max']} V", severity="critical",
+                         suggestion="Add input protection (TVS, surge stopper) or pick a part with a higher rating.")
+
+    def _supply_ratings(self, rail: dict, part: dict, sheet: dict):
+        """RAT-003: a load's supply range against the rail it is powered from."""
+        lo, hi = rail.get("min_v", rail["nominal_v"]), rail.get("max_v", rail["nominal_v"])
+        path = f"power_tree/{rail['id']}"
+        rec = self._limit(sheet, "recommended_operating", SUPPLY_PARAMS)
+        if rec and (("max" in rec and hi > rec["max"]) or ("min" in rec and lo < rec["min"])):
+            self._rating("RAT-003", "major", f"{part['id']} supply range does not cover rail '{rail['id']}'",
+                         [part["id"], rail["id"]], sheet, rec, path,
+                         f"rail {lo}..{hi} V vs {rec['param']} {rec.get('min', '-')}..{rec.get('max', '-')} V")
+        absmax = self._limit(sheet, "absolute_maximum", SUPPLY_PARAMS)
+        if absmax and "max" in absmax and hi > absmax["max"]:
+            self._rating("RAT-003", "critical", f"rail '{rail['id']}' exceeds {part['id']} absolute maximum",
+                         [part["id"], rail["id"]], sheet, absmax, path, f"rail max {hi} V > {absmax['max']} V",
+                         severity="critical")
+
+
+def check_spec(spec: dict, project: str, rules: dict | None = None,
+               library: SheetLibrary | None = None) -> tuple[list[str], Findings, SpecChecker | None]:
+    """Validate the schema, then run the deterministic checks.
+
+    Returns (schema errors, findings, checker). The checker exposes the computed rail
+    currents for reports. Ratings are checked only when a component sheet library is given.
+    """
     findings = Findings(project)
     errors = validate("spec", spec)
     if errors:
-        return errors, findings
-    SpecChecker(spec, findings, rules).run()
-    return [], findings
+        return errors, findings, None
+    checker = SpecChecker(spec, findings, rules, library)
+    checker.run()
+    return [], findings, checker

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "mpn": "EXAMPLE-LDO-01",
+  "manufacturer": "Example (fictional part, test only)",
+  "category": "regulator",
+  "datasheet": {
+    "revision": "A",
+    "source_url": "https://example.com/EXAMPLE-LDO-01.pdf"
+  },
+  "absolute_maximum": [
+    {
+      "param": "VIN",
+      "max": 6.5,
+      "unit": "V",
+      "page": 3
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "VIN",
+      "min": 2.5,
+      "max": 5.5,
+      "unit": "V",
+      "page": 3
+    },
+    {
+      "param": "IOUT",
+      "max": 0.25,
+      "unit": "A",
+      "page": 3
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "VIN",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "page": 2
+    }
+  ],
+  "extraction": {
+    "critic_score": 9,
+    "attempts": 1,
+    "human_validated": true
+  }
+}

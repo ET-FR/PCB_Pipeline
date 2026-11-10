@@ -2,6 +2,7 @@
 datasheets/*.pdf
 # Pipeline outputs
 out/
+# design/spec.md and design/spec.pdf are generated but committed, so the PDF can be shared.
 # KiCad local files
 *.kicad_prl
 *.lck

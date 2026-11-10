@@ -1,4 +1,8 @@
-"""Command line interface: pcb-pipeline init | check-spec | check | validate-sheet | validate-notes | report."""
+"""Command line interface.
+
+pcb-pipeline init | check-spec | fetch-datasheets | render-spec | spec-diff | check |
+validate-sheet | validate-notes | report
+"""
 
 from __future__ import annotations
 
@@ -17,7 +21,10 @@ from .netlist import functional_groups
 from .report import render_markdown
 from .rules.engine import load_rules, RuleEngine
 from .schemas import validate
+from .datasheet.fetch import fetch_datasheets
+from .render import build_sections, render_markdown as render_spec_markdown, render_pdf
 from .spec import check_spec, load_spec, spec_rails
+from .spec_diff import impact, load_from_git, render_impact
 from .template import init_project
 
 REPO = Path(__file__).resolve().parents[2]
@@ -109,11 +116,23 @@ def _fails(doc: dict, fail_on: str | None) -> bool:
     return any(SEVERITY_ORDER[f["severity"]] <= limit for f in doc["findings"])
 
 
+def _library(dirs: list[str] | None) -> SheetLibrary:
+    library = SheetLibrary(*[Path(d) for d in (dirs or [REPO / "library" / "component_sheets"])])
+    for path, errs in library.errors.items():
+        print(f"warning: invalid sheet {path}: {errs[0]}", file=sys.stderr)
+    return library
+
+
+def _project_name(spec: dict, path: Path) -> str:
+    return spec.get("project", {}).get("name", path.stem) if isinstance(spec.get("project"), dict) else path.stem
+
+
 def cmd_check_spec(args) -> int:
     path = Path(args.spec)
     spec = load_spec(path)
-    project = spec.get("project", {}).get("name", path.stem) if isinstance(spec.get("project"), dict) else path.stem
-    errors, findings = check_spec(spec, project, load_rules(Path(args.rules) if args.rules else None))
+    project = _project_name(spec, path)
+    errors, findings, _ = check_spec(spec, project, load_rules(Path(args.rules) if args.rules else None),
+                                     _library(args.library))
     if errors:
         print(f"{path}: INVALID")
         for e in errors:
@@ -129,6 +148,59 @@ def cmd_check_spec(args) -> int:
     _print_findings(doc)
     print(f"outputs in {out}/")
     return 1 if _fails(doc, args.fail_on) else 0
+
+
+def cmd_fetch_datasheets(args) -> int:
+    spec = load_spec(Path(args.spec))
+    folder = Path(args.dir) if args.dir else Path(args.spec).resolve().parent.parent / "datasheets"
+    res = fetch_datasheets(spec, folder, timeout=args.timeout, offline=args.offline)
+    print(f"datasheets in {folder}: {len(res.present)} present, {len(res.downloaded)} downloaded, "
+          f"{len(res.missing)} missing")
+    for mpn in res.changed:
+        print(f"  changed  {mpn}: the PDF differs from the indexed one, check the revision and rebuild its sheet")
+    for m in res.missing:
+        print(f"  missing  {m['mpn']}: {m['reason']}")
+        print(f"           download it by hand{' from ' + m['url'] if m.get('url') else ''} "
+              f"and save it as {folder / m['file']}")
+    return 1 if res.missing else 0
+
+
+def cmd_render_spec(args) -> int:
+    path = Path(args.spec)
+    spec = load_spec(path)
+    errors, findings, checker = check_spec(spec, _project_name(spec, path),
+                                           load_rules(Path(args.rules) if args.rules else None),
+                                           _library(args.library))
+    if errors:
+        print(f"{path}: INVALID, fix it before rendering")
+        for e in errors:
+            print(f"  {e}")
+        return 1
+    sections = build_sections(spec, checker.currents, findings.to_doc()["findings"])
+    md = Path(args.markdown) if args.markdown else path.with_suffix(".md")
+    md.write_text(render_spec_markdown(spec, sections))
+    print(f"markdown written to {md}")
+    if not args.no_pdf:
+        pdf = Path(args.pdf) if args.pdf else path.with_suffix(".pdf")
+        render_pdf(spec, sections, pdf)
+        print(f"pdf written to {pdf}")
+    return 0
+
+
+def cmd_spec_diff(args) -> int:
+    new_path = Path(args.spec)
+    new = load_spec(new_path)
+    if args.old:
+        old, old_label = load_spec(Path(args.old)), args.old
+    else:
+        old, old_label = load_from_git(new_path, args.against), f"{args.against}:{new_path.name}"
+    imp = impact(old, new)
+    text = render_impact(imp, old_label, str(new_path))
+    if args.output:
+        Path(args.output).write_text(text)
+        print(f"impact written to {args.output}")
+    print(text)
+    return 0
 
 
 def cmd_init(args) -> int:
@@ -206,8 +278,33 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("spec")
     s.add_argument("--out", default="out")
     s.add_argument("--rules", help="rules YAML (default rules/checklist.yaml)")
+    s.add_argument("--library", action="append", help="component sheet directory (repeatable)")
     s.add_argument("--fail-on", choices=list(SEVERITY_ORDER), help="non-zero exit at this severity or worse")
     s.set_defaults(fn=cmd_check_spec)
+
+    fd = sub.add_parser("fetch-datasheets", help="download selected parts' datasheets, update datasheets/index.yaml")
+    fd.add_argument("spec")
+    fd.add_argument("--dir", help="datasheet folder (default: datasheets/ next to design/)")
+    fd.add_argument("--timeout", type=float, default=30.0)
+    fd.add_argument("--offline", action="store_true", help="only register PDFs already on disk")
+    fd.set_defaults(fn=cmd_fetch_datasheets)
+
+    rs = sub.add_parser("render-spec", help="render the spec to Markdown and PDF")
+    rs.add_argument("spec")
+    rs.add_argument("--markdown", help="default: spec.md next to the spec")
+    rs.add_argument("--pdf", help="default: spec.pdf next to the spec")
+    rs.add_argument("--no-pdf", action="store_true")
+    rs.add_argument("--rules")
+    rs.add_argument("--library", action="append")
+    rs.set_defaults(fn=cmd_render_spec)
+
+    sd = sub.add_parser("spec-diff", help="changes between two spec revisions and what to check again")
+    sd.add_argument("spec", help="new spec")
+    g = sd.add_mutually_exclusive_group()
+    g.add_argument("--old", help="old spec file")
+    g.add_argument("--against", default="HEAD", help="git revision of the old spec (default HEAD)")
+    sd.add_argument("-o", "--output", help="write the impact report to this file")
+    sd.set_defaults(fn=cmd_spec_diff)
 
     v = sub.add_parser("validate-sheet", help="validate component sheets against the schema")
     v.add_argument("paths", nargs="+")

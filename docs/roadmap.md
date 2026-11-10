@@ -14,6 +14,10 @@ Ordered by value: the earlier phases catch the most expensive errors.
 - [x] **Deterministic spec checks**: `pcb-pipeline check-spec` (SPEC-001 references,
   BUS-001/002 I2C addresses, MCU-001 pins, PWR-001 to PWR-005 power budget, voltages,
   LDO dissipation), trapped spec, rail voltages from the spec for schematic checks.
+- [x] **Phase 1**: architect and component selector agents, `/architecture` command,
+  `knowledge/architecture_checklist.md`, `knowledge/preferred_parts.yaml`,
+  `fetch-datasheets` (index, manual fallback), ratings against component sheets
+  (RAT-001 to RAT-004), `render-spec` (Markdown and PDF), `spec-diff` (PRD change impact).
 - [x] **Deterministic schematic core**: netlist graph, functional groups, rules
   SYM-001, PIN-001/002, CAP-001, ABS-001, EQ-001, trapped project, Markdown report.
 
@@ -21,9 +25,9 @@ Ordered by value: the earlier phases catch the most expensive errors.
 
 - [ ] **3. Phase 0 first real use**: run `/define` on a real board, refine
   `knowledge/phase0_questions.md`.
-- [ ] **4. Phase 1**: architect and component selector agents, `/architecture` command,
-  datasheet download with index and manual fallback, part ratings versus component
-  sheets (regulator input range, absolute max), PDF rendering, PRD change impact analysis.
+- [ ] **4. Phase 1 first real use**: run `/architecture` on a real board, refine the
+  checklist and the agents. Planned spec rules: temperature grade, sleep budget, net
+  class coverage of power nets.
 - [ ] **5. Datasheet agents wired**: locator, extractor, critic on 5 to 10 parts known by heart.
 - [ ] **6. Working loop**: proposed fixes in findings, `review/decisions.yaml`, apply
   accepted fixes (symbol fields, values, footprints first), one commit per run.

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "mpn": "EXAMPLE-TEMP-01",
+  "manufacturer": "Example (fictional part, test only)",
+  "category": "sensor",
+  "datasheet": {
+    "revision": "A",
+    "source_url": "https://example.com/EXAMPLE-TEMP-01.pdf"
+  },
+  "absolute_maximum": [
+    {
+      "param": "VDD",
+      "max": 4.0,
+      "unit": "V",
+      "page": 4
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "VDD",
+      "min": 1.6,
+      "max": 3.3,
+      "unit": "V",
+      "page": 4
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "VDD",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "page": 2
+    }
+  ],
+  "extraction": {
+    "critic_score": 9,
+    "attempts": 1,
+    "human_validated": true
+  }
+}

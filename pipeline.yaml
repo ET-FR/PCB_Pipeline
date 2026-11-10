@@ -36,6 +36,7 @@ phases:
   - id: definition
     title: "Phase 0: product definition"
     kind: agent
+    command: /define
     agents: [interviewer]
     knowledge: [knowledge/phase0_questions.md]
     description: >
@@ -47,7 +48,10 @@ phases:
   - id: architecture
     title: "Phase 1: architecture (paper design)"
     kind: agent
-    rerun_on: [prd_changed]       # impact analysis against the previous spec.yaml
+    command: /architecture
+    agents: [architect]
+    knowledge: [knowledge/architecture_checklist.md, knowledge/preferred_parts.yaml]
+    rerun_on: [prd_changed]       # impact analysis: pcb-pipeline spec-diff
     stages:
       - id: block_diagram
         description: Functional blocks and interfaces between them.
@@ -56,6 +60,7 @@ phases:
         description: Propose candidates per block, the user chooses, record the reasons.
       - id: datasheet_fetch
         kind: deterministic
+        command: pcb-pipeline fetch-datasheets design/spec.yaml
         description: Download every selected datasheet into datasheets/, update the index.
         params:
           fallback: ask_user        # list missing PDFs for manual download
@@ -76,11 +81,21 @@ phases:
         description: Electrical rules (derating, margins) and routing rules (width per current, impedance, clearances, diff pairs).
       - id: spec_checks
         kind: deterministic
-        description: Validate spec.yaml (schema, I2C conflicts, power budget, ratings versus sheets).
+        command: pcb-pipeline check-spec design/spec.yaml
+        description: Schema, references, I2C conflicts, MCU pins, power budget, ratings versus sheets.
+      - id: checklist
+        kind: agent
+        agents: [architect]
+        description: Every item of knowledge/architecture_checklist.md answered, not applicable, or open.
       - id: spec_pdf
         kind: deterministic
-        description: Render spec.yaml to design/spec.pdf.
-    outputs: [design/spec.yaml, design/spec.pdf, datasheets/index.yaml]
+        command: pcb-pipeline render-spec design/spec.yaml
+        description: Render spec.yaml to design/spec.md and design/spec.pdf.
+      - id: impact
+        kind: deterministic
+        command: pcb-pipeline spec-diff design/spec.yaml --against <last signed off revision>
+        description: When the PRD changed, list what must be fetched, re-checked or changed.
+    outputs: [design/spec.yaml, design/spec.md, design/spec.pdf, datasheets/index.yaml]
     gate: architecture_review     # the user signs off before schematic work starts
 
   - id: schematic

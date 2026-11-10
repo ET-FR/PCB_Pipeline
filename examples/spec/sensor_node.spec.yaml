@@ -76,8 +76,8 @@ power_tree:
       nominal_v: 12
       min_v: 9
       max_v: 14
-      transient_max_v: 40
-      source: { type: external, description: "Vehicle 12 V through input_connector" }
+      transient_max_v: 16      # after the input surge stopper, see block power/input
+      source: { type: external, description: "Vehicle 12 V through input_connector and surge stopper" }
       prd_refs: [Q-PWR-002]
     - id: 5v
       net: /+5V

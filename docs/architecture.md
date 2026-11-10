@@ -91,38 +91,46 @@ explicitly. At the end, the agent proposes improvements to the question list.
 
 ### Phase 1: architecture (paper design)
 
-Built from the PRD, in discussion with the user:
+Command `/architecture`, led by the `architect` agent, built from the PRD in discussion
+with the user. The architect proposes, the user decides, Python does the arithmetic.
 
-- **Block diagram**: functional blocks and the interfaces between them.
-- **Component selection**: the agent proposes candidates per block (with the reasons:
-  ratings, availability, price, package), the user chooses. The choice and its reasons
-  are recorded in the spec.
-- **Datasheets**: every selected part's datasheet is downloaded into `datasheets/`,
-  manufacturer source first, and a component sheet is built for it (locator, extractor,
-  critic, see below). When a site blocks the download, the agent lists the missing PDFs
-  and the user drops them in by hand.
-- **Power tree**: every rail with its source, voltage, current budget, efficiency,
-  dissipation and sequencing.
-- **Interfaces**: connectors and harness pinout, I2C address map, MCU pin allocation.
-- **Mechanical**: board size, mounting holes, keep-outs, stackup.
-- **Design rules**: electrical (derating, margins) and routing (track width per current,
-  impedance, clearances, differential pairs, net classes).
+| Step | Who | Tool |
+|---|---|---|
+| Block diagram, with a criticality per block | architect + user | |
+| Component selection: 2 or 3 candidates per role with ratings, margins, package, availability, pitfalls | `component_selector` + user | `knowledge/preferred_parts.yaml` |
+| Datasheets downloaded into `datasheets/`, index with revision and sha256; missing PDFs listed for manual download | deterministic | `pcb-pipeline fetch-datasheets` |
+| Component sheet for every part without one | datasheet agents | locator, extractor, critic |
+| Power tree, interfaces, I2C map, MCU pins, mechanical, design rules | architect + user | |
+| Check loop until no critical or major finding is left | deterministic | `pcb-pipeline check-spec` |
+| Every item of the architecture checklist answered, not applicable, or open | architect | `knowledge/architecture_checklist.md` |
+| Readable spec for the review and for sharing | deterministic | `pcb-pipeline render-spec` |
 
 Deterministic checks on the spec (`pcb-pipeline check-spec`, format in
-`schemas/spec.schema.json`): schema, references between blocks, parts and rails, I2C
-address conflicts, MCU pins used twice, rail voltages consistent with their source,
-power budget per rail (loads plus the input current of child rails, with converter
-efficiency), margin against source capacity, LDO dissipation. Planned: regulator
-ratings versus the component sheets. Rail voltages from the spec also feed the
-schematic rules (`pcb-pipeline check --spec`).
+`schemas/spec.schema.json`, rules in `rules/checklist.yaml`):
 
-Output: `design/spec.yaml` and the generated `design/spec.pdf`.
+- `SPEC-001`: references between blocks, parts and rails exist, ids are unique.
+- `BUS-001`, `BUS-002`: I2C addresses declared, no conflict on a bus.
+- `MCU-001`: each MCU pin assigned once.
+- `PWR-001` to `PWR-005`: rail voltages consistent with their source, power budget per
+  rail (loads plus the input current of child rails, with converter efficiency), margin
+  against source capacity, power tree loops, LDO dissipation.
+- `RAT-001` to `RAT-004`, with the component sheets: converter input range and absolute
+  maximum against the input rail and its transients, converter output current rating,
+  each load's supply range against its rail, parts without a sheet.
 
-**When the PRD changes**, phase 1 runs again. The new spec is compared with the previous
-one and the impact is listed: which parts, rails, rules and schematic blocks must be
-checked again.
+Rail voltages from the spec also feed the schematic rules (`pcb-pipeline check --spec`).
 
-Gate: the user signs off the architecture before starting the schematic.
+Output: `design/spec.yaml`, the generated `design/spec.md` (with a Mermaid block
+diagram) and `design/spec.pdf`, and `datasheets/index.yaml`.
+
+**When the PRD changes**, phase 1 runs again. The architect updates the spec and bumps
+its revision, then `pcb-pipeline spec-diff design/spec.yaml --against <rev>` lists the
+changes and what must be done again: datasheets and component sheets for new parts,
+symbols to update, capacitor derating and absolute maximum ratings on changed rails,
+converters and loads to re-check, buses, MCU pins, net classes, mechanical.
+
+Gate: the user signs off the architecture (`project.status: signed_off`) before
+starting the schematic.
 
 ### Phase 2: schematic
 
@@ -165,7 +173,8 @@ The pipeline must get better with every project. Four sources of lessons:
 | Phase 0 interview | `design/prd.md` | Questions added, lowered or retired, user defaults |
 | Notes written by agents during a run | `review/notes.yaml` | Project memory for the next run; pipeline notes merged into `knowledge/notes.yaml` once accepted |
 | Validated component sheet | `library/component_sheets/` | Reused as is by the next projects |
-| Component choice and its reasons | `design/spec.yaml` | Preferred parts list for the next selections |
+| Component choice and its reasons | `design/spec.yaml` | `knowledge/preferred_parts.yaml` for the next selections |
+| Architecture issue found later | `review/missed.yaml` | A new item in `knowledge/architecture_checklist.md`, or a spec rule when it is mechanical |
 
 Lessons are promoted into this repo by pull request: the agent proposes the change
 (rule, trap, checklist item, sheet), the user accepts it. A missed issue always adds a
@@ -209,8 +218,8 @@ Safeguards:
 | Agent | Phase | Role |
 |---|---|---|
 | Interviewer | 0 | Reads the user's documents, asks questions from `knowledge/phase0_questions.md`, writes the PRD |
-| Architect (planned) | 1 | Block diagram, power tree, interfaces, design rules |
-| Component selector (planned) | 1 | Proposes candidates per block with reasons |
+| Architect | 1 | Leads phase 1: block diagram, power tree, interfaces, design rules, check loop, checklist |
+| Component selector | 1 | Proposes 2 or 3 candidates per role, with ratings and pages, the user chooses |
 | Datasheet locator | 1 | Finds the useful pages from the table of contents |
 | Datasheet extractor | 1 | Fills the component sheet, every value with its page |
 | Datasheet critic | 1 | Scores the sheet out of 10, triggers retries |

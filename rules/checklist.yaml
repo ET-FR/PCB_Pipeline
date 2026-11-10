@@ -70,6 +70,22 @@ rules:
     description: LDO dissipation at maximum input voltage and worst case load (information for thermal design).
     severity: info
 
+  - id: RAT-001
+    description: Converter input range and absolute maximum cover the parent rail (min, max, transient).
+    severity: major       # absolute maximum exceeded is always critical
+
+  - id: RAT-002
+    description: Converter output current rating covers the worst case rail load.
+    severity: critical
+
+  - id: RAT-003
+    description: Each load's supply range covers the rail it is powered from.
+    severity: major       # absolute maximum exceeded is always critical
+
+  - id: RAT-004
+    description: Every selected part has a component sheet, otherwise its ratings are not checked.
+    severity: minor
+
 # Rail voltages are not in the netlist. Declare them here, with --rail, or with
 # --spec design/spec.yaml (max_v of each rail, or nominal_v).
 rails: {}

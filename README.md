@@ -10,8 +10,10 @@ applies the ones the user accepts. Deterministic checks run in Python; AI agents
 
 ## Status
 
-The deterministic schematic core works. Phases 0 and 1, the fix loop and the learning
-loop are designed but not built yet: see the [roadmap](docs/roadmap.md).
+Phases 0 and 1 are built (agents, commands, deterministic spec checks, datasheet fetch,
+spec rendering, change impact), as is the deterministic schematic core. Not built yet:
+the fix loop, the learning loop automation, phase 2 agents end to end, phase 3. See the
+[roadmap](docs/roadmap.md).
 
 ## How it works
 
@@ -51,8 +53,11 @@ pip install -e ".[dev]"
 # Create a hardware project repo (inputs/, design/, datasheets/, kicad/, review/)
 pcb-pipeline init ../my_board
 
-# Phase 1: validate design/spec.yaml and run the spec rules (I2C, power budget, pins)
+# Phase 1: validate design/spec.yaml and run the spec rules (I2C, power budget, pins, ratings)
 pcb-pipeline check-spec ../my_board/design/spec.yaml
+pcb-pipeline fetch-datasheets ../my_board/design/spec.yaml    # into ../my_board/datasheets/
+pcb-pipeline render-spec ../my_board/design/spec.yaml         # spec.md and spec.pdf
+pcb-pipeline spec-diff ../my_board/design/spec.yaml --against HEAD   # impact of a change
 
 # Phase 2: schematic checks, rail voltages taken from the spec
 pcb-pipeline check ../my_board/kicad/my_board.kicad_sch --spec ../my_board/design/spec.yaml
@@ -86,8 +91,8 @@ Every symbol should carry these fields, otherwise most automatic checks are impo
 |---|---|
 | `pipeline.yaml` | Pipeline definition: phases, stages, gates, learning loop |
 | `schemas/` | JSON Schemas for the spec, component sheets, findings and agent notes |
-| `agents/` | Agent prompts (interviewer, orchestrator, datasheet, critic, conformity) |
-| `knowledge/` | Shared knowledge that improves with use: phase 0 questions, accepted agent notes |
+| `agents/` | Agent prompts (interviewer, architect, component selector, orchestrator, datasheet, conformity) |
+| `knowledge/` | Shared knowledge that improves with use: phase 0 questions, architecture checklist, preferred parts, accepted agent notes |
 | `rules/` | Deterministic rule configuration (derating, etc.) |
 | `library/component_sheets/` | Shared, cached component sheets (one per MPN + revision) |
 | `templates/project/` | Template of a hardware project repo, used by `pcb-pipeline init` |

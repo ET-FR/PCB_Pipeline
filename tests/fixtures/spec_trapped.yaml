@@ -1,7 +1,11 @@
 # Trapped spec: deliberate errors that `pcb-pipeline check-spec` must catch.
 # BUS-001 I2C conflict 0x48, SPEC-001 unknown part 'eeprom', MCU-001 PA9 used twice,
-# PWR-001 3v3 overloaded, PWR-002 5v above 80 % of capacity. Add a trap each time a real
-# spec review misses something.
+# PWR-001 3v3 overloaded, PWR-002 5v above 80 % of capacity.
+# With tests/fixtures/component_sheets and examples/component_sheets (ratings):
+# RAT-001 40 V transient on vin above the buck absolute max (no surge stopper),
+# RAT-002 3v3 load above the LDO output rating, RAT-003 3v3 max 3.4 V above the
+# temperature sensor's 3.3 V recommended maximum.
+# Add a trap each time a real spec review misses something.
 schema_version: 1
 project:
   name: spec_trapped

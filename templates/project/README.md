@@ -5,7 +5,7 @@ Hardware project designed with [PCB_Pipeline](https://github.com/ET-FR/PCB_Pipel
 | Phase | Command in Claude Code | Output |
 |---|---|---|
 | 0. Definition | `/define` | `design/prd.md` |
-| 1. Architecture | `/architecture` (planned) | `design/spec.yaml`, `design/spec.pdf`, `datasheets/` |
+| 1. Architecture | `/architecture` | `design/spec.yaml`, `design/spec.pdf`, `datasheets/` |
 | 2. Schematic | `/review` | `review/<run>/` |
 | 3. Layout | `/review` | `review/<run>/` |
 

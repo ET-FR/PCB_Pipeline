@@ -1,0 +1,12 @@
+# Parts the user already trusts, reused first by the component selector.
+# Entries are added by pull request when the user picks a part that could serve
+# other projects. Remove or mark `avoid` when a part disappoints, with the reason.
+#
+# - mpn: TPS62133
+#   manufacturer: Texas Instruments
+#   role: buck 3 V to 17 V in, 3 A
+#   why: "Used on 3 boards, easy layout, good light load efficiency"
+#   status: preferred        # preferred | ok | avoid
+#   projects: [board_a, board_b]
+#   notes: ""
+parts: []
