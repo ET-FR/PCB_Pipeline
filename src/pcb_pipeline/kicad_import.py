@@ -66,6 +66,8 @@ class Netlist:
                     return net, n
                 if pin_number and n.pin == pin_number:
                     candidates.append((net, n))
+                elif pin_number and _pin_name_matches(n.pin_function, pin_number):
+                    candidates.append((net, n))       # sheet numbered by letter (K/A), symbol by number
         return candidates[0] if candidates else (None, None)
 
 

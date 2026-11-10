@@ -22,7 +22,7 @@ def load_rules(path: Path | None = None) -> dict:
 
 class RuleEngine:
     def __init__(self, netlist: Netlist, library: SheetLibrary, findings: Findings,
-                 rules: dict, rails: dict[str, float] | None = None):
+                 rules: dict, rails: dict[str, float] | None = None, nominals: dict[str, float] | None = None):
         self.n = netlist
         self.lib = library
         self.f = findings
@@ -31,6 +31,8 @@ class RuleEngine:
         # spec nets are written /NET (root sheet) while power symbols and global labels give NET:
         # match both ways
         self.rails.update({k.lstrip("/"): v for k, v in list(self.rails.items()) if k.lstrip("/") not in self.rails})
+        self.nominals = dict(nominals or {})
+        self.nominals.update({k.lstrip("/"): v for k, v in list(self.nominals.items()) if k.lstrip("/") not in self.nominals})
 
     # helpers ---------------------------------------------------------------
 
@@ -76,11 +78,17 @@ class RuleEngine:
             sheet = self.lib.get(c.mpn)
             if not sheet:
                 continue
+            found = {}
+            for pin in sheet["pins"]:
+                found[pin["number"]] = self.n.node(ref, pin_name=pin["name"], pin_number=pin["number"])[0]
             for pin in sheet["pins"]:
                 req = pin.get("requirement", "none")
                 if req == "none":
                     continue
                 net, _node = self.n.node(ref, pin_name=pin["name"], pin_number=pin["number"])
+                if net is None and any(found.get(o["number"]) for o in sheet["pins"]
+                                       if o["name"] == pin["name"] and o["number"] != pin["number"]):
+                    continue                           # pads merged on one symbol pin (TDSON drain 5-8)
                 nodes = self.n.nets.get(net) if net else None
                 floating = is_unconnected(net, nodes)
                 ev = [{"kind": "datasheet", "mpn": c.mpn, "page": pin["page"],
@@ -176,9 +184,12 @@ class RuleEngine:
         for var, (a, b) in eq.get("variables", {}).items():
             na, nb = self._endpoint_net(ref, a), self._endpoint_net(ref, b)
             found = None
+            kind = var[:1].upper() if var[:1].upper() in "RCL" and var[1:2].isdigit() else None
             for pref, pc in self.n.components.items():
                 if not pc.is_passive or pref == ref:
                     continue
+                if kind and not pref.upper().startswith(kind):
+                    continue                           # R2 is a resistor, not the feed-forward capacitor
                 pnets = set(self.n.nets_of(pref).values())
                 if len(pnets) != 2:
                     continue
@@ -208,7 +219,9 @@ class RuleEngine:
             result = eval(eq["expression"], {"__builtins__": {}}, env)  # noqa: S307, expression from validated sheet
         except Exception:
             return
-        target = self.rail(target_net)
+        target = self.nominals.get(target_net, self.nominals.get((target_net or "").lstrip("/")))             if target_net else None
+        if target is None:
+            target = self.rail(target_net)
         if target is None or target == 0:
             return
         err = (result - target) / target

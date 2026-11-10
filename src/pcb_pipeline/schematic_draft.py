@@ -91,8 +91,13 @@ class Sheet:
     def nc(self, ref: str, pin: str | int):
         self.conns.append(Conn(ref, str(pin), None))
 
-    def note(self, text: str, at: tuple[float, float], size: float = 1.27):
-        self.sch.add_text(text, (snap(at[0]), snap(at[1])), size=size)
+    def note(self, text: str, at: tuple[float, float] | None = None, size: float = 1.27, width: int = 110):
+        """Sheet note, wrapped; kicad-sch-api centres texts on their position, so the default is the page top centre."""
+        import textwrap
+        lines = textwrap.wrap(text, width)
+        x, y = at if at else (148.59, 25.4)
+        for k, line in enumerate(lines):
+            self.sch.add_text(line, (snap(x), snap(y + k * 3.81)), size=size)
 
     # ---- drawing ----
     def _outward(self, ref: str, pin: str) -> tuple[tuple[float, float], tuple[float, float]]:
@@ -108,8 +113,15 @@ class Sheet:
 
     def draw(self, power: set[str], globals_: set[str], power_lib: dict[str, str]):
         globals_out = []
+        done: dict[tuple[str, float, float], str | None] = {}
         for c in self.conns:
             (px, py), (dx, dy) = self._outward(c.ref, c.pin)
+            key = (c.ref, round(px, 2), round(py, 2))
+            if key in done:                              # stacked pins (e.g. MOSFET source 1-3): one stub only
+                if done[key] != c.net:
+                    raise ValueError(f"{c.ref} pins at the same point on two nets: {done[key]} / {c.net}")
+                continue
+            done[key] = c.net
             if c.net is None:
                 self.sch.no_connects.add(position=(px, py)) if hasattr(self.sch.no_connects, "add") else None
                 continue
@@ -265,3 +277,59 @@ def _tidy_properties(path: Path):
         i = end
     out.append(text[i:])
     path.write_text("".join(out), encoding="utf-8")
+
+
+# ---------- project symbol library ----------
+
+PIN_TYPES = {"power_in", "power_out", "input", "output", "bidirectional", "tri_state", "passive",
+             "open_collector", "open_emitter", "no_connect", "unspecified", "free"}
+
+
+def _f(size: float = 1.27, hide: bool = False) -> str:
+    return f"(effects (font (size {size} {size})){' (hide yes)' if hide else ''})"
+
+
+def symbol_sexpr(name: str, left: list[tuple], right: list[tuple], ref: str = "U", footprint: str = "",
+                 datasheet: str = "", description: str = "", width: float = 20.32) -> str:
+    """Rectangular symbol. left/right: (number, name, pin_type) from the component sheet, top to bottom."""
+    rows = max(len(left), len(right))
+    h = snap((rows + 1) * 2.54 / 2) + 1.27
+    hw = width / 2
+    pins = []
+    for side, lst in ((-1, left), (1, right)):
+        y = snap((len(lst) - 1) * 2.54 / 2)
+        for number, pname, ptype in lst:
+            ptype = ptype if ptype in PIN_TYPES else {"ground": "power_in", "open_drain": "open_collector",
+                                                      "nc": "no_connect", "analog": "passive"}.get(ptype, "passive")
+            x = side * (hw + 5.08)
+            ang = 0 if side < 0 else 180
+            hide = " hide" if ptype == "no_connect" else ""
+            pins.append(f'\t\t\t(pin {ptype} line{hide} (at {x:g} {y:g} {ang}) (length 5.08) '
+                        f'(name "{pname}" {_f()}) (number "{number}" {_f()}))')
+            y = round(y - 2.54, 4)
+    return (f'\t(symbol "{name}" (pin_names (offset 1.016)) (exclude_from_sim no) (in_bom yes) (on_board yes)\n'
+            f'\t\t(property "Reference" "{ref}" (at {-hw:g} {h + 1.27:g} 0) (effects (font (size 1.27 1.27)) (justify left)))\n'
+            f'\t\t(property "Value" "{name}" (at {-hw:g} {-h - 1.27:g} 0) (effects (font (size 1.27 1.27)) (justify left)))\n'
+            f'\t\t(property "Footprint" "{footprint}" (at 0 0 0) {_f(hide=True)})\n'
+            f'\t\t(property "Datasheet" "{datasheet}" (at 0 0 0) {_f(hide=True)})\n'
+            f'\t\t(property "Description" "{description}" (at 0 0 0) {_f(hide=True)})\n'
+            f'\t\t(symbol "{name}_0_1" (rectangle (start {-hw:g} {h:g}) (end {hw:g} {-h:g}) '
+            f'(stroke (width 0.254) (type default)) (fill (type background))))\n'
+            f'\t\t(symbol "{name}_1_1"\n' + "\n".join(pins) + "\n\t\t)\n\t)\n")
+
+
+def write_symbol_lib(path: Path, symbols: list[str]):
+    Path(path).write_text('(kicad_symbol_lib (version 20241209) (generator "pcb_pipeline") (generator_version "1")\n'
+                          + "".join(symbols) + ")\n", encoding="utf-8")
+
+
+def write_lib_tables(kicad_dir: Path, name: str, footprints: bool = False):
+    """Project sym-lib-table (and fp-lib-table) pointing at <name>.kicad_sym / <name>.pretty."""
+    d = Path(kicad_dir)
+    (d / "sym-lib-table").write_text(
+        f'(sym_lib_table\n  (version 7)\n  (lib (name "{name}")(type "KiCad")(uri "${{KIPRJMOD}}/{name}.kicad_sym")(options "")(descr "Project symbols"))\n)\n',
+        encoding="utf-8")
+    if footprints:
+        (d / "fp-lib-table").write_text(
+            f'(fp_lib_table\n  (version 7)\n  (lib (name "{name}")(type "KiCad")(uri "${{KIPRJMOD}}/{name}.pretty")(options "")(descr "Project footprints"))\n)\n',
+            encoding="utf-8")

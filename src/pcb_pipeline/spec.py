@@ -28,6 +28,11 @@ def spec_rails(spec: dict) -> dict[str, float]:
     return {r["net"]: r.get("max_v", r["nominal_v"]) for r in spec.get("power_tree", {}).get("rails", [])}
 
 
+def spec_rail_nominals(spec: dict) -> dict[str, float]:
+    """Net name -> nominal voltage, the target of output voltage equations."""
+    return {r["net"]: r["nominal_v"] for r in spec.get("power_tree", {}).get("rails", [])}
+
+
 def _ev(path: str, summary: str, rule_id: str | None = None) -> list[dict]:
     ev = [{"kind": "spec", "spec_path": path, "summary": summary}]
     if rule_id:

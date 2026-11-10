@@ -26,7 +26,7 @@ from .findings import SEVERITY_ORDER, Findings
 from .kicad_files import read_board, read_schematic
 from .kicad_import import export_netlist, parse_netlist_xml
 from .rules.engine import RuleEngine, load_rules
-from .spec import check_spec, load_spec, spec_rails
+from .spec import check_spec, load_spec, spec_rail_nominals, spec_rails
 
 REPO = Path(__file__).resolve().parents[2]
 ASSET = Path(__file__).resolve().parent / "dashboard_assets" / "index.html"
@@ -351,7 +351,7 @@ def build_data(project_dir: Path, out: Path, kicad_cli: str = "kicad-cli", use_k
             try:
                 netlist = parse_netlist_xml(export_netlist(p.sch, out, kicad_cli))
                 rf = Findings(name)
-                RuleEngine(netlist, lib, rf, load_rules(), spec_rails(spec) if spec else {}).run()
+                RuleEngine(netlist, lib, rf, load_rules(), spec_rails(spec) if spec else {}, spec_rail_nominals(spec) if spec else None).run()
                 findings += [dict(f, origin="schematic") for f in rf.to_doc()["findings"]]
             except Exception as exc:
                 p.warnings.append(f"schematic checks failed: {exc}")

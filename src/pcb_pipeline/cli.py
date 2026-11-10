@@ -23,7 +23,7 @@ from .rules.engine import load_rules, RuleEngine
 from .schemas import validate
 from .datasheet.fetch import fetch_datasheets
 from .render import build_sections, render_markdown as render_spec_markdown, render_pdf
-from .spec import check_spec, load_spec, spec_rails
+from .spec import check_spec, load_spec, spec_rails, spec_rail_nominals
 from .spec_diff import impact, load_from_git, render_impact
 from .template import init_project
 
@@ -79,9 +79,10 @@ def cmd_check(args) -> int:
 
     findings = Findings(project)
     rules = load_rules(Path(args.rules) if args.rules else None)
-    rails = spec_rails(load_spec(Path(args.spec))) if args.spec else {}
+    spec = load_spec(Path(args.spec)) if args.spec else {}
+    rails = spec_rails(spec) if spec else {}
     rails.update(_parse_rails(args.rail))   # --rail overrides the spec
-    RuleEngine(netlist, library, findings, rules, rails).run()
+    RuleEngine(netlist, library, findings, rules, rails, spec_rail_nominals(spec) if spec else None).run()
     doc = findings.to_doc()
 
     mpns = [c.mpn for c in netlist.components.values() if c.mpn]
