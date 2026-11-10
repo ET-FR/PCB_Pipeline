@@ -49,6 +49,7 @@
         "additionalProperties": false,
         "properties": {
           "id": { "$ref": "#/$defs/id", "description": "e.g. power/buck_5v, mcu, sensors/imu" },
+          "name": { "type": "string", "description": "Short readable name shown on the block diagram, e.g. Drain pump switch; the id is used when absent" },
           "function": { "type": "string" },
           "criticality": { "type": "string", "enum": ["standard", "power", "mains"], "default": "standard" },
           "connects_to": { "type": "array", "items": { "type": "string" }, "description": "Other block ids" },

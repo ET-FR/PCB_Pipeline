@@ -28,6 +28,9 @@ EXT = 50                   # gap between the frame and the external boxes
 LG = 120                   # channel between a board edge and the nearest column
 TOP = 70                   # frame top margin (legend)
 
+# one colour per rail (power lines), away from the communication / mix / protection colours
+RAIL_COLOURS = ["#f76b15", "#d4a017", "#d6409f", "#2bb3a3", "#a0522d", "#ff8a80", "#9c6ade", "#8d6e63", "#4caf50", "#e91e63"]
+
 SIGNAL_DIRS = {"in", "out", "bidir"}
 POWER_DIRS = {"power_in", "power_out"}
 
@@ -112,14 +115,16 @@ def block_diagram_svg(spec: dict) -> str:
         parent = rail_by_id.get(src.get("from_rail"))
         return rail_sources(parent, seen + (r["id"],)) if parent and parent["id"] not in seen else set()
 
+    rail_colour = {r["id"]: RAIL_COLOURS[i % len(RAIL_COLOURS)] for i, r in enumerate(rails)}
     for r in rails:
         label = r.get("net", r["id"]).lstrip("/")
+        kind = "power|" + r["id"]
         for s in rail_sources(r):
             for load in r.get("loads", []):
-                add(s, f"B:{block_of.get(load['part'])}", "power", label)
+                add(s, f"B:{block_of.get(load['part'])}", kind, label)
             for child in rails:
                 if child.get("source", {}).get("from_rail") == r["id"] and child.get("source", {}).get("part"):
-                    add(s, f"B:{block_of.get(child['source']['part'])}", "power", label)
+                    add(s, f"B:{block_of.get(child['source']['part'])}", kind, label)
     for bus in buses:
         ctrl = f"B:{block_of.get(bus.get('controller'))}"
         for d in bus.get("devices", []):
@@ -297,22 +302,28 @@ def block_diagram_svg(spec: dict) -> str:
     out = [f'<svg class="bdiag" viewBox="0 0 {width:.0f} {height:.0f}" width="{width:.0f}" height="{height:.0f}" '
            f'xmlns="http://www.w3.org/2000/svg">',
            '<g class="legend" transform="translate(8,18)">'
-           '<line class="power" x1="0" y1="0" x2="26" y2="0"/><text x="32" y="4">power</text>'
+           '<line class="power" x1="0" y1="0" x2="26" y2="0"/><text x="32" y="4">power pins</text>'
            '<line class="comm" x1="100" y1="0" x2="126" y2="0"/><text x="132" y="4">communication</text>'
            '<line class="mix" x1="250" y1="0" x2="276" y2="0"/><text x="282" y="4">power + signals</text>'
            '<line class="prot" x1="400" y1="0" x2="426" y2="0"/><text x="432" y="4">ESD protection</text>'
-           '<line class="other" x1="550" y1="0" x2="576" y2="0"/><text x="582" y="4">other link</text></g>',
+           '<line class="other" x1="550" y1="0" x2="576" y2="0"/><text x="582" y="4">other link</text>'
+           + "".join(f'<line class="power" style="stroke:{rail_colour[r["id"]]}" x1="{680 + k * 150}" y1="0" x2="{706 + k * 150}" y2="0"/>'
+                     f'<text x="{712 + k * 150}" y="4">{e(r.get("net", r["id"]).lstrip("/"))} {r["nominal_v"]:g} V</text>'
+                     for k, r in enumerate(rails)) + '</g>',
            f'<rect class="frame" x="{FX:.0f}" y="{TOP}" width="{FW:.0f}" height="{FH:.0f}" rx="12"/>',
            f'<text class="fname" x="{FX + 14:.0f}" y="{TOP + 20}">{e(spec.get("project", {}).get("name", "board"))}</text>']
     rank = {"other": 0, "prot": 1, "mix": 2, "power": 3, "comm": 4}
-    for i in sorted(range(len(routes)), key=lambda i: rank.get(routes[i]["kind"], 0)):
+    for i in sorted(range(len(routes)), key=lambda i: rank.get(routes[i]["kind"].split("|")[0], 0)):
         rt = routes[i]
+        base, _, rid = rt["kind"].partition("|")
+        style = f' style="stroke:{rail_colour[rid]}"' if rid in rail_colour else ""
+        fill = f' style="fill:{rail_colour[rid]}"' if rid in rail_colour else ""
         tip = e(", ".join(rt["labels"])) if rt["labels"] else rt["kind"]
         if "direct" in rt:
             xg, cg = geo[rt["direct"][0]], geo[rt["direct"][1]]
             y = cg[1] + cg[3] / 2
             x1, x2 = (xg[0] + xg[2], cg[0]) if xg[0] < cg[0] else (xg[0], cg[0] + cg[2])
-            out.append(f'<path class="edge {rt["kind"]}" d="M{x1:.0f},{y:.0f} H{x2:.0f}"><title>{tip}</title></path>')
+            out.append(f'<path class="edge {base}"{style} d="M{x1:.0f},{y:.0f} H{x2:.0f}"><title>{tip}</title></path>')
             continue
         (x1, y1), (x2, y2) = rt["p1"], rt["p2"]
         if rt["h"] is None:
@@ -320,20 +331,21 @@ def block_diagram_svg(spec: dict) -> str:
         else:
             d = (f"M{x1:.0f},{y1:.1f} H{vx[(i, 'a')]:.1f} V{hy[i]:.1f} H{vx[(i, 'b')]:.1f} "
                  f"V{y2:.1f} H{x2:.0f}")
-        out.append(f'<path class="edge {rt["kind"]}" d="{d}"><title>{tip}</title></path>')
-        if rt["labels"] and rt["kind"] in ("power", "comm") and rt["b"].startswith("B:"):
+        out.append(f'<path class="edge {base}"{style} d="{d}"><title>{tip}</title></path>')
+        if rt["labels"] and base in ("power", "comm") and rt["b"].startswith("B:"):
             left = rt["sb"] < 0
-            out.append(f'<text class="elabel {rt["kind"]}" x="{x2 + (-4 if left else 4):.0f}" y="{y2 - 3:.1f}" '
+            out.append(f'<text class="elabel {base}"{fill} x="{x2 + (-4 if left else 4):.0f}" y="{y2 - 3:.1f}" '
                        f'text-anchor="{"end" if left else "start"}">{e(_short(", ".join(rt["labels"]), 18))}</text>')
     crit = {b["id"]: b.get("criticality", "standard") for b in blocks}
     func = {b["id"]: b.get("function", "") for b in blocks}
+    name = {b["id"]: b.get("name") or b["id"] for b in blocks}
     for n, (x, y, w, h) in geo.items():
         kind, ident = n[0], n[2:]
         if kind == "B":
             plist = [p["mpn"] for p in parts.values() if p.get("block") == ident][:3]
-            out.append(f'<g class="blk crit-{crit[ident]}" data-block="{e(ident)}"><title>{e(func[ident])}</title>'
+            out.append(f'<g class="blk crit-{crit[ident]}" data-block="{e(ident)}"><title>{e(ident)}: {e(func[ident])}</title>'
                        f'<rect x="{x:.0f}" y="{y:.0f}" width="{w}" height="{h}" rx="8"/>'
-                       f'<text class="t1" x="{x + 10:.0f}" y="{y + 24:.0f}">{e(_short(ident, 28))}</text>'
+                       f'<text class="t1" x="{x + 10:.0f}" y="{y + 24:.0f}">{e(_short(name[ident], 31))}</text>'
                        f'<text class="t2" x="{x + 10:.0f}" y="{y + 44:.0f}">{e(_short(", ".join(plist), 36))}</text></g>')
         elif kind == "C":
             c = conn_by_id[ident]
