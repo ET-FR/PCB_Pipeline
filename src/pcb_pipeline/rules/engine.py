@@ -15,7 +15,7 @@ DEFAULT_RULES = Path(__file__).resolve().parents[3] / "rules" / "checklist.yaml"
 
 
 def load_rules(path: Path | None = None) -> dict:
-    data = yaml.safe_load((path or DEFAULT_RULES).read_text())
+    data = yaml.safe_load((path or DEFAULT_RULES).read_text(encoding="utf-8"))
     rules = {r["id"]: r for r in data.get("rules", [])}
     return {"rules": rules, "rails": data.get("rails") or {}}
 

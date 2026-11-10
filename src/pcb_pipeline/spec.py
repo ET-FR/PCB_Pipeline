@@ -20,7 +20,7 @@ SUPPLY_PARAMS = ("VDD", "VCC", "VIN", "VS", "VSUP", "VBAT")   # supply pin names
 
 
 def load_spec(path: Path) -> dict:
-    return yaml.safe_load(Path(path).read_text()) or {}
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
 
 
 def spec_rails(spec: dict) -> dict[str, float]:

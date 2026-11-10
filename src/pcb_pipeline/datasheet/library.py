@@ -16,7 +16,7 @@ class SheetLibrary:
             if not d.exists():
                 continue
             for path in sorted(d.glob("*.json")):
-                sheet = json.loads(path.read_text())
+                sheet = json.loads(path.read_text(encoding="utf-8"))
                 errs = validate("component_sheet", sheet)
                 if errs:
                     self.errors[str(path)] = errs

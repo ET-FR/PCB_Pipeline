@@ -69,7 +69,7 @@ class Project:
 def _yaml(path: Path, key: str) -> list:
     if not path.exists():
         return []
-    data = yaml.safe_load(path.read_text()) or {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return data.get(key) or [] if isinstance(data, dict) else []
 
 
@@ -110,7 +110,7 @@ class Exporter:
         self.cli = kicad_cli
         self.major = int(re.match(r"(\d+)", version).group(1)) if re.match(r"(\d+)", version) else 10
         self.cache_file = out / "cache.json"
-        self.cache = json.loads(self.cache_file.read_text()) if self.cache_file.exists() else {}
+        self.cache = json.loads(self.cache_file.read_text(encoding="utf-8")) if self.cache_file.exists() else {}
 
     def _fresh(self, key: str, sources: list[Path], outputs: list[Path]) -> bool:
         stamp = _mtime(*sources)
@@ -118,7 +118,7 @@ class Exporter:
 
     def _done(self, key: str, sources: list[Path]):
         self.cache[key] = _mtime(*sources)
-        self.cache_file.write_text(json.dumps(self.cache, indent=2))
+        self.cache_file.write_text(json.dumps(self.cache, indent=2), encoding="utf-8")
 
     def schematic(self, sch: Path) -> tuple[list[Path], str | None]:
         sources = sorted(sch.parent.rglob("*.kicad_sch"))
@@ -213,7 +213,7 @@ def _datasheet_rows(spec: dict | None, index: list[dict], lib: SheetLibrary, p: 
             "part": part["id"], "ref": part.get("ref", ""), "mpn": part["mpn"], "block": part["block"],
             "status": part["status"], "revision": e.get("revision") or part.get("datasheet", {}).get("revision", ""),
             "url": e.get("url") or part.get("datasheet", {}).get("url", ""),
-            "pdf": os.path.relpath(local, out) if local and local.exists() else "",
+            "pdf": Path(os.path.relpath(local, out)).as_posix() if local and local.exists() else "",
             "sheet": bool(sheet), "score": ext.get("critic_score"), "validated": ext.get("human_validated", False),
             "gaps": len(ext.get("gaps", [])),
         })
@@ -309,7 +309,7 @@ def build_data(project_dir: Path, out: Path, kicad_cli: str = "kicad-cli", use_k
     lib = SheetLibrary(*(library_dirs or default_library_dirs()),
                        *([p.root / "library"] if (p.root / "library").exists() else []))
 
-    prd_text = p.prd.read_text() if p.prd.exists() else ""
+    prd_text = p.prd.read_text(encoding="utf-8") if p.prd.exists() else ""
     spec = load_spec(p.spec) if p.spec.exists() else None
     name = (spec or {}).get("project", {}).get("name") or p.root.name
 
@@ -345,7 +345,7 @@ def build_data(project_dir: Path, out: Path, kicad_cli: str = "kicad-cli", use_k
         for s in sheets:
             svg = _sheet_svg(svgs, p.sch.stem, s.name)
             sheets_data.append({"name": s.name or "root", "file": s.file.name, "page": list(s.page),
-                                "svg": os.path.relpath(svg, out) if svg else "",
+                                "svg": Path(os.path.relpath(svg, out)).as_posix() if svg else "",
                                 "items": [i.to_dict() for i in s.items]})
         if version:
             try:
@@ -365,11 +365,11 @@ def build_data(project_dir: Path, out: Path, kicad_cli: str = "kicad-cli", use_k
             files, err = Exporter(out, kicad_cli, version).board(p.pcb)
             if err:
                 p.warnings.append(err)
-            board["views"] = [{"name": n, "svg": os.path.relpath(f, out)} for n, f in files.items()]
+            board["views"] = [{"name": n, "svg": Path(os.path.relpath(f, out)).as_posix()} for n, f in files.items()]
 
     review_findings = p.root / "out" / "findings.json"
     if review_findings.exists():
-        doc = json.loads(review_findings.read_text())
+        doc = json.loads(review_findings.read_text(encoding="utf-8"))
         findings += [dict(f, origin="review", generated_at=doc.get("generated_at", "")) for f in doc.get("findings", [])]
 
     index = _yaml(p.datasheets / "index.yaml", "datasheets")

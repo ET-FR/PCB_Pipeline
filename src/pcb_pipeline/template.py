@@ -33,10 +33,10 @@ def init_project(target: Path, name: str | None = None) -> tuple[list[Path], lis
         if dst.exists():
             skipped.append(rel)
             continue
-        text = src.read_text()
+        text = src.read_text(encoding="utf-8")
         for key, value in values.items():
             text = text.replace(key, value)
         dst.parent.mkdir(parents=True, exist_ok=True)
-        dst.write_text(text)
+        dst.write_text(text, encoding="utf-8")
         created.append(rel)
     return created, skipped

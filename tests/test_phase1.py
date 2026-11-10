@@ -11,7 +11,7 @@ from pcb_pipeline.spec import check_spec
 from pcb_pipeline.spec_diff import diff_specs, impact, render_impact
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE = yaml.safe_load((ROOT / "examples/spec/sensor_node.spec.yaml").read_text())
+EXAMPLE = yaml.safe_load((ROOT / "examples/spec/sensor_node.spec.yaml").read_text(encoding="utf-8"))
 
 
 def one_part_spec(url):
@@ -33,7 +33,7 @@ def test_fetch_downloads_and_indexes(tmp_path):
     res = fetch_datasheets(one_part_spec(src.as_uri()), folder)
     assert res.downloaded == ["EXAMPLE-BUCK-01"] and not res.missing
     assert (folder / "EXAMPLE-BUCK-01@A.pdf").read_bytes() == b"%PDF-1.4 fake"
-    index = yaml.safe_load((folder / "index.yaml").read_text())
+    index = yaml.safe_load((folder / "index.yaml").read_text(encoding="utf-8"))
     assert index["datasheets"][0]["file"] == "EXAMPLE-BUCK-01@A.pdf" and len(index["datasheets"][0]["sha256"]) == 64
 
     # Second run: already present. Then the local PDF changes: reported as changed.
@@ -44,7 +44,7 @@ def test_fetch_downloads_and_indexes(tmp_path):
 
 def test_fetch_rejects_html_and_lists_missing(tmp_path):
     src = tmp_path / "login.html"
-    src.write_text("<html>please log in</html>")
+    src.write_text("<html>please log in</html>", encoding="utf-8")
     res = fetch_datasheets(one_part_spec(src.as_uri()), tmp_path / "ds")
     assert res.missing and "did not return a PDF" in res.missing[0]["reason"]
     res = fetch_datasheets(one_part_spec(None), tmp_path / "ds")

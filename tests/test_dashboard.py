@@ -70,12 +70,12 @@ def test_sheet_svg_names(tmp_path):
 def project(tmp_path):
     init_project(tmp_path / "board", "mini")
     root = tmp_path / "board"
-    (root / "design/spec.yaml").write_text((ROOT / "examples/spec/sensor_node.spec.yaml").read_text())
+    (root / "design/spec.yaml").write_text((ROOT / "examples/spec/sensor_node.spec.yaml").read_text(encoding="utf-8"), encoding="utf-8")
     for f in KICAD.glob("*"):
-        (root / "kicad" / f.name).write_text(f.read_text())
+        (root / "kicad" / f.name).write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
     (root / "datasheets/EXAMPLE-BUCK-01@A.pdf").write_bytes(b"%PDF-1.4")
     (root / "datasheets/index.yaml").write_text(yaml.safe_dump({"datasheets": [
-        {"mpn": "EXAMPLE-BUCK-01", "file": "EXAMPLE-BUCK-01@A.pdf", "revision": "A"}]}))
+        {"mpn": "EXAMPLE-BUCK-01", "file": "EXAMPLE-BUCK-01@A.pdf", "revision": "A"}]}), encoding="utf-8")
     return root
 
 
@@ -95,7 +95,7 @@ def test_dashboard_data_without_kicad(project, tmp_path):
 
 def test_gate_and_decision(project, tmp_path):
     (project / "review/gates.yaml").write_text(yaml.safe_dump({"gates": [
-        {"id": "architecture_review", "passed": "2026-11-10", "revision": "A.1"}]}))
+        {"id": "architecture_review", "passed": "2026-11-10", "revision": "A.1"}]}), encoding="utf-8")
     data = build_data(project, tmp_path / "out", use_kicad=False)
     arch = next(p for p in data["phases"] if p["id"] == "architecture")
     assert arch["status"] == "done" and "2026-11-10" in arch["gate_passed"]
@@ -103,7 +103,7 @@ def test_gate_and_decision(project, tmp_path):
 
 def test_write_dashboard(project, tmp_path):
     index = write_dashboard(project, tmp_path / "dash", use_kicad=False)
-    page = index.read_text()
+    page = index.read_text(encoding="utf-8")
     assert "<title>sensor_node" in page
     data = json.loads(re.search(r"const D = (.*?);\n", page).group(1))
     assert data["project"]["name"] == "sensor_node"

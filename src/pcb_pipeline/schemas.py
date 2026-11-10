@@ -13,7 +13,7 @@ SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 @lru_cache
 def _validator(name: str) -> Draft202012Validator:
-    schema = json.loads((SCHEMA_DIR / f"{name}.schema.json").read_text())
+    schema = json.loads((SCHEMA_DIR / f"{name}.schema.json").read_text(encoding="utf-8"))
     return Draft202012Validator(schema)
 
 

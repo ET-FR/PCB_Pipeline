@@ -5,7 +5,7 @@ from pathlib import Path
 from pcb_pipeline.schemas import validate
 
 ROOT = Path(__file__).resolve().parents[1]
-SHEET = json.loads((ROOT / "examples/component_sheets/EXAMPLE-BUCK-01@A.json").read_text())
+SHEET = json.loads((ROOT / "examples/component_sheets/EXAMPLE-BUCK-01@A.json").read_text(encoding="utf-8"))
 
 
 def test_example_sheet_is_valid():
@@ -48,5 +48,5 @@ def test_verified_note_without_depends_on_is_rejected():
 
 def test_pipeline_notes_file_is_valid():
     import yaml
-    doc = yaml.safe_load((ROOT / "templates/knowledge_base/knowledge/notes.yaml").read_text())
+    doc = yaml.safe_load((ROOT / "templates/knowledge_base/knowledge/notes.yaml").read_text(encoding="utf-8"))
     assert validate("notes", doc) == []

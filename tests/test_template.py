@@ -12,17 +12,17 @@ def test_init_creates_project(tmp_path):
     for path in ["inputs/README.md", "design/prd.md", "datasheets/index.yaml", "review/notes.yaml",
                  "review/decisions.yaml", "review/missed.yaml", "CLAUDE.md", ".claude/commands/define.md"]:
         assert (root / path).exists(), path
-    assert "my_board" in (root / "design/prd.md").read_text()
-    assert "{{" not in "".join((root / p).read_text() for p in created)
-    assert validate("notes", yaml.safe_load((root / "review/notes.yaml").read_text())) == []
+    assert "my_board" in (root / "design/prd.md").read_text(encoding="utf-8")
+    assert "{{" not in "".join((root / p).read_text(encoding="utf-8") for p in created)
+    assert validate("notes", yaml.safe_load((root / "review/notes.yaml").read_text(encoding="utf-8"))) == []
 
 
 def test_init_never_overwrites(tmp_path):
     (tmp_path / "design").mkdir()
-    (tmp_path / "design/prd.md").write_text("my PRD")
+    (tmp_path / "design/prd.md").write_text("my PRD", encoding="utf-8")
     _, skipped = init_project(tmp_path)
-    assert (tmp_path / "design/prd.md").read_text() == "my PRD"
-    assert any(str(p) == "design/prd.md" for p in skipped)
+    assert (tmp_path / "design/prd.md").read_text(encoding="utf-8") == "my PRD"
+    assert any(p.as_posix() == "design/prd.md" for p in skipped)
 
 
 def test_cli_check_spec(tmp_path, capsys):

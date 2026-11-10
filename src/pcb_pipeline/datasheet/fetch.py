@@ -43,7 +43,7 @@ def _download(url: str, timeout: float) -> bytes:
 
 
 def load_index(path: Path) -> dict:
-    data = yaml.safe_load(path.read_text()) if path.exists() else None
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else None
     return data if isinstance(data, dict) and isinstance(data.get("datasheets"), list) else {"datasheets": []}
 
 
@@ -102,5 +102,5 @@ def fetch_datasheets(spec: dict, folder: Path, timeout: float = 30.0, offline: b
     index["datasheets"] = sorted(entries.values(), key=lambda e: e["mpn"])
     header = ("# One entry per datasheet. The PDFs stay local; this index is committed.\n"
               "# Written by `pcb-pipeline fetch-datasheets`.\n")
-    index_path.write_text(header + yaml.safe_dump(index, sort_keys=False, allow_unicode=True))
+    index_path.write_text(header + yaml.safe_dump(index, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return result

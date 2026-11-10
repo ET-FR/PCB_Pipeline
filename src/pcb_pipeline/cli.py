@@ -33,7 +33,7 @@ REPO = Path(__file__).resolve().parents[2]
 
 def _pipeline_config() -> dict:
     p = REPO / "pipeline.yaml"
-    return yaml.safe_load(p.read_text()) if p.exists() else {}
+    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.exists() else {}
 
 
 def _stage_params(cfg: dict, stage_id: str) -> dict:
@@ -88,11 +88,11 @@ def cmd_check(args) -> int:
     mpns = [c.mpn for c in netlist.components.values() if c.mpn]
     (out / "netlist.json").write_text(json.dumps(
         {"components": {k: asdict(v) for k, v in netlist.components.items()},
-         "nets": {k: [asdict(n) for n in v] for k, v in netlist.nets.items()}}, indent=2))
-    (out / "groups.json").write_text(json.dumps(groups, indent=2))
-    (out / "missing_sheets.json").write_text(json.dumps(library.missing(mpns), indent=2))
-    (out / "rules_findings.json").write_text(json.dumps(doc, indent=2, ensure_ascii=False))
-    (out / "rules_report.md").write_text(render_markdown(doc))
+         "nets": {k: [asdict(n) for n in v] for k, v in netlist.nets.items()}}, indent=2), encoding="utf-8")
+    (out / "groups.json").write_text(json.dumps(groups, indent=2), encoding="utf-8")
+    (out / "missing_sheets.json").write_text(json.dumps(library.missing(mpns), indent=2), encoding="utf-8")
+    (out / "rules_findings.json").write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
+    (out / "rules_report.md").write_text(render_markdown(doc), encoding="utf-8")
 
     print(f"{project}: {len(netlist.components)} parts, {len(groups)} functional groups, "
           f"{len(library.missing(mpns))} MPN without sheet")
@@ -142,8 +142,8 @@ def cmd_check_spec(args) -> int:
     doc = findings.to_doc()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "spec_findings.json").write_text(json.dumps(doc, indent=2, ensure_ascii=False))
-    (out / "spec_report.md").write_text(render_markdown(doc))
+    (out / "spec_findings.json").write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
+    (out / "spec_report.md").write_text(render_markdown(doc), encoding="utf-8")
     rails = spec.get("power_tree", {}).get("rails", [])
     print(f"{project}: {len(spec.get('parts', []))} parts, {len(rails)} rails, {len(spec.get('buses', []))} buses")
     _print_findings(doc)
@@ -179,7 +179,7 @@ def cmd_render_spec(args) -> int:
         return 1
     sections = build_sections(spec, checker.currents, findings.to_doc()["findings"])
     md = Path(args.markdown) if args.markdown else path.with_suffix(".md")
-    md.write_text(render_spec_markdown(spec, sections))
+    md.write_text(render_spec_markdown(spec, sections), encoding="utf-8")
     print(f"markdown written to {md}")
     if not args.no_pdf:
         pdf = Path(args.pdf) if args.pdf else path.with_suffix(".pdf")
@@ -198,7 +198,7 @@ def cmd_spec_diff(args) -> int:
     imp = impact(old, new)
     text = render_impact(imp, old_label, str(new_path))
     if args.output:
-        Path(args.output).write_text(text)
+        Path(args.output).write_text(text, encoding="utf-8")
         print(f"impact written to {args.output}")
     print(text)
     return 0
@@ -251,7 +251,7 @@ def cmd_init(args) -> int:
 def cmd_validate_sheet(args) -> int:
     status = 0
     for path in args.paths:
-        errors = validate("component_sheet", json.loads(Path(path).read_text()))
+        errors = validate("component_sheet", json.loads(Path(path).read_text(encoding="utf-8")))
         if errors:
             status = 1
             print(f"{path}: INVALID")
@@ -265,7 +265,7 @@ def cmd_validate_sheet(args) -> int:
 def cmd_validate_notes(args) -> int:
     status = 0
     for path in args.paths:
-        errors = validate("notes", yaml.safe_load(Path(path).read_text()) or {})
+        errors = validate("notes", yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {})
         if errors:
             status = 1
             print(f"{path}: INVALID")
@@ -277,14 +277,14 @@ def cmd_validate_notes(args) -> int:
 
 
 def cmd_report(args) -> int:
-    doc = json.loads(Path(args.findings).read_text())
+    doc = json.loads(Path(args.findings).read_text(encoding="utf-8"))
     errors = validate("findings", doc)
     if errors:
         print("findings.json invalid:\n  " + "\n  ".join(errors), file=sys.stderr)
         return 1
     md = render_markdown(doc)
     out = Path(args.output) if args.output else Path(args.findings).with_suffix(".md")
-    out.write_text(md)
+    out.write_text(md, encoding="utf-8")
     print(f"report written to {out}")
     return 0
 

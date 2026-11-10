@@ -9,8 +9,8 @@ from pcb_pipeline.rules.engine import load_rules
 from pcb_pipeline.spec import check_spec, spec_rails
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE = yaml.safe_load((ROOT / "examples/spec/sensor_node.spec.yaml").read_text())
-TRAPPED = yaml.safe_load((ROOT / "tests/fixtures/spec_trapped.yaml").read_text())
+EXAMPLE = yaml.safe_load((ROOT / "examples/spec/sensor_node.spec.yaml").read_text(encoding="utf-8"))
+TRAPPED = yaml.safe_load((ROOT / "tests/fixtures/spec_trapped.yaml").read_text(encoding="utf-8"))
 
 
 def run(spec):
@@ -62,7 +62,7 @@ def test_every_spec_rule_has_a_trap(trapped):
 
 
 def test_power_tree_loop_is_reported():
-    spec = yaml.safe_load((ROOT / "examples/spec/sensor_node.spec.yaml").read_text())
+    spec = yaml.safe_load((ROOT / "examples/spec/sensor_node.spec.yaml").read_text(encoding="utf-8"))
     vin = spec["power_tree"]["rails"][0]
     vin["source"] = {"type": "buck", "from_rail": "3v3"}
     assert any(f["title"] == "power tree has a loop" for f in run(spec))

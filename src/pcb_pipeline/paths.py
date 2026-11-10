@@ -35,7 +35,7 @@ def data_home() -> Path:
         return Path(os.environ[ENV]).expanduser().resolve()
     cfg = config_file()
     if cfg.exists():
-        data = yaml.safe_load(cfg.read_text()) or {}
+        data = yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}
         if data.get("data_home"):
             return Path(data["data_home"]).expanduser().resolve()
     return DEFAULT_DATA_HOME
@@ -82,7 +82,7 @@ def setup_data_home(target: Path | None = None, save_config: bool = True) -> tup
     if save_config:
         cfg = config_file()
         cfg.parent.mkdir(parents=True, exist_ok=True)
-        data = (yaml.safe_load(cfg.read_text()) or {}) if cfg.exists() else {}
+        data = (yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}) if cfg.exists() else {}
         data["data_home"] = str(target)
-        cfg.write_text(yaml.safe_dump(data, sort_keys=False))
+        cfg.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
     return target, created, kept
