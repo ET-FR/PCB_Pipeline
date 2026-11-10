@@ -11,6 +11,8 @@ This repository is a design review pipeline for KiCad projects. When working her
 - Never invent datasheet values. If a value cannot be found in the PDF, leave the field
   out and lower the sheet's critic score.
 - Run `pytest` before committing.
+- Write everything in the repo in English (code, comments, docs, commit messages).
+  Talk to the user in French.
 
 ## Running a review
 

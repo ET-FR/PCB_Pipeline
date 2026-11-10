@@ -1,121 +1,121 @@
-# PCB_Pipeline : handoff pour Claude Code
+# PCB_Pipeline: handoff for Claude Code
 
-Ce fichier contient tout le contexte des discussions de conception et l'intégralité du code
-du repo `ET-FR/PCB_Pipeline`.
+This file holds all the context from the design discussions and the full code of the
+`ET-FR/PCB_Pipeline` repo.
 
-## Instructions pour Claude Code
+## Instructions for Claude Code
 
-1. Recrée chaque fichier listé dans la section « Code » à son chemin exact, à la racine du repo.
-   Le contenu de chaque fichier est entre les balises de code à 5 backticks qui suivent son chemin.
-2. Installe et teste : `pip install -e ".[dev]"` puis `pytest -q` (19 tests doivent passer).
-3. Vérifie le projet piégé :
+1. Recreate every file listed in the "Code" section at its exact path, at the repo root.
+   The content of each file sits between the 5-backtick code fences that follow its path.
+2. Install and test: `pip install -e ".[dev]"` then `pytest -q` (19 tests must pass).
+3. Check the trapped project:
    `pcb-pipeline check --netlist tests/fixtures/buck_trapped.xml --library examples/component_sheets --rail /VIN=12 --rail /+5V=5`
-   doit sortir 4 findings : CAP-001 (critical), PIN-001 (critical), EQ-001 (major), SYM-001 (major).
-4. Commit avec le message « Pipeline definition, schemas, agent prompts and deterministic core » et push sur `main`.
-5. Ajoute ce fichier lui-même dans `docs/handoff.md` pour garder la trace des décisions.
+   must output 4 findings: CAP-001 (critical), PIN-001 (critical), EQ-001 (major), SYM-001 (major).
+4. Commit with the message "Pipeline definition, schemas, agent prompts and deterministic core" and push to `main`.
+5. Add this file itself as `docs/handoff.md` to keep a record of the decisions.
 
-## Contexte et décisions de conception
+## Context and design decisions
 
-### Objectif
-Un environnement d'agents IA pour les projets hardware de Thomas : lire un projet KiCad, vérifier
-les datasheets, faire des propositions, puis à terme vérifier la méca (Onshape), le firmware et lancer
-un harness de test. On commence par l'électronique et les datasheets.
+### Goal
+An AI agent environment for Thomas's hardware projects: read a KiCad project, check the
+datasheets, make proposals, then later check the mechanics (Onshape), the firmware and run
+a test harness. We start with the electronics and the datasheets.
 
-### Choix structurants
-- **Outil séparé de KiCad**, piloté depuis le terminal avec Claude Code. Pas d'interface Python
-  (Tkinter, Qt) : le temps va dans la qualité des revues, pas dans l'UI.
-- **Lecture de KiCad via `kicad-cli`** (`kicad-cli sch export netlist --format kicadxml`), qui résout
-  la hiérarchie, les labels globaux et les noms de nets. Les propriétés des symboles viennent des
-  champs de la netlist (ou des `.kicad_sch` en S-expressions si besoin).
-- **Champs obligatoires dans les symboles** : `MPN` partout, `Voltage` sur les condensateurs,
-  `Tolerance` utile pour les ponts. Sans ça, la plupart des checks automatiques sont impossibles.
-- **« Python calcule, le LLM juge »** : tout ce qui est vérifiable mécaniquement (broches, derating,
-  équations, valeurs max absolues) est en Python déterministe. Les agents gèrent les notes de
-  datasheet, les cas limites, la cohérence avec la spec.
-- **« Pas de preuve, pas de finding »** : chaque finding cite une page de datasheet, un net ou un
-  calcul. C'est imposé par le JSON Schema (evidence minItems 1, page obligatoire sur chaque valeur).
-- **Le serveur MCP KiCad** reste complémentaire pour les revues exploratoires, mais les checks
-  systématiques vivent dans l'outil déterministe pour être reproductibles.
+### Key choices
+- **Tool separate from KiCad**, driven from the terminal with Claude Code. No Python GUI
+  (Tkinter, Qt): the time goes into review quality, not into the UI.
+- **KiCad is read through `kicad-cli`** (`kicad-cli sch export netlist --format kicadxml`), which resolves
+  the hierarchy, global labels and net names. Symbol properties come from the netlist
+  fields (or from the `.kicad_sch` S-expressions if needed).
+- **Mandatory symbol fields**: `MPN` everywhere, `Voltage` on capacitors,
+  `Tolerance` useful for dividers. Without them, most automatic checks are impossible.
+- **"Python computes, the LLM judges"**: everything that can be checked mechanically (pins, derating,
+  equations, absolute maximum values) is deterministic Python. The agents handle datasheet
+  notes, edge cases and consistency with the spec.
+- **"No evidence, no finding"**: every finding cites a datasheet page, a net or a
+  calculation. This is enforced by the JSON Schema (evidence minItems 1, page required on every value).
+- **The KiCad MCP server** stays complementary for exploratory reviews, but systematic
+  checks live in the deterministic tool so they are reproducible.
 
-### Quand lancer le système
-- **Couche rapide (déterministe)** : à chaque commit (hook pre-commit) ou à la sauvegarde. Quelques
-  secondes, aucun token.
-- **Couche agents** : à la demande (`/review`), sur pull request (rapport en commentaire), et avant
-  envoi en fabrication (revue complète obligatoire, la « design gate »). Jamais en continu ni toutes
-  les 5 minutes : le schéma en cours de saisie est incohérent et ça coûterait cher pour rien.
-- **Agent Datasheet** : quand un nouveau MPN apparaît dans la BOM, une fois par composant, puis cache.
-- **Revue incrémentale** : on compare la netlist à la précédente et on ne relance les agents que sur
-  les groupes fonctionnels modifiés.
+### When to run the system
+- **Fast layer (deterministic)**: on every commit (pre-commit hook) or on save. A few
+  seconds, no tokens.
+- **Agent layer**: on demand (`/review`), on pull request (report as a comment), and before
+  sending to fabrication (mandatory full review, the "design gate"). Never continuously or every
+  5 minutes: a schematic being drawn is inconsistent and it would cost a lot for nothing.
+- **Datasheet agent**: when a new MPN appears in the BOM, once per component, then cached.
+- **Incremental review**: the netlist is compared with the previous one and agents are rerun only on
+  the functional groups that changed.
 
 ### Interface
-- Terminal avec Claude Code comme interface principale.
-- Rapport statique (Markdown maintenant, HTML ensuite) : findings classés par gravité, filtrables par
-  bloc, preuves cliquables vers la page de datasheet.
-- Plus tard, extension KiCad optionnelle qui lit le JSON et surligne les composants concernés.
+- Terminal with Claude Code as the main interface.
+- Static report (Markdown now, HTML later): findings sorted by severity, filterable by
+  block, evidence linking to the datasheet page.
+- Later, an optional KiCad extension that reads the JSON and highlights the affected components.
 
-### L'équipe d'agents
-- **Chef de revue (orchestrateur)** : planifie, découpe en groupes fonctionnels, lance les agents,
-  fusionne, dédoublonne, regroupe par cause racine, classe par gravité. N'analyse rien lui-même.
-- **Agent Datasheet** en trois sous-agents : locator, extractor, critic.
-- **Agent Conformité** : compare un groupe fonctionnel à ses fiches.
-- **Prévus** : agent Footprint (`.kicad_mod` contre land pattern), agent SPICE (ngspice puis LTspice),
-  agent Layout (mesures pcbsight, rendus par couche), agent Théoricien (base de livres d'électronique).
+### The agent team
+- **Review lead (orchestrator)**: plans, splits into functional groups, launches the agents,
+  merges, deduplicates, groups by root cause, sorts by severity. Analyzes nothing itself.
+- **Datasheet agent** with three sub-agents: locator, extractor, critic.
+- **Conformity agent**: compares a functional group with its sheets.
+- **Planned**: Footprint agent (`.kicad_mod` against land pattern), SPICE agent (ngspice then LTspice),
+  Layout agent (pcbsight measurements, per-layer renders), Theorist agent (electronics book base).
 
-### Pipeline datasheet
-1. Résolution : MPN vers PDF, source fabricant en priorité, révision et date notées. Clé de cache
-   `MPN@révision`, pour détecter une révision plus récente (cas réel : une copie fournie précédait
-   une correction publiée en révision G).
-2. Repérage : la table des matières sert à sélectionner seulement brochage, max absolus, conditions
-   recommandées, caractéristiques électriques, circuit d'application, notes de layout.
-3. Extraction : fiche JSON, chaque valeur avec sa page, jamais de valeur devinée.
-4. Critique : note sur 10 (complétude 4, couverture des broches 3, infos d'application 3), au moins
-   3 valeurs vérifiées dans le PDF, une erreur plafonne à 4. Relance sous 7, 5 tentatives maximum.
-5. Validation humaine la première fois pour les composants alimentation et secteur.
+### Datasheet pipeline
+1. Resolution: MPN to PDF, manufacturer source first, revision and date recorded. Cache key
+   `MPN@revision`, to detect a newer revision (real case: a supplied copy predated
+   a fix published in revision G).
+2. Locating: the table of contents is used to select only pinout, absolute max, recommended
+   conditions, electrical characteristics, application circuit, layout notes.
+3. Extraction: JSON sheet, every value with its page, never a guessed value.
+4. Critique: score out of 10 (completeness 4, pin coverage 3, application info 3), at least
+   3 values checked in the PDF, one error caps the score at 4. Retry below 7, 5 attempts maximum.
+5. Human validation the first time for power and mains components.
 
-### Agent Conformité
-Entrée : le groupe (composant actif plus voisins à 2 sauts, arrêt aux autres composants actifs), les
-fiches, les résultats des règles déterministes. Checks déterministes : broche par broche, composants
-externes requis, derating condensateurs, équations (pont de feedback), rails contre max absolus.
-L'agent ajoute le jugement : notes de datasheet, mauvais type de composant (diélectrique, ESR),
-séquencement, EN et power-good, strapping de boot, cohérence avec la spec.
+### Conformity agent
+Input: the group (active component plus neighbors within 2 hops, stopping at other active components), the
+sheets, the results of the deterministic rules. Deterministic checks: pin by pin, required
+external components, capacitor derating, equations (feedback divider), rails against absolute max.
+The agent adds judgment: datasheet notes, wrong component type (dielectric, ESR),
+sequencing, EN and power-good, boot strapping, consistency with the spec.
 
-### Idées reprises de l'existant
-Outils étudiés : DRCY (AllSpice, multi-agents, analyse broche par broche, tourne en CI), Traceformer
-(KiCad et Altium, chaque finding cite des pages de datasheet), pcbsight (revue `.kicad_pcb` pour
-agents, plugin Claude Code), kicad-happy (plugin Claude Code sous licence MIT, couvre une bonne partie
-de la couche déterministe et l'extraction de datasheets), Cady, Cadstrom. Flux, Quilter et CELUS
-font plutôt de la génération.
-Idées intégrées : groupement fonctionnel automatique, repérage par table des matières, critique avec
-relance, check de révision, **consensus multi-runs** (3 runs en parallèle sur alimentation et secteur,
-on garde avec confiance ce qui apparaît dans au moins 2 runs, le reste est réexaminé), regroupement
-par cause racine, deux niveaux de modèles (modèle puissant pour extraction et conformité, modèle
-économique pour repérage et dédoublonnage).
-Outils à réutiliser plutôt que réécrire : kicad-happy, pcbsight, ngspice, LTspice.
+### Ideas taken from existing tools
+Tools studied: DRCY (AllSpice, multi-agent, pin by pin analysis, runs in CI), Traceformer
+(KiCad and Altium, every finding cites datasheet pages), pcbsight (`.kicad_pcb` review for
+agents, Claude Code plugin), kicad-happy (MIT licensed Claude Code plugin, covers a good part
+of the deterministic layer and datasheet extraction), Cady, Cadstrom. Flux, Quilter and CELUS
+are more about generation.
+Ideas adopted: automatic functional grouping, locating through the table of contents, critique with
+retry, revision check, **multi-run consensus** (3 parallel runs on power and mains,
+findings that appear in at least 2 runs are kept with confidence, the rest is re-examined), grouping
+by root cause, two model tiers (powerful model for extraction and conformity, cheaper
+model for locating and deduplication).
+Tools to reuse rather than rewrite: kicad-happy, pcbsight, ngspice, LTspice.
 
-### Roadmap (11 étapes)
-1. Fondations : structure du repo, `pipeline.yaml`, import `kicad-cli`, hook pre-commit. **(fait)**
-2. Tester l'existant : kicad-happy et pcbsight sur un projet terminé ; ce qu'ils ratent devient
-   exigences et pièges du « projet piégé ». **(prochaine étape recommandée)**
-3. Formats : JSON Schema fiche et findings, alignés sur kicad-happy. **(premier jet fait)**
-4. Agents Datasheet et Conformité, testés d'abord sur 5 à 10 composants connus par cœur.
-5. Critique, consensus multi-runs, projet piégé, benchmark contre Traceformer.
-6. Agent Footprint.
-7. Agent SPICE.
-8. Agent Layout.
-9. Agent Théoricien et base documentaire.
-10. Rapport HTML, commande `/review`, revue sur pull request.
-11. Extension KiCad de surlignage (optionnelle).
+### Roadmap (11 steps)
+1. Foundations: repo structure, `pipeline.yaml`, `kicad-cli` import, pre-commit hook. **(done)**
+2. Test existing tools: kicad-happy and pcbsight on a finished project; what they miss becomes
+   requirements and traps for the "trapped project". **(recommended next step)**
+3. Formats: JSON Schema for sheets and findings, aligned with kicad-happy. **(first draft done)**
+4. Datasheet and Conformity agents, tested first on 5 to 10 components known by heart.
+5. Critique, multi-run consensus, trapped project, benchmark against Traceformer.
+6. Footprint agent.
+7. SPICE agent.
+8. Layout agent.
+9. Theorist agent and document base.
+10. HTML report, `/review` command, review on pull request.
+11. KiCad highlighting extension (optional).
 
-### État actuel du code
-- Cœur déterministe fonctionnel : import netlist, graphe et groupes fonctionnels, moteur de règles
-  (SYM-001 MPN manquant, PIN-001/002 broches, CAP-001 derating, ABS-001 max absolus, EQ-001 équations),
-  findings validés par schéma, rapport Markdown, CLI `pcb-pipeline check | validate-sheet | report`.
-- Prompts des agents rédigés mais pas encore branchés à un orchestrateur exécutable.
-- Les tensions de rails ne sont pas dans la netlist : à déclarer dans `rules/checklist.yaml`
-  (`rails`) ou via `--rail NET=V`.
-- La fiche `EXAMPLE-BUCK-01` est un composant **fictif** aux valeurs illustratives, uniquement pour
-  les tests.
-- Les chemins vers `schemas/` et `rules/` supposent une installation éditable (`pip install -e`).
+### Current state of the code
+- Working deterministic core: netlist import, graph and functional groups, rule engine
+  (SYM-001 missing MPN, PIN-001/002 pins, CAP-001 derating, ABS-001 absolute max, EQ-001 equations),
+  schema-validated findings, Markdown report, CLI `pcb-pipeline check | validate-sheet | report`.
+- Agent prompts written but not yet wired to an executable orchestrator.
+- Rail voltages are not in the netlist: declare them in `rules/checklist.yaml`
+  (`rails`) or with `--rail NET=V`.
+- The `EXAMPLE-BUCK-01` sheet is a **fictional** component with illustrative values, for tests
+  only.
+- Paths to `schemas/` and `rules/` assume an editable install (`pip install -e`).
 
 ## Code
 
