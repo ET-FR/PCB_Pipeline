@@ -17,6 +17,7 @@ columns and the horizontal channels between rows, each on its own lane.
 from __future__ import annotations
 
 import html
+import re
 import textwrap
 from collections import defaultdict
 
@@ -88,6 +89,21 @@ def block_diagram_svg(spec: dict) -> str:
     buses = spec.get("buses", [])
     bids = {b["id"] for b in blocks}
 
+    def conn_block(c: dict) -> str | None:
+        """Owning block: explicit `block`, else a block whose function names the connector (J4, J6-J8), else the part's block."""
+        if c.get("block") in bids:
+            return c["block"]
+        num = re.fullmatch(r"[A-Za-z]+(\d+)", c["id"])
+        for b in blocks:
+            for m in re.finditer(r"\b([A-Za-z]+)(\d+)(?:\s*-\s*[A-Za-z]*(\d+))?\b", b.get("function", "")):
+                if num and m.group(1).lower() == re.sub(r"\d+", "", c["id"]).lower():
+                    lo, hi = int(m.group(2)), int(m.group(3) or m.group(2))
+                    if lo <= int(num.group(1)) <= hi:
+                        return b["id"]
+        return block_of.get(c.get("part"))
+
+    cblock = {c["id"]: conn_block(c) for c in connectors}
+
     # ---------- logical edges, merged per (pair, kind) ----------
     edges: dict[tuple[str, str, str], list[str]] = {}
 
@@ -102,8 +118,8 @@ def block_diagram_svg(spec: dict) -> str:
     net_conn = defaultdict(set)
     for c in connectors:
         for p in c.get("pins", []):
-            if p.get("direction") == "power_in" and p.get("net"):
-                net_conn[p["net"]].add("C:" + c["id"])
+            if p.get("direction") == "power_in" and p.get("net") and cblock[c["id"]]:
+                net_conn[p["net"]].add("B:" + cblock[c["id"]])
     rail_by_id = {r["id"]: r for r in rails}
 
     def rail_sources(r: dict, seen=()) -> set[str]:
@@ -133,10 +149,17 @@ def block_diagram_svg(spec: dict) -> str:
     for c in connectors:
         dirs = {p.get("direction") for p in c.get("pins", [])}
         kind = "mix" if dirs & SIGNAL_DIRS and dirs & POWER_DIRS else "comm" if dirs & SIGNAL_DIRS else "power"
-        add("C:" + c["id"], f"B:{block_of.get(c.get('part'))}", kind)
+        add("C:" + c["id"], f"B:{cblock[c['id']]}", kind)
         add("X:" + c["id"], "C:" + c["id"], kind)
-        if esd_blocks and any(p.get("esd_protected") for p in c.get("pins", [])):
-            add("B:" + esd_blocks[0], "C:" + c["id"], "prot")
+    protected = [c["id"] for c in connectors if any(p.get("esd_protected") for p in c.get("pins", []))]
+    controllers = {block_of.get(bus.get("controller")): bus["id"] for bus in buses}
+    for c in connectors:
+        sig = [p["signal"] for p in c.get("pins", []) if p.get("direction") in SIGNAL_DIRS]
+        owner = next((b for b in blocks if b["id"] == cblock[c["id"]]), None)
+        if sig and owner:
+            for t in owner.get("connects_to", []):
+                if t in controllers:
+                    add("B:" + owner["id"], "B:" + t, "comm", "/".join(sig[:2]))
     covered = {frozenset(k[:2]) for k in edges}
     for b in blocks:
         for t in b.get("connects_to", []):
@@ -145,15 +168,19 @@ def block_diagram_svg(spec: dict) -> str:
                 covered.add(frozenset(("B:" + b["id"], "B:" + t)))
 
     # ---------- grid placement ----------
-    entry = {block_of.get(c.get("part")) for c in connectors
+    entry = {cblock[c["id"]] for c in connectors
              if any(p.get("direction") == "power_in" for p in c.get("pins", []))}
     col = _columns(blocks, entry)
     ncol = max(col.values()) + 1
-    neigh = defaultdict(set)
-    for a, b, _ in edges:
+    weight = {"comm": 4, "mix": 4, "power": 1, "other": 1}
+    neigh: dict[str, dict[str, float]] = defaultdict(dict)
+    for a, b, k in edges:
         if a.startswith("B:") and b.startswith("B:"):
-            neigh[a[2:]].add(b[2:])
-            neigh[b[2:]].add(a[2:])
+            w = weight.get(k.split("|")[0], 1)
+            if k == "comm" and (a[2:] in entry or b[2:] in entry):
+                w *= 6                                   # keep the link buffer next to the board entry
+            neigh[a[2:]][b[2:]] = neigh[a[2:]].get(b[2:], 0) + w
+            neigh[b[2:]][a[2:]] = neigh[b[2:]].get(a[2:], 0) + w
     order: dict[int, list[str]] = defaultdict(list)
     for b in blocks:
         order[col[b["id"]]].append(b["id"])
@@ -161,7 +188,8 @@ def block_diagram_svg(spec: dict) -> str:
     for _ in range(4):                                   # barycentre ordering, both directions
         for c in list(range(1, ncol)) + list(range(ncol - 2, -1, -1)):
             ids = order[c]
-            bary = {i: (sum(row[n] for n in neigh[i]) / len(neigh[i]) if neigh[i] else row[i]) for i in ids}
+            bary = {i: (sum(row[n] * w for n, w in neigh[i].items()) / sum(neigh[i].values()) if neigh[i] else row[i])
+                    for i in ids}
             ids.sort(key=lambda i: (bary[i], row[i]))
             for r, i in enumerate(ids):
                 row[i] = r
@@ -187,7 +215,7 @@ def block_diagram_svg(spec: dict) -> str:
     sides: dict[str, int] = {}
     stacks: dict[int, list[tuple[float, str]]] = {-1: [], 1: []}
     for c in connectors:
-        b = block_of.get(c.get("part"))
+        b = cblock[c["id"]]
         g = geo.get(f"B:{b}")
         sd = -1 if (b not in col or col[b] < ncol / 2) else 1
         sides[c["id"]] = sd
@@ -305,10 +333,10 @@ def block_diagram_svg(spec: dict) -> str:
            '<line class="power" x1="0" y1="0" x2="26" y2="0"/><text x="32" y="4">power pins</text>'
            '<line class="comm" x1="100" y1="0" x2="126" y2="0"/><text x="132" y="4">communication</text>'
            '<line class="mix" x1="250" y1="0" x2="276" y2="0"/><text x="282" y="4">power + signals</text>'
-           '<line class="prot" x1="400" y1="0" x2="426" y2="0"/><text x="432" y="4">ESD protection</text>'
-           '<line class="other" x1="550" y1="0" x2="576" y2="0"/><text x="582" y="4">other link</text>'
-           + "".join(f'<line class="power" style="stroke:{rail_colour[r["id"]]}" x1="{680 + k * 150}" y1="0" x2="{706 + k * 150}" y2="0"/>'
-                     f'<text x="{712 + k * 150}" y="4">{e(r.get("net", r["id"]).lstrip("/"))} {r["nominal_v"]:g} V</text>'
+           '<rect class="protsw" x="400" y="-7" width="26" height="14" rx="3"/><text x="432" y="4">ESD-protected connector</text>'
+           '<line class="other" x1="600" y1="0" x2="626" y2="0"/><text x="632" y="4">other link</text>'
+           + "".join(f'<line class="power" style="stroke:{rail_colour[r["id"]]}" x1="{730 + k * 150}" y1="0" x2="{756 + k * 150}" y2="0"/>'
+                     f'<text x="{762 + k * 150}" y="4">{e(r.get("net", r["id"]).lstrip("/"))} {r["nominal_v"]:g} V</text>'
                      for k, r in enumerate(rails)) + '</g>',
            f'<rect class="frame" x="{FX:.0f}" y="{TOP}" width="{FW:.0f}" height="{FH:.0f}" rx="12"/>',
            f'<text class="fname" x="{FX + 14:.0f}" y="{TOP + 20}">{e(spec.get("project", {}).get("name", "board"))}</text>']
@@ -343,13 +371,16 @@ def block_diagram_svg(spec: dict) -> str:
         kind, ident = n[0], n[2:]
         if kind == "B":
             plist = [p["mpn"] for p in parts.values() if p.get("block") == ident][:3]
+            if ident in esd_blocks and protected:
+                plist = ["protects " + ", ".join(x.upper() for x in protected)]
             out.append(f'<g class="blk crit-{crit[ident]}" data-block="{e(ident)}"><title>{e(ident)}: {e(func[ident])}</title>'
                        f'<rect x="{x:.0f}" y="{y:.0f}" width="{w}" height="{h}" rx="8"/>'
                        f'<text class="t1" x="{x + 10:.0f}" y="{y + 24:.0f}">{e(_short(name[ident], 31))}</text>'
                        f'<text class="t2" x="{x + 10:.0f}" y="{y + 44:.0f}">{e(_short(", ".join(plist), 36))}</text></g>')
         elif kind == "C":
             c = conn_by_id[ident]
-            out.append(f'<g class="conn"><title>{e(c.get("purpose", ""))}</title>'
+            out.append(f'<g class="conn{" prot" if ident in protected else ""}"><title>{e(c.get("purpose", ""))}'
+                       f'{" (ESD protected)" if ident in protected else ""}</title>'
                        f'<rect x="{x:.0f}" y="{y:.0f}" width="{w}" height="{h}" rx="4"/>'
                        f'<text x="{x + w / 2:.0f}" y="{y + 20:.0f}" text-anchor="middle">{e(ident.upper())}</text></g>')
         else:

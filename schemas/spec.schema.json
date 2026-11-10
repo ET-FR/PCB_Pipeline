@@ -167,6 +167,7 @@
         "properties": {
           "id": { "$ref": "#/$defs/id" },
           "part": { "type": "string", "description": "Spec part id" },
+          "block": { "type": "string", "description": "Block that owns this connector (block diagram); defaults to the block of its part" },
           "purpose": { "type": "string" },
           "mates_with": { "type": "string" },
           "keyed": { "type": "boolean" },
