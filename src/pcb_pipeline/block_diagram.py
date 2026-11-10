@@ -167,26 +167,56 @@ def block_diagram_svg(spec: dict) -> str:
                 add("B:" + b["id"], "B:" + t, "other")
                 covered.add(frozenset(("B:" + b["id"], "B:" + t)))
 
+    # ---------- a block that only holds connectors is drawn as its connector ----------
+    conn_parts = {c.get("part") for c in connectors}
+    collapsed: dict[str, str] = {}
+    for b in blocks:
+        own = [p for p in parts.values() if p.get("block") == b["id"]]
+        conns = [c["id"] for c in connectors if cblock[c["id"]] == b["id"]]
+        if conns and own and all(p["id"] in conn_parts for p in own):
+            collapsed[b["id"]] = conns[0]
+    if collapsed:
+        merged: dict[tuple[str, str, str], list[str]] = {}
+        for (a, b, k), labels in edges.items():
+            a2 = "C:" + collapsed[a[2:]] if a.startswith("B:") and a[2:] in collapsed else a
+            b2 = "C:" + collapsed[b[2:]] if b.startswith("B:") and b[2:] in collapsed else b
+            if a2 == b2:
+                continue
+            lst = merged.setdefault((*sorted((a2, b2)), k), [])
+            lst += [x for x in labels if x not in lst]
+        edges = merged
+    entry_conn = {"C:" + c for c in collapsed.values()}
+
     # ---------- grid placement ----------
     entry = {cblock[c["id"]] for c in connectors
              if any(p.get("direction") == "power_in" for p in c.get("pins", []))}
-    col = _columns(blocks, entry)
+    col_all = _columns(blocks, entry)
+    blocks = [b for b in blocks if b["id"] not in collapsed]
+    base = min(col_all[b["id"]] for b in blocks)
+    col = {b["id"]: col_all[b["id"]] - base for b in blocks}
     ncol = max(col.values()) + 1
     weight = {"comm": 4, "mix": 4, "power": 1, "other": 1}
     neigh: dict[str, dict[str, float]] = defaultdict(dict)
+    row: dict[str, float] = {c: -0.5 for c in entry_conn}  # collapsed entry connectors pull their links to the top
     for a, b, k in edges:
+        w = weight.get(k.split("|")[0], 1)
+        if k == "comm" and (a[2:] in entry or b[2:] in entry or a in entry_conn or b in entry_conn):
+            w *= 6                                       # keep the link buffer next to the board entry
         if a.startswith("B:") and b.startswith("B:"):
-            w = weight.get(k.split("|")[0], 1)
-            if k == "comm" and (a[2:] in entry or b[2:] in entry):
-                w *= 6                                   # keep the link buffer next to the board entry
             neigh[a[2:]][b[2:]] = neigh[a[2:]].get(b[2:], 0) + w
             neigh[b[2:]][a[2:]] = neigh[b[2:]].get(a[2:], 0) + w
+        elif a in entry_conn and b.startswith("B:"):
+            neigh[b[2:]][a] = neigh[b[2:]].get(a, 0) + w
+        elif b in entry_conn and a.startswith("B:"):
+            neigh[a[2:]][b] = neigh[a[2:]].get(b, 0) + w
     order: dict[int, list[str]] = defaultdict(list)
     for b in blocks:
         order[col[b["id"]]].append(b["id"])
-    row = {i: r for ids in order.values() for r, i in enumerate(ids)}
+    for ids in order.values():
+        for r, i in enumerate(ids):
+            row[i] = r
     for _ in range(4):                                   # barycentre ordering, both directions
-        for c in list(range(1, ncol)) + list(range(ncol - 2, -1, -1)):
+        for c in list(range(ncol)) + list(range(ncol - 2, -1, -1)):
             ids = order[c]
             bary = {i: (sum(row[n] * w for n, w in neigh[i].items()) / sum(neigh[i].values()) if neigh[i] else row[i])
                     for i in ids}
@@ -219,7 +249,14 @@ def block_diagram_svg(spec: dict) -> str:
         g = geo.get(f"B:{b}")
         sd = -1 if (b not in col or col[b] < ncol / 2) else 1
         sides[c["id"]] = sd
-        stacks[sd].append(((g[1] + BH / 2) if g else Y0, c["id"]))
+        if g:
+            y = g[1] + BH / 2
+        else:                                            # collapsed block: height of the blocks it links to
+            pts = [(geo[o][1] + BH / 2, 6 if k == "comm" else 1) for a_, b_, k in edges
+                   for o in ((b_,) if a_ == "C:" + c["id"] else (a_,) if b_ == "C:" + c["id"] else ())
+                   if o.startswith("B:") and o in geo]
+            y = sum(v * w for v, w in pts) / sum(w for _, w in pts) if pts else Y0
+        stacks[sd].append((y, c["id"]))
     for sd, items in stacks.items():
         items.sort()
         last = TOP - XH
