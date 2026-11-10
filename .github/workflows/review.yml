@@ -14,9 +14,9 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: pytest -q
-      - name: Validate component sheet library
+      - name: Validate example component sheets
         run: |
           shopt -s nullglob
-          for f in library/component_sheets/*.json examples/component_sheets/*.json; do
+          for f in examples/component_sheets/*.json tests/fixtures/component_sheets/*.json; do
             pcb-pipeline validate-sheet "$f"
           done

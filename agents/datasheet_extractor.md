@@ -18,5 +18,5 @@ Goal: fill one component sheet that validates against `schemas/component_sheet.s
   connected to mains voltage.
 
 ## Output
-The component sheet, saved as `library/component_sheets/<MPN>@<revision>.json`,
+The component sheet, saved as `library/component_sheets/<MPN>@<revision>.json` (knowledge base),
 then validated with `pcb-pipeline validate-sheet`.

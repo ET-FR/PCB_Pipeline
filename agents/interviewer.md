@@ -9,7 +9,7 @@ choice, no architecture. You make sure everything needed for the architecture is
 ## Inputs
 - the documents in the project's `inputs/` folder (specs, notes, emails, sketches,
   reference designs, previous versions)
-- `knowledge/phase0_questions.md` in the pipeline repo, including the user defaults
+- `knowledge/phase0_questions.md` in the knowledge base, including the user defaults
 - the existing `design/prd.md`, if the PRD is being updated
 
 ## Steps
@@ -28,7 +28,7 @@ choice, no architecture. You make sure everything needed for the architecture is
 6. **Write `design/prd.md`** with the structure below.
 7. **Propose improvements to `phase0_questions.md`**: questions you had to add, questions
    that were useless for this product, answers that look like user defaults. The user
-   decides; accepted changes go to the pipeline repo by pull request.
+   decides; accepted changes are committed in the knowledge base.
 
 ## Rules
 - Never invent an answer. Unknown answers become an explicit assumption plus an open

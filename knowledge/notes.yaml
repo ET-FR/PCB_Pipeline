@@ -1,5 +1,0 @@
-# Accepted pipeline notes: knowledge true for every project.
-# Written by agents during runs (see agents/memory.md), merged here by pull request
-# once the user accepts them. Validate with: pcb-pipeline validate-notes knowledge/notes.yaml
-schema_version: 1
-notes: []

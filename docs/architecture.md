@@ -58,10 +58,26 @@ Rules for applying fixes:
   the user, and become automatic once editing the schematic file is proven reliable.
 - Every decision is written to `review/decisions.yaml` (see the learning loop).
 
-## Project repo layout
+## Where the data lives
 
-The pipeline is a separate tool. Each board has its own repo, created with
-`pcb-pipeline init <path>` from `templates/project/`:
+Three places, never mixed (`src/pcb_pipeline/paths.py`):
+
+| Place | Holds | Changes how |
+|---|---|---|
+| Pipeline repo | Code, schemas, rules, agent prompts, templates, seed knowledge files. No board data, no user data. | Pull request; lessons are rewritten as small synthetic examples |
+| Knowledge base | The user's shared data: `library/component_sheets/`, `knowledge/` (phase 0 questions, architecture checklist, preferred parts, accepted notes) | Agent proposes, user accepts, commit in the knowledge base |
+| Board repo | Everything about one board | The working loop |
+
+The knowledge base is created by `pcb-pipeline setup` from `templates/knowledge_base/`
+and found through `$PCB_PIPELINE_DATA`, then `data_home` in
+`~/.config/pcb-pipeline/config.yaml`, then `~/pcb-pipeline-data`. Every command that
+needs component sheets uses it by default. `pcb-pipeline where` prints the locations;
+board repos record both paths in their `CLAUDE.md` so the agents find them.
+
+## Board repo layout
+
+Each board has its own repo, created with `pcb-pipeline init <path>` from
+`templates/project/`:
 
 | Path | Content |
 |---|---|
@@ -79,7 +95,7 @@ The pipeline is a separate tool. Each board has its own repo, created with
 ### Phase 0: product definition
 
 The user gives documents to the `interviewer` agent (in `inputs/`), then they discuss.
-The agent works from `knowledge/phase0_questions.md`, the shared list of questions and
+The agent works from `knowledge/phase0_questions.md` in the knowledge base, the shared list of questions and
 data it needs (function, power, interfaces, mechanical, environment, standards,
 manufacturing, reliability). Each question has a stable ID, a priority and what the
 answer drives in the design.
@@ -187,6 +203,8 @@ Claude Code, which already handles permissions, edits and commits.
 
 ## Learning loop
 
+In this section, `knowledge/...` and `library/...` are paths in the knowledge base.
+
 The pipeline must get better with every project. Four sources of lessons:
 
 | Source | Recorded in | Becomes |
@@ -196,13 +214,15 @@ The pipeline must get better with every project. Four sources of lessons:
 | Problem caused by a missing or wrong requirement | `review/missed.yaml` | A new or reworded question in `knowledge/phase0_questions.md` |
 | Phase 0 interview | `design/prd.md` | Questions added, lowered or retired, user defaults |
 | Notes written by agents during a run | `review/notes.yaml` | Project memory for the next run; pipeline notes merged into `knowledge/notes.yaml` once accepted |
-| Validated component sheet | `library/component_sheets/` | Reused as is by the next projects |
+| Validated component sheet | `library/component_sheets/` in the knowledge base | Reused as is by the next projects |
 | Component choice and its reasons | `design/spec.yaml` | `knowledge/preferred_parts.yaml` for the next selections |
 | Architecture issue found later | `review/missed.yaml` | A new item in `knowledge/architecture_checklist.md`, or a spec rule when it is mechanical |
 
-Lessons are promoted into this repo by pull request: the agent proposes the change
-(rule, trap, checklist item, sheet), the user accepts it. A missed issue always adds a
-trap to `tests/fixtures/`, so the same mistake can never come back unnoticed.
+The agent proposes each lesson, the user accepts it. Knowledge (sheets, notes,
+checklist items, questions, preferred parts) is committed in the knowledge base. Generic
+logic (rules, traps, prompts) goes to the pipeline repo by pull request, rewritten as a
+small synthetic example without board data. A missed issue always adds such a trap to
+`tests/fixtures/`, so the same mistake can never come back unnoticed.
 
 The decision history also measures the pipeline: findings per rule, false positive rate
 per rule and per agent, issues missed per phase.
@@ -225,8 +245,8 @@ Two scopes:
 
 - **project** notes go to `review/notes.yaml` in the project repo and are used directly
   by the next run.
-- **pipeline** notes are proposed there too, then merged into `knowledge/notes.yaml`
-  by pull request once the user accepts them. Until then they are only hints.
+- **pipeline** notes are proposed there too, then committed in `knowledge/notes.yaml`
+  of the knowledge base once the user accepts them. Until then they are only hints.
 
 Safeguards:
 

@@ -2,8 +2,13 @@
 
 This is the hardware project `{{name}}`, designed with PCB_Pipeline.
 
-- Pipeline repo: `{{pipeline}}`. Agent prompts are in `{{pipeline}}/agents/`, shared
-  knowledge in `{{pipeline}}/knowledge/`, rules in `{{pipeline}}/rules/`.
+- Pipeline repo (code, read only from here): `{{pipeline}}`. Agent prompts are in
+  `{{pipeline}}/agents/`, rules in `{{pipeline}}/rules/`.
+- Knowledge base (your shared data): `{{data_home}}`. Component sheets in
+  `{{data_home}}/library/component_sheets/`, knowledge in `{{data_home}}/knowledge/`.
+  Run `pcb-pipeline where` if a path has moved.
+- This board's data stays in this repo. Never write board data into the pipeline repo;
+  only reusable knowledge goes to the knowledge base, after the user accepts it.
 - Write everything in this repo in English. Talk to the user in French.
 - `design/spec.yaml` is the reference for design intent. Validate it with
   `pcb-pipeline check-spec design/spec.yaml` after every change.

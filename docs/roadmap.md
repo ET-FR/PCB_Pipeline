@@ -20,6 +20,8 @@ Ordered by value: the earlier phases catch the most expensive errors.
   (RAT-001 to RAT-004), `render-spec` (Markdown and PDF), `spec-diff` (PRD change impact).
 - [x] **Dashboard V1** (`pcb-pipeline dashboard`): status, PRD, power tree, datasheets,
   findings, schematic and layout from KiCad 10 with findings highlighted.
+- [x] **Data separation**: knowledge base outside the pipeline repo (`pcb-pipeline setup`,
+  `pcb-pipeline where`), board repos refused inside the pipeline repo.
 - [x] **Deterministic schematic core**: netlist graph, functional groups, rules
   SYM-001, PIN-001/002, CAP-001, ABS-001, EQ-001, trapped project, Markdown report.
 

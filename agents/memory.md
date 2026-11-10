@@ -1,5 +1,8 @@
 # Memory rules (read by every agent)
 
+Paths: `review/...` is in the board repo; `knowledge/...` and `library/...` are in the
+knowledge base (`pcb-pipeline where`), never in the pipeline repo.
+
 Agents write notes while they work, so the next run does not redo the same reasoning
 and does not fall into the same trap. Notes follow `schemas/notes.schema.json`.
 
@@ -8,11 +11,15 @@ and does not fall into the same trap. Notes follow `schemas/notes.schema.json`.
 | Scope | File | Used by the next run |
 |---|---|---|
 | `project`: true for this board only | `review/notes.yaml` in the project repo | Directly, as long as it has not expired |
-| `pipeline`: true for every project | proposed in `review/notes.yaml`, merged into `knowledge/notes.yaml` once accepted | As a hint while `proposed`, as knowledge once `accepted` |
+| `pipeline`: true for every project | proposed in `review/notes.yaml`, merged into `knowledge/notes.yaml` of the knowledge base once accepted | As a hint while `proposed`, as knowledge once `accepted` |
 | Something an earlier phase or run should have caught | `kind: missed` in `review/notes.yaml`, copied to `review/missed.yaml` at the end of the run | Feeds the learning loop |
 
-Never write directly into `rules/`, `agents/`, `knowledge/phase0_questions.md` or
-`library/` during a run. Those change only through a pull request the user accepts.
+Never write directly into `rules/` or `agents/` (pipeline repo), or into
+`knowledge/` or `library/` (knowledge base) during a run. Knowledge base changes are
+committed there once the user accepts them; pipeline changes go through a pull request.
+Never put board data (netlists, schematics, PRD content, part choices, names) in the
+pipeline repo: a lesson promoted to a rule or a trap is rewritten as a small synthetic
+example.
 
 ## Before working
 
@@ -50,6 +57,7 @@ Rules:
 ## End of run
 
 The orchestrator lists the new `pipeline` notes and `missed` entries for the user, who
-accepts or rejects each one. Accepted pipeline notes are merged by pull request into
-`knowledge/notes.yaml`, or turned into a rule, a trap, a checklist item or a phase 0
-question when that fits better (`promoted_to` records where it went).
+accepts or rejects each one. Accepted pipeline notes are committed in the knowledge base
+(`knowledge/notes.yaml`, or a checklist item, a phase 0 question, a preferred part), or
+become a rule or a trap in the pipeline repo by pull request, rewritten without board
+data. `promoted_to` records where it went.

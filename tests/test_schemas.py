@@ -48,5 +48,5 @@ def test_verified_note_without_depends_on_is_rejected():
 
 def test_pipeline_notes_file_is_valid():
     import yaml
-    doc = yaml.safe_load((ROOT / "knowledge/notes.yaml").read_text())
+    doc = yaml.safe_load((ROOT / "templates/knowledge_base/knowledge/notes.yaml").read_text())
     assert validate("notes", doc) == []

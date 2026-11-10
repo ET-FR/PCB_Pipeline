@@ -10,7 +10,19 @@ inputs:
   required_symbol_fields: [MPN]   # missing fields are reported as findings
   recommended_symbol_fields: [Voltage, Tolerance]
 
-# Files expected in the hardware project repo (not in this repo).
+# Three places, never mixed (see src/pcb_pipeline/paths.py):
+#   pipeline repo   this repo: code, schemas, rules, prompts, templates, seed knowledge
+#   knowledge base  your shared data, created by `pcb-pipeline setup`, its own git repo
+#   board repo      one per board, created by `pcb-pipeline init`
+storage:
+  knowledge_base:
+    location: "$PCB_PIPELINE_DATA, or data_home in ~/.config/pcb-pipeline/config.yaml, or ~/pcb-pipeline-data"
+    seed: templates/knowledge_base/
+    component_sheets: library/component_sheets/
+    knowledge: knowledge/        # phase 0 questions, architecture checklist, preferred parts, notes
+  pipeline_repo_holds_board_data: false
+
+# Files expected in the board repo (not in this repo).
 project_layout:
   inputs_dir: inputs/             # documents given by the user for phase 0
   prd: design/prd.md
@@ -22,7 +34,7 @@ project_layout:
   review_dir: review/             # findings and decisions, one folder per run
 
 library:
-  component_sheets: library/component_sheets
+  component_sheets: library/component_sheets   # in the knowledge base
   cache_key: "{mpn}@{datasheet_revision}"
 
 # Working loop: the user stops, saves, runs the pipeline. Nothing runs while KiCad edits.
@@ -166,7 +178,7 @@ dashboard:
 # Rules in agents/memory.md, format in schemas/notes.schema.json.
 memory:
   project_notes: review/notes.yaml        # project scope, usable directly
-  pipeline_notes: knowledge/notes.yaml    # pipeline scope, after the user accepts
+  pipeline_notes: knowledge/notes.yaml    # in the knowledge base, after the user accepts
   expire_on_change: [sheets, spec_revision, prd_revision, group_hash, files]
   never_skip_at_gates: [pre_fabrication]  # notes speed up iterations, not the final review
 
@@ -176,13 +188,14 @@ learning:
   missed_issues: review/missed.yaml   # problems found later (bring-up, other review)
   promote:
     - missed_issue_to_rule        # a deterministic rule when the check is mechanical
-    - missed_issue_to_trap        # always: a new trap in the trapped project tests
+    - missed_issue_to_trap        # always: a new synthetic trap in the tests, no board data
     - missed_issue_to_checklist   # an agent checklist item when it needs judgment
     - false_positive_to_rule_tuning
     - missed_issue_to_question    # when the issue came from a missing phase 0 answer
-    - accepted_note_to_knowledge  # pipeline notes merged into knowledge/notes.yaml
-    - validated_sheet_to_library  # component sheets are shared across projects
-  changes_to_pipeline: pull_request   # proposed by the agent, accepted by the user
+    - accepted_note_to_knowledge  # pipeline notes merged into the knowledge base
+    - validated_sheet_to_library  # component sheets, in the knowledge base
+  changes_to_knowledge_base: commit   # proposed by the agent, accepted by the user
+  changes_to_pipeline: pull_request   # rules, traps, prompts: generic, without board data
 
 models:
   extraction: high_capability     # datasheet extraction, conformity, architecture

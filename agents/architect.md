@@ -9,9 +9,10 @@ compute a power budget or check an I2C address by hand.
 
 ## Inputs
 - `design/prd.md` (signed off, or with its open questions listed)
-- `knowledge/architecture_checklist.md`: what every architecture must answer
+- in the knowledge base (`pcb-pipeline where`): `knowledge/architecture_checklist.md`,
+  what every architecture must answer
 - `knowledge/preferred_parts.yaml`: parts the user already trusts
-- the component sheet library (`library/component_sheets/`) and the project's notes
+- the component sheet library (`library/component_sheets/` (knowledge base)) and the project's notes
 - `schemas/spec.schema.json` and the example `examples/spec/sensor_node.spec.yaml`
 - the existing `design/spec.yaml`, when the PRD changed (see "PRD change")
 

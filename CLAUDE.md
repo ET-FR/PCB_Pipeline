@@ -13,6 +13,10 @@ This repository is a design review pipeline for KiCad projects. When working her
 - Run `pytest` before committing.
 - Write everything in the repo in English (code, comments, docs, commit messages).
   Talk to the user in French.
+- This repo holds no board data and no user data. Board data goes to the board repo
+  (`pcb-pipeline init`), shared user data (component sheets, notes, preferred parts,
+  the living checklists) to the knowledge base (`pcb-pipeline where`). Only generic,
+  synthetic examples and seed files belong here.
 
 ## Running a review
 

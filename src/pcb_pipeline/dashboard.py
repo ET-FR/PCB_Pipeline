@@ -25,6 +25,7 @@ from .findings import SEVERITY_ORDER, Findings
 from .kicad_files import read_board, read_schematic
 from .kicad_import import export_netlist, parse_netlist_xml
 from .rules.engine import RuleEngine, load_rules
+from .paths import default_library_dirs
 from .spec import check_spec, load_spec, spec_rails
 
 REPO = Path(__file__).resolve().parents[2]
@@ -305,7 +306,7 @@ def build_data(project_dir: Path, out: Path, kicad_cli: str = "kicad-cli", use_k
                library_dirs: list[Path] | None = None) -> dict:
     p = Project.find(project_dir)
     out.mkdir(parents=True, exist_ok=True)
-    lib = SheetLibrary(*(library_dirs or [REPO / "library" / "component_sheets"]),
+    lib = SheetLibrary(*(library_dirs or default_library_dirs()),
                        *([p.root / "library"] if (p.root / "library").exists() else []))
 
     prd_text = p.prd.read_text() if p.prd.exists() else ""
