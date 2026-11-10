@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "mpn": "SMBJ15A-E3/52",
+  "manufacturer": "Vishay General Semiconductor",
+  "category": "protection",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "88392 (Revision: 09-Jan-2024)",
+    "date": "2024-01-09",
+    "source_url": "https://www.vishay.com/docs/88392/smbj.pdf",
+    "sha256": "1b65b57a4311128068c1dec747bbb99f6846ae932d77fcfd39904cb2d7a5cd50"
+  },
+  "absolute_maximum": [
+    { "param": "PPPM", "max": 600, "unit": "W", "conditions": "10/1000 us waveform, non-repetitive, derated above TA = 25 C per fig. 2, 5 x 5 mm copper pads", "page": 1 },
+    { "param": "IPPM", "max": 24.6, "unit": "A", "conditions": "SMBJ15A, 10/1000 us waveform per fig. 3", "page": 2 },
+    { "param": "PD", "max": 5.0, "unit": "W", "conditions": "infinite heatsink at TA = 50 C", "page": 1 },
+    { "param": "IFSM", "max": 100, "unit": "A", "conditions": "8.3 ms single half sine-wave, unidirectional only", "page": 1 },
+    { "param": "TJ", "min": -55, "max": 150, "unit": "C", "conditions": "operating junction and storage", "page": 1 }
+  ],
+  "recommended_operating": [
+    { "param": "VWM", "max": 15, "unit": "V", "conditions": "SMBJ15A stand-off voltage", "page": 2 },
+    { "param": "ID", "max": 1.0, "unit": "uA", "conditions": "reverse leakage at VWM, TA = 25 C", "page": 2 },
+    { "param": "VBR", "min": 16.7, "max": 18.5, "unit": "V", "conditions": "at IT = 1.0 mA, pulse test tp <= 50 ms, TA = 25 C", "page": 2 },
+    { "param": "VC", "max": 24.4, "unit": "V", "conditions": "at IPPM = 24.6 A, 10/1000 us", "page": 2 },
+    { "param": "VBR_tempco", "max": 0.088, "unit": "%/C", "page": 2 },
+    { "param": "VF", "max": 3.5, "unit": "V", "conditions": "IF = 50 A, unidirectional only (note 6)", "page": 2 },
+    { "param": "RthJA", "typ": 100, "unit": "C/W", "conditions": "minimum recommended pad layout", "page": 3 },
+    { "param": "RthJL", "typ": 20, "unit": "C/W", "page": 3 }
+  ],
+  "pins": [
+    { "number": "K", "name": "Cathode", "type": "passive", "requirement": "must_connect", "notes": "Band denotes cathode end (unidirectional). Connect to the protected positive rail. Datasheet gives no pin numbers.", "page": 1 },
+    { "number": "A", "name": "Anode", "type": "passive", "requirement": "must_connect", "notes": "Connect to ground of the protected rail. Datasheet gives no pin numbers.", "page": 1 }
+  ],
+  "layout_notes": [
+    { "text": "SMB (DO-214AA) mounting pad layout (p5): pad height 2.18 mm (0.086 in) min, pad width 1.52 mm (0.060 in) min, gap between pads 2.159 mm (0.085 in) max, overall length 5.59 mm (0.220 in) ref.", "page": 5 },
+    { "text": "SMB body: 4.06-4.57 mm long (excluding leads), 3.30-3.94 mm wide, 2.13-2.44 mm high; 5.21-5.59 mm over leads. Cathode band on the cathode end.", "page": 5 },
+    { "text": "PPPM rating assumes 0.2 x 0.2 in (5.0 x 5.0 mm) copper pads to each terminal.", "page": 1 }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 2,
+    "gaps": [
+      "Datasheet gives no pin numbers, only cathode (band) and anode; pin numbers K and A here are labels, map to the symbol by name.",
+      "Marking code for SMBJ15A is LM (unidirectional) per p2; not a rating, recorded here only.",
+      "Junction capacitance only as typical curve (fig. 4, p4); no tabulated value.",
+      "Response time stated only as 'very fast' (p1); no value.",
+      "Power derating vs temperature only as curve (fig. 2, p4); no tabulated value.",
+      "SMBJ15A-E3/52: E3 = RoHS commercial grade, 52 = 7 in reel of 750 (p1, p3); not AEC-Q101 (that is HE3/HM3)."
+    ],
+    "human_validated": false,
+    "pages_used": [1, 2, 3, 4, 5]
+  }
+}

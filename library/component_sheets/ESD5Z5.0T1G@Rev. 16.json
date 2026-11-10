@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "mpn": "ESD5Z5.0T1G",
+  "manufacturer": "onsemi",
+  "category": "protection",
+  "criticality": "standard",
+  "datasheet": {
+    "revision": "Rev. 16",
+    "date": "2024-02",
+    "source_url": "https://www.onsemi.com/download/data-sheet/pdf/esd5z2.5t1-d.pdf",
+    "sha256": "3b42a335696fd53574cc2888edfd971fd27be0497878d76a497965968b41b030"
+  },
+  "absolute_maximum": [
+    { "param": "ESD_IEC61000-4-2_contact", "max": 30, "unit": "kV", "conditions": "IEC 61000-4-2 contact", "page": 2 },
+    { "param": "ESD_IEC61000-4-2_air", "max": 30, "unit": "kV", "conditions": "IEC 61000-4-2 air", "page": 2 },
+    { "param": "EFT_IEC61000-4-4", "max": 40, "unit": "A", "conditions": "IEC 61000-4-4 (EFT)", "page": 2 },
+    { "param": "ESD_HBM", "max": 16, "unit": "kV", "conditions": "Human Body Model", "page": 2 },
+    { "param": "ESD_MM", "max": 400, "unit": "V", "conditions": "Machine Model", "page": 2 },
+    { "param": "PD", "max": 500, "unit": "mW", "conditions": "Total power dissipation on FR-4 board, single-sided copper, mounting pad 1 cm2, TA = 25 C (Note 1)", "page": 2 },
+    { "param": "TJ", "min": -55, "max": 150, "unit": "C", "conditions": "Junction and storage temperature range", "page": 2 },
+    { "param": "TL", "max": 260, "unit": "C", "conditions": "Lead solder temperature, 10 s", "page": 2 },
+    { "param": "IPP", "max": 9.4, "unit": "A", "conditions": "Maximum reverse peak pulse current, 8 x 20 us waveform (Figure 5), TA = 25 C", "page": 3 },
+    { "param": "Ppk", "max": 174, "unit": "W", "conditions": "Peak power dissipation, 8 x 20 us waveform (Figure 5), TA = 25 C", "page": 3 }
+  ],
+  "recommended_operating": [
+    { "param": "VRWM", "max": 5.0, "unit": "V", "conditions": "Working peak reverse voltage (cathode positive vs anode), TA = 25 C", "page": 3 },
+    { "param": "IR", "max": 0.05, "unit": "uA", "conditions": "Reverse leakage at VRWM, TA = 25 C", "page": 3 },
+    { "param": "VBR", "min": 6.2, "unit": "V", "conditions": "Breakdown voltage at IT = 1.0 mA, TA = 25 C (Note 2)", "page": 3 },
+    { "param": "VC", "typ": 11.6, "unit": "V", "conditions": "Clamping voltage at IPP = 5.0 A, 8 x 20 us", "page": 3 },
+    { "param": "VC", "max": 18.6, "unit": "V", "conditions": "Clamping voltage at max IPP (9.4 A), 8 x 20 us", "page": 3 },
+    { "param": "VF", "max": 1.1, "unit": "V", "conditions": "Forward voltage at IF = 10 mA", "page": 3 },
+    { "param": "C", "typ": 80, "unit": "pF", "conditions": "Capacitance at VR = 0 V, f = 1 MHz", "page": 3 }
+  ],
+  "pins": [
+    { "number": "1", "name": "Cathode", "type": "passive", "requirement": "must_connect", "notes": "Polarity band side (SOD-523 style 1). Connect to the protected signal line.", "page": 1 },
+    { "number": "2", "name": "Anode", "type": "passive", "requirement": "must_connect", "notes": "Connect to GND (uni-directional device).", "page": 1 }
+  ],
+  "layout_notes": [],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 1,
+    "gaps": [
+      "No layout guidelines in the datasheet (placement near the connector, GND return) - application note AND8308/D or AND8307/D not read.",
+      "No IR, VBR, VC or capacitance over temperature: all electrical characteristics are at TA = 25 C only (p3).",
+      "No VBR max and no VBR typ given; only VBR min 6.2 V at 1 mA (p3).",
+      "Capacitance is typ only (80 pF at 0 V); no max and no curve versus bias voltage in this revision.",
+      "No IEC 61000-4-2 clamping voltage number for ESD5Z5.0: only oscilloscope screenshots (Figures 1 and 2, p3).",
+      "No recommended operating temperature range distinct from TJ/Tstg -55 to +150 C (p2).",
+      "Pin 1 cathode / pin 2 anode taken from the p1 package drawing and the p5 case outline (STYLE 1); the datasheet has no pin table."
+    ],
+    "human_validated": false,
+    "pages_used": [1, 2, 3, 5]
+  }
+}

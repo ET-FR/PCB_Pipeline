@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "mpn": "AO3400A",
+  "manufacturer": "Alpha & Omega Semiconductor",
+  "category": "power_switch",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "Rev 3.1",
+    "date": "2023-07",
+    "source_url": "https://www.aosmd.com/res/datasheets/AO3400A.pdf",
+    "sha256": "9c60d0b6c1ddc7609a4b788a91181468d8ffe6c3e9ba425c3d8ffc5ba88c5033"
+  },
+  "absolute_maximum": [
+    { "param": "VDS", "max": 30, "unit": "V", "conditions": "TA=25C", "page": 1 },
+    { "param": "VGS", "min": -12, "max": 12, "unit": "V", "conditions": "TA=25C", "page": 1 },
+    { "param": "ID", "max": 5.7, "unit": "A", "conditions": "continuous, TA=25C", "page": 1 },
+    { "param": "ID", "max": 4.7, "unit": "A", "conditions": "continuous, TA=70C", "page": 1 },
+    { "param": "IDM", "max": 30, "unit": "A", "conditions": "pulsed, repetitive rating limited by TJ(MAX)=150C (note C)", "page": 1 },
+    { "param": "PD", "max": 1.4, "unit": "W", "conditions": "TA=25C, based on t<=10s RthJA (note B)", "page": 1 },
+    { "param": "PD", "max": 0.9, "unit": "W", "conditions": "TA=70C (note B)", "page": 1 },
+    { "param": "TJ", "min": -55, "max": 150, "unit": "C", "conditions": "junction and storage", "page": 1 },
+    { "param": "TSTG", "min": -55, "max": 150, "unit": "C", "page": 1 },
+    { "param": "RthJA", "typ": 70, "max": 90, "unit": "C/W", "conditions": "t<=10s, 1 in2 FR-4 2 oz copper, still air (note A)", "page": 1 },
+    { "param": "RthJA", "typ": 100, "max": 125, "unit": "C/W", "conditions": "steady state (notes A, D)", "page": 1 },
+    { "param": "RthJL", "typ": 63, "max": 80, "unit": "C/W", "conditions": "steady state", "page": 1 }
+  ],
+  "recommended_operating": [
+    { "param": "BVDSS", "min": 30, "unit": "V", "conditions": "ID=250uA, VGS=0V", "page": 2 },
+    { "param": "IDSS", "max": 1, "unit": "uA", "conditions": "VDS=30V, VGS=0V", "page": 2 },
+    { "param": "IDSS", "max": 5, "unit": "uA", "conditions": "VDS=30V, VGS=0V, TJ=55C", "page": 2 },
+    { "param": "IGSS", "max": 100, "unit": "nA", "conditions": "VDS=0V, VGS=+/-12V", "page": 2 },
+    { "param": "VGS(th)", "min": 0.65, "typ": 1.05, "max": 1.45, "unit": "V", "conditions": "VDS=VGS, ID=250uA", "page": 2 },
+    { "param": "ID(ON)", "min": 30, "unit": "A", "conditions": "VGS=4.5V, VDS=5V", "page": 2 },
+    { "param": "RDS(ON)", "typ": 18, "max": 26.5, "unit": "mohm", "conditions": "VGS=10V, ID=5.7A", "page": 2 },
+    { "param": "RDS(ON)", "typ": 28, "max": 38, "unit": "mohm", "conditions": "VGS=10V, ID=5.7A, TJ=125C", "page": 2 },
+    { "param": "RDS(ON)", "typ": 19, "max": 32, "unit": "mohm", "conditions": "VGS=4.5V, ID=5A", "page": 2 },
+    { "param": "RDS(ON)", "typ": 24, "max": 48, "unit": "mohm", "conditions": "VGS=2.5V, ID=3A", "page": 2 },
+    { "param": "gFS", "typ": 33, "unit": "S", "conditions": "VDS=5V, ID=5.7A", "page": 2 },
+    { "param": "VSD", "typ": 0.7, "max": 1, "unit": "V", "conditions": "IS=1A, VGS=0V", "page": 2 },
+    { "param": "IS", "max": 2, "unit": "A", "conditions": "maximum body-diode continuous current", "page": 2 },
+    { "param": "Ciss", "typ": 630, "unit": "pF", "conditions": "VGS=0V, VDS=15V, f=1MHz", "page": 2 },
+    { "param": "Coss", "typ": 75, "unit": "pF", "conditions": "VGS=0V, VDS=15V, f=1MHz", "page": 2 },
+    { "param": "Crss", "typ": 50, "unit": "pF", "conditions": "VGS=0V, VDS=15V, f=1MHz", "page": 2 },
+    { "param": "Rg", "min": 1.5, "typ": 3, "max": 4.5, "unit": "ohm", "conditions": "VGS=0V, VDS=0V, f=1MHz", "page": 2 },
+    { "param": "Qg", "typ": 6, "max": 7, "unit": "nC", "conditions": "VGS=4.5V, VDS=15V, ID=5.7A", "page": 2 },
+    { "param": "Qgs", "typ": 1.3, "unit": "nC", "conditions": "VGS=4.5V, VDS=15V, ID=5.7A", "page": 2 },
+    { "param": "Qgd", "typ": 1.8, "unit": "nC", "conditions": "VGS=4.5V, VDS=15V, ID=5.7A", "page": 2 },
+    { "param": "tD(on)", "typ": 3, "unit": "ns", "conditions": "VGS=10V, VDS=15V, RL=2.6ohm, RGEN=3ohm", "page": 2 },
+    { "param": "tr", "typ": 2.5, "unit": "ns", "conditions": "VGS=10V, VDS=15V, RL=2.6ohm, RGEN=3ohm", "page": 2 },
+    { "param": "tD(off)", "typ": 25, "unit": "ns", "conditions": "VGS=10V, VDS=15V, RL=2.6ohm, RGEN=3ohm", "page": 2 },
+    { "param": "tf", "typ": 4, "unit": "ns", "conditions": "VGS=10V, VDS=15V, RL=2.6ohm, RGEN=3ohm", "page": 2 },
+    { "param": "trr", "typ": 8.5, "unit": "ns", "conditions": "IF=5.7A, dI/dt=100A/us", "page": 2 },
+    { "param": "Qrr", "typ": 2.6, "unit": "nC", "conditions": "IF=5.7A, dI/dt=100A/us", "page": 2 }
+  ],
+  "pins": [
+    { "number": "1", "name": "G", "type": "input", "requirement": "none", "notes": "Gate. Datasheet shows only G/D/S labels on the SOT23 drawing, no pin numbers; numbering 1=G, 2=S, 3=D is the usual SOT-23 MOSFET mapping and must be checked against the footprint/symbol (see gaps).", "page": 1 },
+    { "number": "2", "name": "S", "type": "passive", "requirement": "must_connect", "notes": "Source", "page": 1 },
+    { "number": "3", "name": "D", "type": "passive", "requirement": "must_connect", "notes": "Drain", "page": 1 }
+  ],
+  "layout_notes": [
+    { "text": "RthJA is measured on 1 in2 FR-4 with 2 oz copper in still air; the value in any given application depends on the board design.", "page": 2 }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 1,
+    "gaps": [
+      "Pin numbers are not printed in the datasheet: the SOT23 drawing (p1) shows only G, D, S labels. Numbering 1=G, 2=S, 3=D is not stated and must be confirmed against the KiCad symbol/footprint or the AOS package outline.",
+      "No recommended operating conditions table in the datasheet; recommended_operating holds the electrical characteristics at TJ=25C (p2).",
+      "No gate pull-down or gate resistor recommendation in the datasheet; the 100 kohm pull-down in the design is a design choice, not a datasheet requirement.",
+      "No package outline or land pattern in this 5-page datasheet.",
+      "No layout guidelines beyond the thermal test-board note (p2)."
+    ],
+    "human_validated": false,
+    "pages_used": [1, 2, 3, 4]
+  }
+}

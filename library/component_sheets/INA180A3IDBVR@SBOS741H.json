@@ -1,0 +1,438 @@
+{
+  "schema_version": 1,
+  "mpn": "INA180A3IDBVR",
+  "manufacturer": "Texas Instruments",
+  "category": "sensor",
+  "criticality": "standard",
+  "datasheet": {
+    "revision": "SBOS741H",
+    "date": "2022-07",
+    "source_url": "https://www.ti.com/lit/ds/symlink/ina180.pdf",
+    "sha256": "d48a0e37dbd3afcfe053f740ba2ba30e94a05fa22cab2cbc5873651ac39bf1e6"
+  },
+  "absolute_maximum": [
+    {
+      "param": "VS",
+      "max": 6,
+      "unit": "V",
+      "conditions": "supply voltage",
+      "page": 7
+    },
+    {
+      "param": "VIN+ - VIN-",
+      "min": -26,
+      "max": 26,
+      "unit": "V",
+      "conditions": "differential input voltage, IN+ to IN-",
+      "page": 7
+    },
+    {
+      "param": "IN+",
+      "min": -0.3,
+      "max": 26,
+      "unit": "V",
+      "conditions": "common-mode, relative to GND (min is GND - 0.3 V); input voltage can exceed this if the pin current is limited to 5 mA (note 3)",
+      "page": 7
+    },
+    {
+      "param": "IN-",
+      "min": -0.3,
+      "max": 26,
+      "unit": "V",
+      "conditions": "common-mode, relative to GND (min is GND - 0.3 V); input voltage can exceed this if the pin current is limited to 5 mA (note 3)",
+      "page": 7
+    },
+    {
+      "param": "OUT",
+      "min": -0.3,
+      "unit": "V",
+      "conditions": "output voltage, relative to GND (GND - 0.3 V); max is VS + 0.3 V",
+      "page": 7
+    },
+    {
+      "param": "IOUT",
+      "max": 8,
+      "unit": "mA",
+      "conditions": "maximum output current",
+      "page": 7
+    },
+    {
+      "param": "TA",
+      "min": -55,
+      "max": 150,
+      "unit": "C",
+      "conditions": "operating free-air temperature",
+      "page": 7
+    },
+    {
+      "param": "TJ",
+      "max": 150,
+      "unit": "C",
+      "page": 7
+    },
+    {
+      "param": "TSTG",
+      "min": -65,
+      "max": 150,
+      "unit": "C",
+      "page": 7
+    },
+    {
+      "param": "V(ESD) HBM",
+      "max": 3000,
+      "unit": "V",
+      "conditions": "human-body model, +/-3000 V",
+      "page": 7
+    },
+    {
+      "param": "V(ESD) CDM",
+      "max": 1000,
+      "unit": "V",
+      "conditions": "charged-device model, +/-1000 V",
+      "page": 7
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "VCM",
+      "min": -0.2,
+      "typ": 12,
+      "max": 26,
+      "unit": "V",
+      "conditions": "common-mode input voltage (IN+ and IN-)",
+      "page": 7
+    },
+    {
+      "param": "VS",
+      "min": 2.7,
+      "typ": 5,
+      "max": 5.5,
+      "unit": "V",
+      "conditions": "operating supply voltage",
+      "page": 7
+    },
+    {
+      "param": "TA",
+      "min": -40,
+      "max": 125,
+      "unit": "C",
+      "conditions": "operating free-air temperature",
+      "page": 7
+    },
+    {
+      "param": "RthJA",
+      "typ": 197.1,
+      "unit": "C/W",
+      "conditions": "INA180 DBV (SOT-23-5)",
+      "page": 7
+    },
+    {
+      "param": "G",
+      "typ": 100,
+      "unit": "V/V",
+      "conditions": "A3 devices",
+      "page": 8
+    },
+    {
+      "param": "EG",
+      "typ": 0.1,
+      "max": 1,
+      "unit": "%",
+      "conditions": "gain error +/-, VOUT = 0.5 V to VS - 0.5 V, TA = -40 to +125 C",
+      "page": 8
+    },
+    {
+      "param": "VOS",
+      "typ": 25,
+      "max": 150,
+      "unit": "uV",
+      "conditions": "offset voltage RTI, +/-, VIN+ = 0 V, TA = 25 C, VS = 5 V",
+      "page": 8
+    },
+    {
+      "param": "VOS",
+      "typ": 100,
+      "max": 500,
+      "unit": "uV",
+      "conditions": "offset voltage RTI, +/-, VIN+ = 12 V, TA = 25 C, VS = 5 V",
+      "page": 8
+    },
+    {
+      "param": "dVOS/dT",
+      "typ": 0.2,
+      "max": 1,
+      "unit": "uV/C",
+      "conditions": "TA = -40 to +125 C",
+      "page": 8
+    },
+    {
+      "param": "CMRR",
+      "min": 84,
+      "typ": 100,
+      "unit": "dB",
+      "conditions": "VIN+ = 0 to 26 V, VSENSE = 10 mV, TA = -40 to +125 C",
+      "page": 8
+    },
+    {
+      "param": "PSRR",
+      "typ": 8,
+      "max": 40,
+      "unit": "uV/V",
+      "conditions": "+/-, VS = 2.7 to 5.5 V, VSENSE = 10 mV",
+      "page": 8
+    },
+    {
+      "param": "IIB",
+      "typ": 0.1,
+      "unit": "uA",
+      "conditions": "VSENSE = 0 mV, VIN+ = 0 V",
+      "page": 8
+    },
+    {
+      "param": "IIB",
+      "typ": 80,
+      "unit": "uA",
+      "conditions": "VSENSE = 0 mV, VIN+ = 12 V",
+      "page": 8
+    },
+    {
+      "param": "VSP (VOUT high relative to VS)",
+      "min": -0.03,
+      "typ": -0.02,
+      "unit": "V",
+      "conditions": "swing to VS rail: output reaches (VS) - 0.02 V typ, (VS) - 0.03 V limit; RL = 10 kohm to GND, TA = -40 to +125 C, overdriven input",
+      "page": 8
+    },
+    {
+      "param": "VSN",
+      "typ": 0.0005,
+      "max": 0.005,
+      "unit": "V",
+      "conditions": "swing to GND, relative to GND, RL = 10 kohm to GND, TA = -40 to +125 C, overdriven input",
+      "page": 8
+    },
+    {
+      "param": "CLOAD",
+      "max": 1,
+      "unit": "nF",
+      "conditions": "maximum capacitive load on OUT, no sustained oscillation",
+      "page": 8
+    },
+    {
+      "param": "BW",
+      "typ": 150,
+      "unit": "kHz",
+      "conditions": "A3 devices, CLOAD = 10 pF",
+      "page": 8
+    },
+    {
+      "param": "SR",
+      "typ": 2,
+      "unit": "V/us",
+      "page": 8
+    },
+    {
+      "param": "IQ",
+      "typ": 197,
+      "max": 260,
+      "unit": "uA",
+      "conditions": "INA180, VSENSE = 10 mV, TA = 25 C",
+      "page": 8
+    },
+    {
+      "param": "IQ",
+      "max": 300,
+      "unit": "uA",
+      "conditions": "INA180, VSENSE = 10 mV, TA = -40 to +125 C",
+      "page": 8
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "OUT",
+      "type": "output",
+      "requirement": "none",
+      "notes": "Analog output, output voltage (pinout A, DBV). Max capacitive load 1 nF (p8); TI recommends an RC filter between OUT and the ADC (p21).",
+      "page": 4
+    },
+    {
+      "number": "2",
+      "name": "GND",
+      "type": "ground",
+      "requirement": "tie_to_ground",
+      "notes": "Ground. Connect the ADC reference or MCU ground as close as possible to this pin (p21).",
+      "page": 4
+    },
+    {
+      "number": "3",
+      "name": "IN+",
+      "type": "analog",
+      "requirement": "must_connect",
+      "notes": "Current-sense amplifier positive input. Low-side: connect to the load side of the sense resistor (p4). Kelvin connection to the shunt (p27).",
+      "page": 4
+    },
+    {
+      "number": "4",
+      "name": "IN-",
+      "type": "analog",
+      "requirement": "must_connect",
+      "notes": "Current-sense amplifier negative input (printed 'IN–' in the datasheet). Low-side: connect to the ground side of the sense resistor (p4).",
+      "page": 4
+    },
+    {
+      "number": "5",
+      "name": "VS",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "Power supply, 2.7 V to 5.5 V (p4).",
+      "page": 4
+    }
+  ],
+  "external_components": [
+    {
+      "role": "supply bypass capacitor",
+      "kind": "capacitor",
+      "between_pins": [
+        "VS",
+        "GND"
+      ],
+      "constraints": {
+        "min_value": 1e-07,
+        "unit": "F"
+      },
+      "page": 21
+    },
+    {
+      "role": "optional input filter series resistor, IN+ side (RF)",
+      "kind": "resistor",
+      "between_pins": [
+        "IN+"
+      ],
+      "constraints": {
+        "max_value": 10,
+        "unit": "ohm"
+      },
+      "page": 23
+    },
+    {
+      "role": "optional input filter series resistor, IN- side (RF)",
+      "kind": "resistor",
+      "between_pins": [
+        "IN-"
+      ],
+      "constraints": {
+        "max_value": 10,
+        "unit": "ohm"
+      },
+      "page": 23
+    },
+    {
+      "role": "capacitive load directly on OUT",
+      "kind": "capacitor",
+      "between_pins": [
+        "OUT",
+        "GND"
+      ],
+      "constraints": {
+        "max_value": 1e-09,
+        "unit": "F"
+      },
+      "page": 8
+    }
+  ],
+  "equations": [
+    {
+      "name": "output voltage (normal mode)",
+      "expression": "G * V_SENSE",
+      "unit": "V",
+      "constants": {
+        "G": 100
+      },
+      "page": 19
+    },
+    {
+      "name": "gain error factor with external input series resistors (A3)",
+      "expression": "1000 / (R_F + 1000)",
+      "unit": "",
+      "page": 24
+    },
+    {
+      "name": "added gain error from input series resistors",
+      "expression": "100 - (100 * GEF)",
+      "unit": "%",
+      "page": 24
+    },
+    {
+      "name": "maximum sense resistor for a power budget",
+      "expression": "PD_MAX / I_MAX ** 2",
+      "unit": "ohm",
+      "page": 22
+    },
+    {
+      "name": "total offset error (Equation 6)",
+      "expression": "VOS_TOTAL / (I_SENSE * R_SENSE) * 100",
+      "unit": "%",
+      "page": 25
+    },
+    {
+      "name": "total current-sense error, RSS (Equation 7)",
+      "expression": "(GAIN_ERR_PCT ** 2 + OFFSET_ERR_PCT ** 2) ** 0.5",
+      "unit": "%",
+      "page": 26
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "Connect IN+ and IN- to the sense resistor with a Kelvin (4-wire) connection so only the shunt impedance is seen between the inputs.",
+      "page": 27
+    },
+    {
+      "text": "Place the 0.1 uF bypass capacitor as close as possible to the VS and GND pins.",
+      "page": 27
+    },
+    {
+      "text": "Keep the two shunt-to-input trace lengths as close as possible to minimise impedance mismatch.",
+      "page": 27
+    },
+    {
+      "text": "Single-channel recommended layout, pinout A: shunt next to pins 3/4, via to ground plane at GND pin 2 (Figure 9-7).",
+      "page": 28
+    }
+  ],
+  "extraction": {
+    "critic_score": 9,
+    "attempts": 1,
+    "gaps": [
+      "INA180A3IDBVR = INA180, gain 100 V/V, DBV SOT-23-5, pinout A (device comparison p4, orderable list p32, marking 1A9D).",
+      "Pin name IN- is printed with an en dash ('IN–') in the datasheet; stored as ASCII 'IN-' for symbol mapping.",
+      "Absolute maximum for OUT is GND - 0.3 V to VS + 0.3 V (p7): the max depends on VS and is only in the conditions text. Common-mode min is GND - 0.3 V.",
+      "VSP is specified relative to VS ((VS) - 0.02 typ, (VS) - 0.03 limit, p8); stored as negative offsets from VS. Text p19 says 'maximum specified output swing to the positive rail is 30 mV'.",
+      "Electrical characteristics are at TA = 25 C, VS = 5 V, VIN+ = 12 V unless noted (p8); they are stored in recommended_operating with their conditions since the schema has no characteristics block.",
+      "Offset at VCM near 0 V with VIN+ = 0 V is +/-150 uV max (p8);",
+      "Datasheet quirk: the design example (p25) says the offset is '125 uV (maximum)' at VCM = 0 V, VS = 5 V, then uses 150 uV; the Electrical Characteristics table (p8) gives 150 uV max.",
+      "Equation variables (V_SENSE, R_F, GEF, PD_MAX, I_MAX, VOS_TOTAL, I_SENSE, R_SENSE, GAIN_ERR_PCT, OFFSET_ERR_PCT) are operating quantities or off-pin parts; no pin endpoints mapped.",
+      "No input common-mode transient protection is needed below 26 V (p26); protection options for > 26 V are application info only (p26-p27).",
+      "Inputs withstand the full 26 V differential range with or without VS applied (p26)."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      1,
+      4,
+      7,
+      8,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      32
+    ]
+  }
+}

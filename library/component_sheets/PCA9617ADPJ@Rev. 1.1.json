@@ -1,0 +1,493 @@
+{
+  "schema_version": 1,
+  "mpn": "PCA9617ADPJ",
+  "manufacturer": "NXP Semiconductors",
+  "category": "interface",
+  "criticality": "standard",
+  "datasheet": {
+    "revision": "Rev. 1.1",
+    "date": "2026-03-16",
+    "source_url": "https://www.nxp.com/docs/en/data-sheet/PCA9617A.pdf",
+    "sha256": "1f0289f623c0c36e847db63188de4bdb89fb3cb4c44113ade972b9ee686155b7"
+  },
+  "absolute_maximum": [
+    {
+      "param": "VCC(B)",
+      "min": -0.5,
+      "max": 7,
+      "unit": "V",
+      "page": 10
+    },
+    {
+      "param": "VCC(A)",
+      "min": -0.5,
+      "max": 7,
+      "unit": "V",
+      "conditions": "Adjustable",
+      "page": 10
+    },
+    {
+      "param": "VI/O",
+      "min": -0.5,
+      "max": 7,
+      "unit": "V",
+      "conditions": "Port A and port B; enable pin (EN)",
+      "page": 10
+    },
+    {
+      "param": "II/O",
+      "max": 50,
+      "unit": "mA",
+      "conditions": "Port A; port B",
+      "page": 10
+    },
+    {
+      "param": "II",
+      "max": 50,
+      "unit": "mA",
+      "conditions": "EN, VCC(A), VCC(B), GND",
+      "page": 10
+    },
+    {
+      "param": "Ptot",
+      "max": 100,
+      "unit": "mW",
+      "page": 10
+    },
+    {
+      "param": "Tstg",
+      "min": -55,
+      "max": 125,
+      "unit": "C",
+      "page": 10
+    },
+    {
+      "param": "Tj",
+      "max": 125,
+      "unit": "C",
+      "page": 10
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "VCC(B)",
+      "min": 2.2,
+      "max": 5.5,
+      "unit": "V",
+      "page": 11
+    },
+    {
+      "param": "VCC(A)",
+      "min": 0.8,
+      "max": 5.5,
+      "unit": "V",
+      "conditions": "Channels enabled only if 0.4 x VCC(A) + 0.8 V <= VCC(B) (Notes 1 and 3)",
+      "page": 11
+    },
+    {
+      "param": "Tamb",
+      "min": -40,
+      "max": 85,
+      "unit": "C",
+      "conditions": "Operating in free air",
+      "page": 10
+    },
+    {
+      "param": "ICC(A)",
+      "max": 8,
+      "unit": "uA",
+      "conditions": "VCC(A) = 0.95 V",
+      "page": 11
+    },
+    {
+      "param": "ICC(A)",
+      "max": 50,
+      "unit": "uA",
+      "conditions": "VCC(A) = 5.5 V",
+      "page": 11
+    },
+    {
+      "param": "ICCH(B)",
+      "typ": 1.5,
+      "max": 2.5,
+      "unit": "mA",
+      "conditions": "VCC(B) = 5.5 V; SDAn = SCLn = VCC(n)",
+      "page": 11
+    },
+    {
+      "param": "ICCL(B)",
+      "typ": 1.7,
+      "max": 2.9,
+      "unit": "mA",
+      "conditions": "VCC(B) = 5.5 V; one SDA and one SCL = GND; other SDA and SCL open (with pullup resistors)",
+      "page": 11
+    },
+    {
+      "param": "VIH_portB",
+      "min": 0.7,
+      "unit": "x VCC(B)",
+      "conditions": "SDAB, SCLB; max 5.5 V",
+      "page": 11
+    },
+    {
+      "param": "VIL_portB",
+      "min": -0.5,
+      "max": 0.4,
+      "unit": "V",
+      "conditions": "SDAB, SCLB",
+      "page": 11
+    },
+    {
+      "param": "ILI_portB",
+      "max": 1,
+      "unit": "uA",
+      "conditions": "SDAB, SCLB; VI = 5.5 V; +/-1 uA",
+      "page": 11
+    },
+    {
+      "param": "IIL_portB",
+      "max": 10,
+      "unit": "uA",
+      "conditions": "SDA, SCL; VI = 0.2 V",
+      "page": 11
+    },
+    {
+      "param": "VOL_portB",
+      "min": 0.47,
+      "unit": "V",
+      "conditions": "IOL = 150 uA at VCC(B) = 2.2 V; pullup must give IOL >= 150 uA (Note 4)",
+      "page": 11
+    },
+    {
+      "param": "VOL_portB",
+      "typ": 0.54,
+      "max": 0.6,
+      "unit": "V",
+      "conditions": "IOL = 13 mA at VCC(B) = 2.2 V (guaranteed by design and characterization)",
+      "page": 11
+    },
+    {
+      "param": "VOL-VIL_portB",
+      "min": 60,
+      "typ": 90,
+      "max": 160,
+      "unit": "mV",
+      "conditions": "VOL at IOL = 1 mA; guaranteed by design",
+      "page": 11
+    },
+    {
+      "param": "Cio_portB",
+      "typ": 7,
+      "max": 10,
+      "unit": "pF",
+      "conditions": "VI = 3 V or 0 V; VCC(B) = 3.3 V; EN = LOW, or VCC = 0 V",
+      "page": 11
+    },
+    {
+      "param": "VIH_portA",
+      "min": 0.7,
+      "unit": "x VCC(A)",
+      "conditions": "SDAA, SCLA; max 5.5 V",
+      "page": 11
+    },
+    {
+      "param": "VIL_portA",
+      "max": 0.25,
+      "unit": "x VCC(A)",
+      "conditions": "SDAA, SCLA; min -0.5 V; with envelope noise VIL must stay below 0.3 VCC(A) (Note 6)",
+      "page": 11
+    },
+    {
+      "param": "ILI_portA",
+      "max": 1,
+      "unit": "uA",
+      "conditions": "SDAA, SCLA; VI = 5.5 V; +/-1 uA",
+      "page": 11
+    },
+    {
+      "param": "IIL_portA",
+      "max": 10,
+      "unit": "uA",
+      "conditions": "SDA, SCL; VI = 0.2 V",
+      "page": 11
+    },
+    {
+      "param": "VOL_portA",
+      "typ": 0.1,
+      "max": 0.2,
+      "unit": "V",
+      "conditions": "IOL = 13 mA; VCC(B) = 2.2 V",
+      "page": 11
+    },
+    {
+      "param": "Cio_portA",
+      "typ": 7,
+      "max": 10,
+      "unit": "pF",
+      "conditions": "VI = 3 V or 0 V; VCC = 3.3 V; EN = LOW, or VCC = 0 V",
+      "page": 12
+    },
+    {
+      "param": "VIL_EN",
+      "max": 0.3,
+      "unit": "x VCC(B)",
+      "conditions": "EN; min -0.5 V",
+      "page": 12
+    },
+    {
+      "param": "VIH_EN",
+      "min": 0.7,
+      "unit": "x VCC(B)",
+      "conditions": "EN; max 5.5 V",
+      "page": 12
+    },
+    {
+      "param": "IIL(EN)",
+      "min": -18,
+      "typ": -7,
+      "max": -4,
+      "unit": "uA",
+      "conditions": "VI = 0.2 V, EN; VCC(B) = 2.2 V (internal pullup)",
+      "page": 12
+    },
+    {
+      "param": "Ci_EN",
+      "typ": 6,
+      "max": 7,
+      "unit": "pF",
+      "conditions": "VI = VCC(B)",
+      "page": 12
+    },
+    {
+      "param": "fSCL",
+      "min": 0,
+      "max": 1000,
+      "unit": "kHz",
+      "conditions": "Maximum system frequency can be lower because of repeater delays",
+      "page": 2
+    },
+    {
+      "param": "tPHL_A_to_B",
+      "min": 63,
+      "typ": 80,
+      "max": 173,
+      "unit": "ns",
+      "conditions": "Port A to port B; 1.35 kohm, 50 pF",
+      "page": 14
+    },
+    {
+      "param": "tPLH_A_to_B",
+      "min": 40,
+      "typ": 60,
+      "max": 102,
+      "unit": "ns",
+      "conditions": "Port A to port B; 1.35 kohm, 50 pF",
+      "page": 14
+    },
+    {
+      "param": "tPHL_B_to_A",
+      "min": 46,
+      "typ": 76,
+      "max": 152,
+      "unit": "ns",
+      "conditions": "Port B to port A; 1.35 kohm, 50 pF",
+      "page": 14
+    },
+    {
+      "param": "tPLH2_B_to_A",
+      "min": 67,
+      "typ": 94,
+      "max": 130,
+      "unit": "ns",
+      "conditions": "Port B to port A, 0.45 V on port B to 0.5 VCC(A) on port A",
+      "page": 14
+    },
+    {
+      "param": "ten",
+      "max": 100,
+      "unit": "ns",
+      "conditions": "EN HIGH to enable",
+      "page": 14
+    },
+    {
+      "param": "tdis",
+      "max": 100,
+      "unit": "ns",
+      "conditions": "EN LOW to disable",
+      "page": 14
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "VCC(A)",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "Port A supply 0.8-5.5 V; only sets the port A input reference and power-good detect (p6); decoupling capacitor required (p12 Note 2). Requires 0.4 x VCC(A) + 0.8 V <= VCC(B).",
+      "page": 5
+    },
+    {
+      "number": "2",
+      "name": "SCLA",
+      "type": "open_drain",
+      "requirement": "pull_up",
+      "notes": "Serial clock port A bus; open-drain, 5.5 V tolerant, high-Z when unpowered; each side needs a pullup (p6). Port A drives a hard LOW (no offset); may connect to port A of other PCA9617As (star) or to any static-offset buffer (p1).",
+      "page": 5
+    },
+    {
+      "number": "3",
+      "name": "SDAA",
+      "type": "open_drain",
+      "requirement": "pull_up",
+      "notes": "Serial data port A bus; same as SCLA.",
+      "page": 5
+    },
+    {
+      "number": "4",
+      "name": "GND",
+      "type": "ground",
+      "requirement": "tie_to_ground",
+      "notes": "Supply ground (0 V).",
+      "page": 5
+    },
+    {
+      "number": "5",
+      "name": "EN",
+      "type": "input",
+      "requirement": "none",
+      "notes": "Active HIGH repeater enable, thresholds referenced to VCC(B), internal pullup to VCC(B) keeps the device active (p6). Change state only when the bus is idle.",
+      "page": 5
+    },
+    {
+      "number": "6",
+      "name": "SDAB",
+      "type": "open_drain",
+      "requirement": "pull_up",
+      "notes": "Serial data port B bus; static offset LOW about 0.55 V; must not face port B of another PCA9617A or another static/incremented-offset buffer (p1). Devices on port B must pull below 0.4 V to be passed through (p7). Pullup must give IOL >= 150 uA (p11); B-side RC must be >= 67.5 ns (p6).",
+      "page": 5
+    },
+    {
+      "number": "7",
+      "name": "SCLB",
+      "type": "open_drain",
+      "requirement": "pull_up",
+      "notes": "Serial clock port B bus; same as SDAB.",
+      "page": 5
+    },
+    {
+      "number": "8",
+      "name": "VCC(B)",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "Port B supply 2.2-5.5 V; powers the logic and all I/Os (p6). Drivers off until VCC(B) > 2.2 V plus ~400 us settling (p6).",
+      "page": 5
+    }
+  ],
+  "external_components": [
+    {
+      "role": "VCC(B) decoupling capacitor, 0.1 uF located near the VCC(B) pin",
+      "kind": "capacitor",
+      "between_pins": [
+        "VCC(B)",
+        "GND"
+      ],
+      "constraints": {
+        "min_value": 1e-07,
+        "unit": "F"
+      },
+      "page": 12
+    },
+    {
+      "role": "VCC(A) decoupling capacitor (required, value not given)",
+      "kind": "capacitor",
+      "between_pins": [
+        "VCC(A)",
+        "GND"
+      ],
+      "page": 12
+    },
+    {
+      "role": "SDAA pullup resistor to the port A bus supply (each side must have a pullup)",
+      "kind": "resistor",
+      "between_pins": [
+        "SDAA"
+      ],
+      "page": 6
+    },
+    {
+      "role": "SCLA pullup resistor to the port A bus supply (each side must have a pullup)",
+      "kind": "resistor",
+      "between_pins": [
+        "SCLA"
+      ],
+      "page": 6
+    },
+    {
+      "role": "SDAB pullup resistor to the port B bus supply; IOL >= 150 uA, RC >= 67.5 ns",
+      "kind": "resistor",
+      "between_pins": [
+        "SDAB"
+      ],
+      "page": 6
+    },
+    {
+      "role": "SCLB pullup resistor to the port B bus supply; IOL >= 150 uA, RC >= 67.5 ns",
+      "kind": "resistor",
+      "between_pins": [
+        "SCLB"
+      ],
+      "page": 6
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "Decoupling capacitors are required on VCC(A) and VCC(B); the 0.1 uF decoupling for VCC(B) must be located near the VCC(B) pin.",
+      "page": 12
+    },
+    {
+      "text": "Decoupling for VCC(B) close to the VCC(B) pin is especially important (application figure notes).",
+      "page": 8
+    },
+    {
+      "text": "Driving a short cable (Figure 7): 75 ohm series resistors on the cable-side lines and an optional 10 kohm on EN are shown.",
+      "page": 9
+    },
+    {
+      "text": "Change EN only when the global bus and the repeater port are idle.",
+      "page": 6
+    },
+    {
+      "text": "Port B static offset: never connect port B to port B of another PCA9617A or to another static-offset buffer; star topology only with port A sides on the common bus; series only port A to port B.",
+      "page": 1
+    }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 1,
+    "gaps": [
+      "No decoupling capacitor value for VCC(A): only stated as required (p12 Note 2).",
+      "No pullup resistor value range beyond IOL >= 150 uA on port B (p11 Note 4) and B-side RC >= 67.5 ns (p6); AN255 not read.",
+      "Figure 7 (short cable) 75 ohm series and 10 kohm EN values come from the figure only, with no selection text (p9).",
+      "No thermal resistance (RthJA) for TSSOP8 in this datasheet.",
+      "No supply ramp-rate requirement; supplies may be applied in any sequence (p6).",
+      "No dedicated PCB layout section; layout notes come from application figure notes and Table 5 footnotes.",
+      "tPLH port B to port A is printed as -42 / -65 / -103 ns (negative values, p14); not recorded as a limit, meaning unclear.",
+      "Port B and port A VOL at 13 mA are specified at VCC(B) = 2.2 V only; no value at VCC(B) = 3.3 V except the curves in Figures 10 and 11 (p12)."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      1,
+      2,
+      3,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      14
+    ]
+  }
+}

@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "mpn": "0ZCJ0005FF2E",
+  "manufacturer": "Bel Fuse",
+  "category": "protection",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "Rev. 0ZCJ Apr2023",
+    "date": "2023-04",
+    "source_url": "https://sy-dep-epc-lpc.web.cern.ch/components/datasheets/epc-lpc%20(converters)/DS-CP-0ZCJ_Polyswitch_(BELFUSE).pdf",
+    "sha256": "85f7f921368d50f340b6d742540179d26650b0c7c5b75b4beca1ae066e533a21"
+  },
+  "absolute_maximum": [
+    {
+      "param": "Vmax",
+      "max": 60,
+      "unit": "V",
+      "conditions": "rated voltage, Vdc: maximum voltage the device can withstand at its rated current without damage",
+      "page": 1
+    },
+    {
+      "param": "Imax",
+      "max": 10,
+      "unit": "A",
+      "conditions": "maximum fault current the device can withstand at rated voltage (Vmax) without damage",
+      "page": 1
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "TA",
+      "min": -40,
+      "max": 85,
+      "unit": "C",
+      "conditions": "series temperature range",
+      "page": 1
+    },
+    {
+      "param": "IH",
+      "max": 0.05,
+      "unit": "A",
+      "conditions": "hold current: maximum current at which the device will not trip, still air, 23 C",
+      "page": 1
+    },
+    {
+      "param": "IT",
+      "min": 0.15,
+      "unit": "A",
+      "conditions": "trip current: minimum current at which the device will trip, still air, 23 C",
+      "page": 1
+    },
+    {
+      "param": "t_trip",
+      "max": 1.5,
+      "unit": "s",
+      "conditions": "maximum time to trip at 0.25 A, 23 C",
+      "page": 1
+    },
+    {
+      "param": "Pd",
+      "typ": 0.4,
+      "unit": "W",
+      "conditions": "typical power dissipated in tripped state, 23 C still air",
+      "page": 1
+    },
+    {
+      "param": "Rmin",
+      "min": 3.6,
+      "unit": "ohm",
+      "conditions": "minimum device resistance at 23 C, initial un-soldered state",
+      "page": 1
+    },
+    {
+      "param": "R1max",
+      "max": 50.0,
+      "unit": "ohm",
+      "conditions": "maximum device resistance at 23 C, 1 hour after initial trip or after being soldered to the PCB",
+      "page": 1
+    },
+    {
+      "param": "IH_derating",
+      "typ": 1.52,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "-40 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 1.36,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "-20 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 1.2,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "0 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 0.92,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "30 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 0.81,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "40 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 0.71,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "50 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 0.6,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "60 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 0.48,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "70 C, 0005 and 0010 parts",
+      "page": 3
+    },
+    {
+      "param": "IH_derating",
+      "typ": 0.3,
+      "unit": "fraction of IH at 23 C",
+      "conditions": "85 C, 0005 and 0010 parts",
+      "page": 3
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "1",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Terminal; non-polarized two-terminal 1206 chip, the datasheet gives no pin names or numbers.",
+      "page": 3
+    },
+    {
+      "number": "2",
+      "name": "2",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Terminal; non-polarized.",
+      "page": 3
+    }
+  ],
+  "equations": [
+    {
+      "name": "apparent tripped resistance",
+      "expression": "E ** 2 / Pd",
+      "unit": "ohm",
+      "constants": {
+        "Pd": 0.4
+      },
+      "page": 2
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "Recommended pad layout (1206): P = 2.00 mm, S = 1.00 mm, W = 1.90 mm nominal (see drawing for dimension meaning). Termination matte tin-plated copper.",
+      "page": 3
+    },
+    {
+      "text": "Reflow only (IR, vapor phase, hot air); not recommended for wave solder or direct immersion; paste thickness 0.20-0.25 mm; peak 260 C, 20-40 s within 5 C of peak; MSL 2a.",
+      "page": 4
+    },
+    {
+      "text": "PTC behaviour depends on heat loss: keep it away from heat sources (it trips at about 125 C internal, p2) and avoid rigid potting over it (cautionary note 6).",
+      "page": 3
+    },
+    {
+      "text": "May not suit circuits with large inductance: trip can create voltage spikes above Vmax (cautionary note 4). Intended for occasional faults, not repeated or prolonged faults (note 2).",
+      "page": 3
+    }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 1,
+    "gaps": [
+      "Two-terminal non-polarized part: the datasheet gives no pin names or numbers; names '1'/'2' are a convention for symbol mapping.",
+      "IT is defined as the minimum trip current (p1 definitions) and is listed here as a min; the table column only says 'Trip Current IT, A'.",
+      "Hold-current derating (p3) is given as a typical table and curve 'for guidance only' (p2 note); no guaranteed IH at the board ambient.",
+      "No resistance value at operating temperature or after repeated trips beyond R1max (1 h after trip or after soldering, p1); post-trip resistance drift after the first hour is not specified.",
+      "No voltage-drop or resistance-vs-current curve;",
+      "Time-current curve (p2) is an image; only the single tabulated point (0.25 A, 1.50 s max) is extracted.",
+      "Equation E**2/Pd (p2) gives the apparent tripped resistance; E is the voltage across the tripped PTC (supply open-circuit voltage), not a part value, so no variables are mapped.",
+      "Marking code for 0ZCJ0005FF2E is 'C' (p3); body dimensions C 0.45-0.85 mm, D 0.10-0.75 mm (p3); length and width of the 1206 body are in a drawing not extracted as text.",
+      "Datasheet does not give the date beyond 'Apr2023' (p2 footer)."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      1,
+      2,
+      3,
+      4
+    ]
+  }
+}

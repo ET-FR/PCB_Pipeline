@@ -9,4 +9,60 @@
 #   status: preferred        # preferred | ok | avoid
 #   projects: [board_a, board_b]
 #   notes: ""
-parts: []
+parts:
+  - mpn: TPS54202DDCR
+    manufacturer: Texas Instruments
+    role: sync buck 4.5-28 V in, 2 A, SOT-23-6
+    why: "Cheap and well stocked at LCSC (C191884), used on the V5 mainboard and FRONT_BOARD; Eco-mode pulse skipping cannot be disabled, filter analog branches"
+    status: preferred
+    projects: [FRONT_BOARD]
+    notes: "Sheet SLVSD26C in library/component_sheets"
+  - mpn: TLA2528IRTER
+    manufacturer: Texas Instruments
+    role: 8-channel 12-bit I2C ADC / GPIO, WQFN-16
+    why: "Firmware driver already exists; GPIO levels follow AVDD; accuracy typical only (ADS7128 drop-in for guaranteed limits)"
+    status: preferred
+    projects: [FRONT_BOARD]
+    notes: "LCSC C2866175"
+  - mpn: PCA9617ADPJ
+    manufacturer: NXP Semiconductors
+    role: level translating Fm+ I2C repeater, TSSOP8
+    why: "In stock replacement for the discontinued PCA9615DPJ on short board-to-board cables; port A faces port A across a cable"
+    status: ok
+    projects: [FRONT_BOARD]
+    notes: "LCSC C128388"
+  - mpn: BSC011N03LS
+    manufacturer: Infineon
+    role: N-MOSFET 30 V, 1.4 mOhm at 4.5 V, PG-TDSON-8, low-side motor switch
+    why: "Proven by the user on a motor driver; prefer LS over LSI (much lower off-state leakage, more JLCPCB stock)"
+    status: preferred
+    projects: [FRONT_BOARD]
+    notes: "JLCPCB C129786"
+  - mpn: INA180A3IDBVR
+    manufacturer: Texas Instruments
+    role: low-side current sense amplifier, gain 100, SOT-23-5
+    why: "Cheapest well-stocked TI current sense amp (LCSC C122882), VCM -0.2 to 26 V"
+    status: preferred
+    projects: [FRONT_BOARD]
+    notes: ""
+  - mpn: AO3400A
+    manufacturer: Alpha & Omega Semiconductor
+    role: N-MOSFET 30 V SOT-23 for small loads (valves, solenoids < 1 A)
+    why: "JLCPCB basic part (C20917), logic level"
+    status: preferred
+    projects: [FRONT_BOARD]
+    notes: ""
+  - mpn: SS54
+    manufacturer: MDD (Microdiode Semiconductor)
+    role: Schottky 40 V 5 A SMA, freewheel diode
+    why: "JLCPCB basic part (C22452)"
+    status: preferred
+    projects: [FRONT_BOARD]
+    notes: ""
+  - mpn: ESD5Z5.0T1G
+    manufacturer: onsemi
+    role: unidirectional ESD diode 5 V, SOD-523
+    why: "One part for 3.3 V and 5 V off-board signals, cheap and stocked (C82044); JLCPCB has no basic ESD diode"
+    status: preferred
+    projects: [FRONT_BOARD]
+    notes: ""

@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "mpn": "MMR920C04 I2C board",
+  "manufacturer": "Mitsumi (MinebeaMitsumi)",
+  "category": "sensor",
+  "criticality": "standard",
+  "datasheet": {
+    "revision": "Ver.1.0",
+    "date": "2025-02-25",
+    "source_url": "https://www.mouser.com/catalog/specsheets/MinebeaMitsumi_12-18-2025_MITSUMI%20Sensor%20Shield%20Kit%20Ver.2%20for%20Arduino_Ver.1.0_EN.pdf",
+    "sha256": "4b087814ea52a763d1e55fa789b588bc3735ae77b77079aba5fe7fd1e2e8cf1e"
+  },
+  "absolute_maximum": [],
+  "recommended_operating": [
+    {
+      "param": "VDD",
+      "typ": 3.3,
+      "unit": "V",
+      "conditions": "CN104 pin 3, '3.3 V (sensor power supply)'; supplied from the Arduino 3.3 V pin through the Shield (JP1 pin 1)",
+      "page": 11
+    },
+    {
+      "param": "PRESSURE",
+      "min": -40,
+      "max": 40,
+      "unit": "cmH2O",
+      "conditions": "MMR920C04 operating range (digital output micro pressure sensor)",
+      "page": 10
+    },
+    {
+      "param": "TA",
+      "min": -40,
+      "max": 60,
+      "unit": "C",
+      "conditions": "MMR920C04 operating temperature range",
+      "page": 10
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "SCL",
+      "type": "input",
+      "requirement": "must_connect",
+      "notes": "CN104 pin 1, I2C clock, 'Connected to SCL pin of the sensor' (p11). 100 kohm pull-up R104 to VDD on the board (p15 schematic, p20 BOM). I2C address 0xCE(W)/0xCF(R) (8-bit, p10) = 0x67 7-bit.",
+      "page": 11
+    },
+    {
+      "number": "2",
+      "name": "SDA",
+      "type": "bidirectional",
+      "requirement": "must_connect",
+      "notes": "CN104 pin 2, I2C data, 'Connected to SDA pin of the sensor' (p11). 100 kohm pull-up R103 to VDD on the board (p15, p20).",
+      "page": 11
+    },
+    {
+      "number": "3",
+      "name": "VDD",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "CN104 pin 3, 3.3 V sensor power supply (p11). On the board it feeds both MMR920 VDD and VDDIO, decoupled by C107 10 uF and C108 0.1 uF (p15, p20).",
+      "page": 11
+    },
+    {
+      "number": "4",
+      "name": "GND",
+      "type": "ground",
+      "requirement": "tie_to_ground",
+      "notes": "CN104 pin 4, ground (p11).",
+      "page": 11
+    },
+    {
+      "number": "TH104",
+      "name": "DRDYB",
+      "type": "output",
+      "requirement": "none",
+      "notes": "Through-hole TH104, 'Digital output (Data Ready signal)', not on the 4-pin I2C connector; connect only to use DRDYB/DRDY (p11, p15). Unused in this design.",
+      "page": 11
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "Board connector CN104 is a Seeed 'Grove Female Header DIP-4Pin-2.0mm' with pinout 1=SCL, 2=SDA, 3=VDD, 4=GND;",
+      "page": 20
+    },
+    {
+      "text": "On-board parts: C107 10 uF (GRM188R61E106KA73D), C108 0.1 uF (CGA3E2X7R1H104K080AA), R103/R104 100 kohm (I2C pull-ups), U104 MMR920. PSEL of U104 tied to GND (I2C mode).",
+      "page": 20
+    },
+    {
+      "text": "MMR920 PSEL pin tied to GND, CSB and SDO not connected on the I2C board (schematic).",
+      "page": 15
+    },
+    {
+      "text": "Sensor board size 20 x 24 mm.",
+      "page": 10
+    },
+    {
+      "text": "Kit caution: design/sales promotion tool, Mitsumi gives no guarantee of performance or reliability for the kit boards.",
+      "page": 1
+    }
+  ],
+  "extraction": {
+    "critic_score": 7,
+    "attempts": 1,
+    "gaps": [
+      "MMR920 chip datasheet (MMR920_DATASHEET_Ver.X.X, referenced p10) is not available: no supply voltage range, no absolute maximum ratings, no supply current, no I2C VIL/VIH/VOL, no I2C speed, no power-up timing. The 3.3 V value is the kit's nominal supply only (p11).",
+      "I2C address given as 8-bit 0xCE(W)/0xCF(R) (p10); 0x67 is its 7-bit form. No address-select option documented.",
+      "VOL / sink capability of the MMR920 SDA output not given;",
+      "No absolute maximum on the I2C pins or VDD at board level.",
+      "Ordering name in the kit is 'MMR920C04A I2C Board' (PO EASR920C04A-B1, p22); the 'C04' vs 'C04A' suffix is to confirm with the purchased board.",
+      "Pin types for SCL (input) are from the connector function 'I2C' and sensor pin name SCLK/SCL; direction not stated explicitly."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      1,
+      4,
+      6,
+      9,
+      10,
+      11,
+      15,
+      20,
+      22
+    ]
+  }
+}

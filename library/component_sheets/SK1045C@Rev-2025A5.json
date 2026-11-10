@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "mpn": "SK1045C",
+  "manufacturer": "MDD (Microdiode Semiconductor)",
+  "category": "protection",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "Rev:2025A5",
+    "source_url": "https://datasheet.lcsc.com/datasheet/pdf/eb7c4f634f9f7112d3dbb9c2c8ae222c.pdf?productCode=C65018",
+    "sha256": "bb62f16b950001a6c4ff9399158cded28216217b03c0d04ebf87f92bf8156ecf"
+  },
+  "absolute_maximum": [
+    {
+      "param": "VRRM",
+      "max": 45,
+      "unit": "V",
+      "conditions": "SK104C/SK1045C column, maximum repetitive peak reverse voltage, ratings at 25 C ambient",
+      "page": 1
+    },
+    {
+      "param": "VRMS",
+      "max": 32,
+      "unit": "V",
+      "conditions": "SK104C/SK1045C column",
+      "page": 1
+    },
+    {
+      "param": "VDC",
+      "max": 45,
+      "unit": "V",
+      "conditions": "SK104C/SK1045C column, maximum DC blocking voltage",
+      "page": 1
+    },
+    {
+      "param": "IF(AV)",
+      "max": 10.0,
+      "unit": "A",
+      "conditions": "maximum average forward rectified current; single phase half-wave 60 Hz resistive or inductive load, derate by 20% for capacitive load; derating vs case temperature in Fig.1 (p2)",
+      "page": 1
+    },
+    {
+      "param": "IFSM",
+      "max": 150,
+      "unit": "A",
+      "conditions": "8.3 ms single half sine-wave superimposed on rated load (JEDEC method)",
+      "page": 1
+    },
+    {
+      "param": "TJ",
+      "min": -55,
+      "max": 150,
+      "unit": "C",
+      "conditions": "operating junction temperature range",
+      "page": 1
+    },
+    {
+      "param": "TSTG",
+      "min": -55,
+      "max": 150,
+      "unit": "C",
+      "page": 1
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "VF",
+      "max": 0.55,
+      "unit": "V",
+      "conditions": "maximum instantaneous forward voltage at 10.0 A, SK104C/SK1045C column, 25 C",
+      "page": 1
+    },
+    {
+      "param": "IR",
+      "max": 0.5,
+      "unit": "mA",
+      "conditions": "maximum DC reverse current at rated DC reverse voltage, Ta = 25 C",
+      "page": 1
+    },
+    {
+      "param": "IR",
+      "max": 50,
+      "unit": "mA",
+      "conditions": "maximum DC reverse current at rated DC reverse voltage, Ta = 100 C",
+      "page": 1
+    },
+    {
+      "param": "RthJA",
+      "typ": 25,
+      "unit": "C/W",
+      "conditions": "typical thermal resistance; mounting condition not stated",
+      "page": 1
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "K",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Cathode; 'Polarity: Color band denotes cathode end' (p1). Datasheet gives no pin numbers or pin names; K/A naming and 1=K numbering are the usual SMC diode convention, to check against the symbol and footprint.",
+      "page": 1
+    },
+    {
+      "number": "2",
+      "name": "A",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Anode (end without the band, diode symbol p1).",
+      "page": 1
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "Suggested pad layout (SMC): A = 4.3 mm, B = 4.1 mm, C = 7.9 mm, D = 3.8 mm, E = 12 mm (A pad height, B pad width, C pad centre-to-centre, D gap, E overall; see drawing).",
+      "page": 3
+    },
+    {
+      "text": "Package JEDEC DO-214AB/SMC; reflow guaranteed 250 C / 10 s at terminals.",
+      "page": 1
+    }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 1,
+    "gaps": [
+      "Datasheet gives no pin numbers or pin names; only the polarity rule 'color band denotes cathode end' (p1). K/A names and 1=K numbering are a convention, not datasheet values.",
+      "The ratings table (p1) is garbled in the text layer; values were read from the rendered page. The SK104C and SK1045C share one column.",
+      "RthJA 25 C/W (p1) is given without the mounting or copper area condition.",
+      "IF(AV) 10 A condition (case or lead temperature) is only shown in the Fig.1 derating curve vs case temperature (p2); no tabulated temperature.",
+      "VF is tabulated only at 10 A (0.55 V max); VF at the pump current (7.5 A run, 15-20 A stall/inrush) and its temperature dependence are only in the typical curve Fig.3 (p2).",
+      "No junction capacitance or reverse recovery value tabulated; Fig.4 typical capacitance curve only (p2).",
+      "Datasheet quirk: page 1 header reads 'SK104C THRU SK1020C' while pages 2-3 read 'SK104C THRU SK2010C'.",
+      "No marking code given."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      1,
+      2,
+      3
+    ]
+  }
+}

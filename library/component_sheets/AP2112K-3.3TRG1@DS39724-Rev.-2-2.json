@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "mpn": "AP2112K-3.3TRG1",
+  "manufacturer": "Diodes Incorporated",
+  "category": "regulator",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "DS39724 Rev. 2-2",
+    "date": "2017-06",
+    "source_url": "https://www.diodes.com/assets/Datasheets/AP2112.pdf",
+    "sha256": "ef8d376f2ec356e29172eb9e053819a0ebdcc576dba7fc9ab0505c568427920f"
+  },
+  "absolute_maximum": [
+    { "param": "VIN", "max": 6.5, "unit": "V", "conditions": "VCC power supply voltage", "page": 3 },
+    { "param": "TJ", "max": 150, "unit": "C", "page": 3 },
+    { "param": "TSTG", "min": -65, "max": 150, "unit": "C", "page": 3 },
+    { "param": "TLEAD", "max": 260, "unit": "C", "conditions": "soldering, 10 s", "page": 3 },
+    { "param": "ESD_MM", "max": 400, "unit": "V", "page": 3 },
+    { "param": "ESD_HBM", "max": 4000, "unit": "V", "page": 3 }
+  ],
+  "recommended_operating": [
+    { "param": "VIN", "min": 2.5, "max": 6.0, "unit": "V", "page": 3 },
+    { "param": "TA", "min": -40, "max": 85, "unit": "C", "page": 3 },
+    { "param": "RthJA", "typ": 184, "unit": "C/W", "conditions": "SOT25, no heatsink (listed under absolute maximum ratings)", "page": 3 },
+    { "param": "RthJC", "typ": 96, "unit": "C/W", "conditions": "SOT25", "page": 8 },
+    { "param": "VOUT", "min": 3.2505, "typ": 3.3, "max": 3.3495, "unit": "V", "conditions": "VOUT * 98.5 % to VOUT * 101.5 %, VIN = 4.3 V, 1 mA <= IOUT <= 30 mA, TA = 25 C (production tested at 25 C, note 6)", "page": 8 },
+    { "param": "IOUT", "min": 600, "unit": "mA", "conditions": "maximum output current, VIN = 4.3 V, VOUT = 3.251 V to 3.350 V", "page": 8 },
+    { "param": "load_regulation", "min": -1, "typ": 0.2, "max": 1, "unit": "%/A", "conditions": "VIN = 4.3 V, 1 mA <= IOUT <= 600 mA", "page": 8 },
+    { "param": "line_regulation", "min": -0.1, "typ": 0.02, "max": 0.1, "unit": "%/V", "conditions": "4.3 V <= VIN <= 6 V, IOUT = 30 mA", "page": 8 },
+    { "param": "VDROP", "typ": 5, "max": 8, "unit": "mV", "conditions": "IOUT = 10 mA", "page": 8 },
+    { "param": "VDROP", "typ": 125, "max": 200, "unit": "mV", "conditions": "IOUT = 300 mA", "page": 8 },
+    { "param": "VDROP", "typ": 250, "max": 400, "unit": "mV", "conditions": "IOUT = 600 mA", "page": 8 },
+    { "param": "IQ", "typ": 55, "max": 80, "unit": "uA", "conditions": "VIN = 4.3 V, IOUT = 0 mA", "page": 8 },
+    { "param": "ISTD", "typ": 0.01, "max": 1.0, "unit": "uA", "conditions": "VIN = 4.3 V, EN off", "page": 8 },
+    { "param": "PSRR", "typ": 65, "unit": "dB", "conditions": "100 Hz and 1 kHz, 0.5 Vpp ripple, VIN = 4.3 V, IOUT = 100 mA", "page": 8 },
+    { "param": "VOUT_tempco", "typ": 100, "unit": "ppm/C", "conditions": "+/-100 ppm/C, IOUT = 30 mA, TA -40 to 85 C", "page": 8 },
+    { "param": "ISHORT", "typ": 50, "unit": "mA", "conditions": "foldback short current limit, VOUT = 0 V", "page": 8 },
+    { "param": "VNOISE", "typ": 50, "unit": "uVrms", "conditions": "no load, 10 Hz to 100 kHz", "page": 8 },
+    { "param": "VEN_high", "min": 1.5, "max": 6.0, "unit": "V", "conditions": "enable logic high, regulator on", "page": 8 },
+    { "param": "VEN_low", "min": 0, "max": 0.4, "unit": "V", "conditions": "enable logic low, regulator off", "page": 8 },
+    { "param": "tS", "typ": 20, "unit": "us", "conditions": "start-up time, no load", "page": 8 },
+    { "param": "RPD_EN", "typ": 3.0, "unit": "MOhm", "conditions": "EN internal pull-down", "page": 8 },
+    { "param": "RDCHG", "typ": 60, "unit": "Ohm", "conditions": "VOUT discharge resistor, EN low", "page": 8 },
+    { "param": "TOTSD", "typ": 160, "unit": "C", "conditions": "thermal shutdown", "page": 8 },
+    { "param": "THYOTSD", "typ": 25, "unit": "C", "conditions": "thermal shutdown hysteresis", "page": 8 }
+  ],
+  "pins": [
+    { "number": "1", "name": "VIN", "type": "power_in", "requirement": "must_connect", "notes": "Input voltage.", "page": 2 },
+    { "number": "2", "name": "GND", "type": "ground", "requirement": "tie_to_ground", "page": 2 },
+    { "number": "3", "name": "EN", "type": "input", "requirement": "none", "notes": "Chip enable, H = normal work, L = shutdown output. Internal 3 MOhm pull-down (p2, p8): floating EN keeps the regulator off; tie or drive above 1.5 V to enable.", "page": 2 },
+    { "number": "4", "name": "NC", "type": "nc", "requirement": "none", "notes": "No connection. Pin 4 shown as NC on the SOT25 pinout (p1); the p2 pin table lists no SOT25 number for NC.", "page": 1 },
+    { "number": "5", "name": "VOUT", "type": "power_out", "requirement": "must_connect", "notes": "Output voltage.", "page": 2 }
+  ],
+  "external_components": [
+    { "role": "input capacitor (1 uF in typical application; X7R or X5R if a 1.0 uF ceramic is used)", "kind": "capacitor", "between_pins": ["VIN", "GND"],
+      "constraints": { "min_value": 1e-6, "unit": "F", "dielectric": ["X7R", "X5R"] }, "page": 2 },
+    { "role": "output capacitor (1 uF in typical application; stable with ceramic, tantalum or aluminium electrolytic; X7R or X5R if a 1.0 uF ceramic is used)", "kind": "capacitor", "between_pins": ["VOUT", "GND"],
+      "constraints": { "min_value": 1e-6, "unit": "F", "dielectric": ["X7R", "X5R"] }, "page": 2 }
+  ],
+  "layout_notes": [
+    { "text": "SOT25 land pattern: see diodes.com package outlines for the latest version; suggested pad layout is for reference only.", "page": 14 }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 1,
+    "gaps": [
+      "Absolute maximum for EN pin voltage not given; only VEN high max 6.0 V in the EC table (p8).",
+      "No minimum output capacitance, ESR range or maximum output capacitance stated; only 1 uF in the typical application (p2) and 'stable with 1.0 uF flexible cap' (p1).",
+      "Foldback current limit: only ISHORT 50 mA typ at VOUT = 0 V (p8); no min/max, no foldback curve threshold voltage. p11 application note warns that a load present before enable (current-source load) may keep the part from starting.",
+      "No current limit value above 600 mA given (only IOUT(MAX) 600 mA min, p8).",
+      "Electrical characteristics are production tested at 25 C only; over-temperature values guaranteed by design (note 6, p8).",
+      "VOUT min/max derived from the 98.5 % / 101.5 % limits printed on p8 (3.2505 / 3.3495 V); the IOUT(MAX) test condition prints 3.251 V to 3.350 V.",
+      "TJ abs max printed as '+150' under 'Operating Junction Temperature Range' with no lower bound (p3).",
+      "No layout guidelines beyond the package land pattern reference (p14).",
+      "Pin table (p2) has no SOT25 entry for NC; pin 4 = NC taken from the SOT25 pinout drawing (p1).",
+      "Datasheet is June 2017; newer revision not checked online."
+    ],
+    "human_validated": false,
+    "pages_used": [1, 2, 3, 8, 11, 12, 14]
+  }
+}

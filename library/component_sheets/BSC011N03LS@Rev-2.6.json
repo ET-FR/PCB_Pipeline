@@ -1,0 +1,436 @@
+{
+  "schema_version": 1,
+  "mpn": "BSC011N03LS",
+  "manufacturer": "Infineon",
+  "category": "power_switch",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "Rev. 2.6",
+    "date": "2024-05-11",
+    "source_url": "https://static6.arrow.com/aropdfconversion/4df6aa86b79402fb1829bdc31073fdba64c5c726/infineon-bsc011n03ls-datasheet-v02_06-en.pdf",
+    "sha256": "b1f764c94662d32edeb41f181f598d72781bed448740ade36f3732e84eb4ea9b"
+  },
+  "absolute_maximum": [
+    {
+      "param": "VDS",
+      "max": 30,
+      "unit": "V",
+      "conditions": "Key performance parameter (Table 1, p1); the maximum ratings table (Table 2, p3) has no VDS line; V(BR)DSS min 30 V at VGS=0 V, ID=1 mA (p5)",
+      "page": 1
+    },
+    {
+      "param": "VGS",
+      "min": -20,
+      "max": 20,
+      "unit": "V",
+      "conditions": "gate source voltage; the negative rating is for low duty cycle pulses only, no continuous rating implied (note 5)",
+      "page": 3
+    },
+    {
+      "param": "ID",
+      "max": 240,
+      "unit": "A",
+      "conditions": "continuous, VGS=10 V, TC=25 C (product-only rating, note 1; see Diagram 2 for higher TC)",
+      "page": 3
+    },
+    {
+      "param": "ID",
+      "max": 170,
+      "unit": "A",
+      "conditions": "continuous, VGS=10 V, TC=100 C",
+      "page": 3
+    },
+    {
+      "param": "ID",
+      "max": 213,
+      "unit": "A",
+      "conditions": "continuous, VGS=4.5 V, TC=25 C",
+      "page": 3
+    },
+    {
+      "param": "ID",
+      "max": 150,
+      "unit": "A",
+      "conditions": "continuous, VGS=4.5 V, TC=100 C",
+      "page": 3
+    },
+    {
+      "param": "ID",
+      "max": 39,
+      "unit": "A",
+      "conditions": "continuous, VGS=10 V, TA=25 C, RthJA=50 K/W (6 cm2 drain copper, note 2)",
+      "page": 3
+    },
+    {
+      "param": "ID,pulse",
+      "max": 960,
+      "unit": "A",
+      "conditions": "TC=25 C, see SOA Diagram 3 (p7)",
+      "page": 3
+    },
+    {
+      "param": "IAS",
+      "max": 50,
+      "unit": "A",
+      "conditions": "avalanche current single pulse, TC=25 C (Diagram 13)",
+      "page": 3
+    },
+    {
+      "param": "EAS",
+      "max": 190,
+      "unit": "mJ",
+      "conditions": "avalanche energy single pulse, ID=50 A, RGS=25 ohm",
+      "page": 3
+    },
+    {
+      "param": "Ptot",
+      "max": 115,
+      "unit": "W",
+      "conditions": "TC=25 C",
+      "page": 3
+    },
+    {
+      "param": "Ptot",
+      "max": 3.0,
+      "unit": "W",
+      "conditions": "TA=25 C, RthJA=50 K/W (6 cm2 drain copper, note 2)",
+      "page": 3
+    },
+    {
+      "param": "TJ",
+      "min": -55,
+      "max": 175,
+      "unit": "C",
+      "conditions": "operating and storage temperature Tj, Tstg",
+      "page": 3
+    },
+    {
+      "param": "IS",
+      "max": 115,
+      "unit": "A",
+      "conditions": "reverse diode continuous forward current, TC=25 C",
+      "page": 6
+    },
+    {
+      "param": "IS,pulse",
+      "max": 960,
+      "unit": "A",
+      "conditions": "reverse diode pulse current, TC=25 C",
+      "page": 6
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "RthJC",
+      "max": 1.3,
+      "unit": "K/W",
+      "conditions": "junction to case",
+      "page": 4
+    },
+    {
+      "param": "RthJC_top",
+      "max": 20,
+      "unit": "K/W",
+      "conditions": "junction to case, top",
+      "page": 4
+    },
+    {
+      "param": "RthJA",
+      "max": 50,
+      "unit": "K/W",
+      "conditions": "device on 40x40x1.5 mm FR4 with 6 cm2 (one layer, 70 um) drain copper, PCB vertical in still air (note 6)",
+      "page": 4
+    },
+    {
+      "param": "V(BR)DSS",
+      "min": 30,
+      "unit": "V",
+      "conditions": "VGS=0 V, ID=1 mA",
+      "page": 5
+    },
+    {
+      "param": "VGS(th)",
+      "min": 1.2,
+      "max": 2,
+      "unit": "V",
+      "conditions": "VDS=VGS, ID=250 uA",
+      "page": 5
+    },
+    {
+      "param": "IDSS",
+      "typ": 0.1,
+      "max": 1,
+      "unit": "uA",
+      "conditions": "VDS=30 V, VGS=0 V, Tj=25 C",
+      "page": 5
+    },
+    {
+      "param": "IDSS",
+      "typ": 10,
+      "max": 100,
+      "unit": "uA",
+      "conditions": "VDS=30 V, VGS=0 V, Tj=125 C",
+      "page": 5
+    },
+    {
+      "param": "IGSS",
+      "typ": 10,
+      "max": 100,
+      "unit": "nA",
+      "conditions": "VGS=20 V, VDS=0 V",
+      "page": 5
+    },
+    {
+      "param": "RDS(on)",
+      "typ": 1.1,
+      "max": 1.4,
+      "unit": "mohm",
+      "conditions": "VGS=4.5 V, ID=30 A (25 C)",
+      "page": 5
+    },
+    {
+      "param": "RDS(on)",
+      "typ": 0.9,
+      "max": 1.1,
+      "unit": "mohm",
+      "conditions": "VGS=10 V, ID=30 A (25 C)",
+      "page": 5
+    },
+    {
+      "param": "RG",
+      "min": 0.3,
+      "typ": 0.6,
+      "max": 1.2,
+      "unit": "ohm",
+      "conditions": "internal gate resistance, defined by design (note 7)",
+      "page": 5
+    },
+    {
+      "param": "gfs",
+      "min": 85,
+      "typ": 170,
+      "unit": "S",
+      "conditions": "|VDS|>2|ID|RDS(on)max, ID=30 A",
+      "page": 5
+    },
+    {
+      "param": "Ciss",
+      "typ": 4700,
+      "max": 6251,
+      "unit": "pF",
+      "conditions": "VGS=0 V, VDS=15 V, f=1 MHz (defined by design)",
+      "page": 5
+    },
+    {
+      "param": "Coss",
+      "typ": 1500,
+      "max": 1995,
+      "unit": "pF",
+      "conditions": "VGS=0 V, VDS=15 V, f=1 MHz (defined by design)",
+      "page": 5
+    },
+    {
+      "param": "Crss",
+      "typ": 220,
+      "unit": "pF",
+      "conditions": "VGS=0 V, VDS=15 V, f=1 MHz",
+      "page": 5
+    },
+    {
+      "param": "td(on)",
+      "typ": 6.7,
+      "unit": "ns",
+      "conditions": "VDD=15 V, VGS=10 V, ID=30 A, RG,ext=1.6 ohm",
+      "page": 5
+    },
+    {
+      "param": "tr",
+      "typ": 8.8,
+      "unit": "ns",
+      "conditions": "VDD=15 V, VGS=10 V, ID=30 A, RG,ext=1.6 ohm",
+      "page": 5
+    },
+    {
+      "param": "td(off)",
+      "typ": 37,
+      "unit": "ns",
+      "conditions": "VDD=15 V, VGS=10 V, ID=30 A, RG,ext=1.6 ohm",
+      "page": 5
+    },
+    {
+      "param": "tf",
+      "typ": 6.2,
+      "unit": "ns",
+      "conditions": "VDD=15 V, VGS=10 V, ID=30 A, RG,ext=1.6 ohm",
+      "page": 5
+    },
+    {
+      "param": "Qgs",
+      "typ": 11,
+      "max": 15,
+      "unit": "nC",
+      "conditions": "VDD=15 V, ID=30 A, VGS=0 to 4.5 V",
+      "page": 5
+    },
+    {
+      "param": "Qgd",
+      "typ": 10.3,
+      "max": 13,
+      "unit": "nC",
+      "conditions": "VDD=15 V, ID=30 A, VGS=0 to 4.5 V",
+      "page": 5
+    },
+    {
+      "param": "Qg",
+      "typ": 36,
+      "max": 48,
+      "unit": "nC",
+      "conditions": "VDD=15 V, ID=30 A, VGS=0 to 4.5 V",
+      "page": 6
+    },
+    {
+      "param": "Qg",
+      "typ": 72,
+      "max": 96,
+      "unit": "nC",
+      "conditions": "VDD=15 V, ID=30 A, VGS=0 to 10 V",
+      "page": 6
+    },
+    {
+      "param": "Vplateau",
+      "typ": 2.4,
+      "unit": "V",
+      "conditions": "VDD=15 V, ID=30 A",
+      "page": 6
+    },
+    {
+      "param": "Qoss",
+      "typ": 40,
+      "max": 53,
+      "unit": "nC",
+      "conditions": "VDD=15 V, VGS=0 V",
+      "page": 6
+    },
+    {
+      "param": "VSD",
+      "typ": 0.8,
+      "max": 1,
+      "unit": "V",
+      "conditions": "reverse diode, VGS=0 V, IF=30 A, Tj=25 C",
+      "page": 6
+    },
+    {
+      "param": "Qrr",
+      "typ": 20,
+      "unit": "nC",
+      "conditions": "VR=15 V, IF=IS, diF/dt=400 A/us (defined by design)",
+      "page": 6
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "Source",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Source, pins 1-3 (p1).",
+      "page": 1
+    },
+    {
+      "number": "2",
+      "name": "Source",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Source, pins 1-3 (p1).",
+      "page": 1
+    },
+    {
+      "number": "3",
+      "name": "Source",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Source, pins 1-3 (p1).",
+      "page": 1
+    },
+    {
+      "number": "4",
+      "name": "Gate",
+      "type": "input",
+      "requirement": "must_connect",
+      "notes": "Gate, pin 4 (p1). VGS(th) 1.2-2 V; RDS(on) specified at VGS 4.5 V and 10 V (p5). VGS abs max +/-20 V (p3).",
+      "page": 1
+    },
+    {
+      "number": "5",
+      "name": "Drain",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Drain, pins 5-8 (p1); the exposed pad (D1 x E1 on the bottom view, p11) joins pins 5-8.",
+      "page": 1
+    },
+    {
+      "number": "6",
+      "name": "Drain",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Drain, pins 5-8 (p1).",
+      "page": 1
+    },
+    {
+      "number": "7",
+      "name": "Drain",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Drain, pins 5-8 (p1).",
+      "page": 1
+    },
+    {
+      "number": "8",
+      "name": "Drain",
+      "type": "passive",
+      "requirement": "must_connect",
+      "notes": "Drain, pins 5-8 (p1).",
+      "page": 1
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "RthJA 50 K/W and the TA-based ratings (ID 39 A, Ptot 3.0 W) hold only with 6 cm2 of one-layer 70 um drain copper on a 40x40x1.5 mm FR4 board, vertical, still air (notes 2 and 6).",
+      "page": 4
+    },
+    {
+      "text": "Package PG-TDSON-8-U08: D 4.80-5.35 mm, E 5.70-6.10 mm, A 0.90-1.20 mm, pitch e 1.27 mm, exposed pad D1 3.90-4.40 mm x E1 4.03-4.25 mm (Figure 1).",
+      "page": 11
+    },
+    {
+      "text": "Use the recommended PG-TDSON-8 board pads and stencil apertures (Figure 2).",
+      "page": 12
+    }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 2,
+    "gaps": [
+      "Re-extracted by the critic from the board part datasheet BSC011N03LS Rev. 2.6 (attempt 1 had used the sister part BSC011N03LSI Rev. 2.5, now discarded).",
+      "No recommended operating conditions section in the datasheet; thermal and electrical characteristics are stored in recommended_operating with their test conditions.",
+      "No VDS line in the maximum ratings table (p3); VDS 30 V taken from Table 1 (p1) and V(BR)DSS min (p5).",
+      "Static characteristics (p5) give no Tj for RDS(on); assumed 25 C. RDS(on) vs Tj is only Diagram 9 (p9), at VGS=10 V; no max at high temperature for VGS=4.5 V, the board gate drive is 5 V.",
+      "Exposed pad has no pin number in the datasheet; the bottom view (p11) shows it joined to pins 5-8 (drain). Confirm against the footprint.",
+      "No gate drive recommendation (gate resistor, pull-down) in the datasheet.",
+      "Datasheet quirk: the cover and page footers say Rev. 2.6 2024-05-11, the revision history (p14) says Rev. 2.6 2024-06-04.",
+      "Switching times are given at VGS=10 V only (p5); none at 4.5-5 V gate drive."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      1,
+      3,
+      4,
+      5,
+      6,
+      9,
+      11,
+      12,
+      14
+    ]
+  }
+}

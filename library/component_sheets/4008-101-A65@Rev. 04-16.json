@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "mpn": "4008-101-A65",
+  "manufacturer": "Shurflo (Pentair)",
+  "category": "other",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "Rev. 04/16",
+    "date": "2016-04",
+    "source_url": "local file datasheets/4008-101-A65@unknown.pdf (Shurflo Revolution 4008-101-X65 Technical Data Sheet, www.SHURFLO.com); no download URL recorded in datasheets/index.yaml",
+    "sha256": "6a3681dce29e329ac16de9b38ca9ae828011fef2e7393a31cf8bc50175154f53"
+  },
+  "absolute_maximum": [
+    {
+      "param": "LIQUID_TEMP",
+      "max": 54,
+      "unit": "C",
+      "conditions": "130 F max",
+      "page": 1
+    },
+    {
+      "param": "INLET_PRESSURE",
+      "max": 30,
+      "unit": "psi",
+      "conditions": "2.06 bar",
+      "page": 1
+    },
+    {
+      "param": "BYPASS_PRESSURE",
+      "typ": 62,
+      "unit": "psi",
+      "conditions": "maximum by-pass 62 psi (4.2 bar) +/- 2 psi",
+      "page": 1
+    },
+    {
+      "param": "FUSE",
+      "typ": 10,
+      "unit": "A",
+      "conditions": "recommended fuse rating",
+      "page": 1
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "VMOTOR",
+      "typ": 12,
+      "unit": "V",
+      "conditions": "12 V DC permanent magnet motor, intermittent duty",
+      "page": 1
+    },
+    {
+      "param": "IMOTOR",
+      "typ": 2.2,
+      "unit": "A",
+      "conditions": "typical at 12 V, 0 psi, 3.0 GPM",
+      "page": 2
+    },
+    {
+      "param": "IMOTOR",
+      "typ": 3.3,
+      "unit": "A",
+      "conditions": "typical at 12 V, 10 psi, 2.2 GPM",
+      "page": 2
+    },
+    {
+      "param": "IMOTOR",
+      "typ": 4.3,
+      "unit": "A",
+      "conditions": "typical at 12 V, 20 psi, 1.8 GPM",
+      "page": 2
+    },
+    {
+      "param": "IMOTOR",
+      "typ": 5.1,
+      "unit": "A",
+      "conditions": "typical at 12 V, 30 psi, 1.5 GPM",
+      "page": 2
+    },
+    {
+      "param": "IMOTOR",
+      "typ": 6.0,
+      "unit": "A",
+      "conditions": "typical at 12 V, 40 psi, 1.2 GPM",
+      "page": 2
+    },
+    {
+      "param": "IMOTOR",
+      "typ": 6.8,
+      "unit": "A",
+      "conditions": "typical at 12 V, 50 psi, 0.5 GPM (highest current in the table)",
+      "page": 2
+    },
+    {
+      "param": "IMOTOR",
+      "typ": 6.6,
+      "unit": "A",
+      "conditions": "typical at 12 V, 60 psi, 0 GPM",
+      "page": 2
+    },
+    {
+      "param": "FLOW",
+      "typ": 3.0,
+      "unit": "GPM",
+      "conditions": "typical at 12 V, 0 psi (11.3 LPM)",
+      "page": 2
+    },
+    {
+      "param": "SHUTOFF_PRESSURE",
+      "min": 53,
+      "typ": 55,
+      "max": 57,
+      "unit": "psi",
+      "conditions": "built-in pressure switch shut-off 55 psi (3.8 bar) +/- 2 psi",
+      "page": 1
+    },
+    {
+      "param": "RESTART_PRESSURE",
+      "min": 38,
+      "typ": 40,
+      "max": 42,
+      "unit": "psi",
+      "conditions": "built-in pressure switch re-start 40 psi (2.8 bar) +/- 2 psi",
+      "page": 1
+    },
+    {
+      "param": "DRY_PRIME",
+      "typ": 6,
+      "unit": "ft",
+      "conditions": "1.82 m",
+      "page": 1
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "Red +",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "Motor lead, 16 AWG, 10 in (25 cm) red, positive. Lead numbering 1/2 is not in the datasheet (assigned here for mapping only).",
+      "page": 1
+    },
+    {
+      "number": "2",
+      "name": "Black",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "Motor lead, 16 AWG, 13 in (33 cm) black, return (to the low-side switch in this design).",
+      "page": 1
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "Motor protection: thermal overload with automatic restart (the pump can stop and restart by itself; firmware stall/overcurrent logic must tolerate it).",
+      "page": 1
+    },
+    {
+      "text": "Built-in pressure switch: the pump stops by itself at 55 psi and restarts at 40 psi; the board sees the load open/close independently of the switch command.",
+      "page": 1
+    }
+  ],
+  "extraction": {
+    "critic_score": 7,
+    "attempts": 1,
+    "gaps": [
+      "Off-board load: no inrush (start-up) current and no locked-rotor/stall current in the data sheet. Note N-20261110-003 already says they must be measured.",
+      "Operating voltage range (min/max) not given; only '12V DC' nominal (p1). Performance table is at 12 V only (p2).",
+      "Duty cycle limit for 'intermittent duty' not quantified (p1).",
+      "Current values are typical (performance table and curve, p2); no maximum current is guaranteed. Highest tabulated value is 6.8 A at 50 psi.",
+      "Motor inductance and resistance not given (needed for freewheel and switch sizing).",
+      "Fuse type (fast/slow) not specified, only '10 Amp Recommended' (p1).",
+      "Lead numbering is not in the data sheet; pin names are the lead colours as printed ('Red +', 'Black').",
+      "No download URL in datasheets/index.yaml; revision 'Rev. 04/16' read from the page 2 footer."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      1,
+      2
+    ]
+  }
+}

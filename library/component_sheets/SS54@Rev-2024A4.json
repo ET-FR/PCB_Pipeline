@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "mpn": "SS54",
+  "manufacturer": "MDD (Microdiode Semiconductor)",
+  "category": "protection",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "Rev:2024A4",
+    "source_url": "local file datasheets/SS54@unknown.pdf (SS52 THRU SS5200, http://www.microdiode.com); no download URL recorded in datasheets/index.yaml",
+    "sha256": "d90558a8db9d6ea0e8712c740ffea6d9c106544653faf724af75f1ab276dee66"
+  },
+  "absolute_maximum": [
+    { "param": "VRRM", "max": 40, "unit": "V", "conditions": "SS54 column, maximum repetitive peak reverse voltage", "page": 1 },
+    { "param": "VRMS", "max": 28, "unit": "V", "conditions": "SS54 column", "page": 1 },
+    { "param": "VDC", "max": 40, "unit": "V", "conditions": "SS54 column, maximum DC blocking voltage", "page": 1 },
+    { "param": "I(AV)", "max": 5.0, "unit": "A", "conditions": "maximum average forward rectified current; single phase half-wave 60 Hz resistive or inductive load, derate by 20% for capacitive load; derating vs case temperature in Fig.1", "page": 1 },
+    { "param": "IFSM", "max": 120, "unit": "A", "conditions": "8.3 ms single half sine-wave superimposed on rated load (JEDEC method)", "page": 1 },
+    { "param": "TJ", "min": -55, "max": 125, "unit": "C", "conditions": "operating junction temperature range, SS52-SS55 columns", "page": 1 },
+    { "param": "TSTG", "min": -55, "max": 150, "unit": "C", "page": 1 }
+  ],
+  "recommended_operating": [
+    { "param": "VF", "max": 0.55, "unit": "V", "conditions": "maximum instantaneous forward voltage at 5.0 A, SS52-SS54 columns, 25C", "page": 1 },
+    { "param": "IR", "max": 1.0, "unit": "mA", "conditions": "at rated DC blocking voltage, TA=25C", "page": 1 },
+    { "param": "IR", "max": 50, "unit": "mA", "conditions": "at rated DC blocking voltage, TA=100C", "page": 1 },
+    { "param": "CJ", "typ": 500, "unit": "pF", "conditions": "SS52-SS54 columns, 1 MHz, VR=4.0 V DC (note 1)", "page": 1 },
+    { "param": "RthJA", "typ": 60.0, "unit": "C/W", "conditions": "PCB mounted with 2.0 x 2.0 in (5.0 x 5.0 cm) copper pad areas (note 2)", "page": 1 }
+  ],
+  "pins": [
+    { "number": "1", "name": "K", "type": "passive", "requirement": "must_connect", "notes": "Cathode; 'Color band denotes cathode end' (p1). Datasheet gives no pin numbers or pin names; K/A naming and 1=K numbering are the usual SMA diode convention to check against the symbol/footprint.", "page": 1 },
+    { "number": "2", "name": "A", "type": "passive", "requirement": "must_connect", "notes": "Anode (end without the band).", "page": 1 }
+  ],
+  "layout_notes": [
+    { "text": "Suggested pad layout (SMA): A=1.68 mm, B=1.52 mm, C=3.93 mm, D=2.41 mm, E=5.45 mm (see drawing for dimension meaning).", "page": 3 },
+    { "text": "RthJA 60 C/W applies with 2.0 x 2.0 in (5.0 x 5.0 cm) copper pad areas; give the diode copper if it carries continuous current.", "page": 1 }
+  ],
+  "extraction": {
+    "critic_score": 8,
+    "attempts": 1,
+    "gaps": [
+      "No source URL recorded for this PDF (index.yaml url empty); revision Rev:2024A4 read from the page footer.",
+      "Datasheet gives no pin numbers or pin names; only the polarity rule 'color band denotes cathode end' (p1). K/A names and 1=K numbering are a convention, not datasheet values.",
+      "VF is given only at 5.0 A (max 0.55 V); no VF at the design current (valve ~0.2 A, see Fig.3 typical curve p2, not a guaranteed value).",
+      "VF temperature dependence and IR at intermediate temperatures are only in typical curves (p2), not tabulated.",
+      "The column span for TJ (-55 to +125 C) was read from the rendered table: it covers SS52-SS55; SS56 and above are -55 to +150 C.",
+      "No package marking details beyond 'MDD SS54' marking code row (p1)."
+    ],
+    "human_validated": false,
+    "pages_used": [1, 2, 3]
+  }
+}

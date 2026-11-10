@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "mpn": "JFMSV00008",
+  "manufacturer": "U.S. Solid",
+  "category": "other",
+  "criticality": "power",
+  "datasheet": {
+    "revision": "web product page captured 2026-11-10 (no document revision)",
+    "date": "2026-11-10",
+    "source_url": "https://ussolid.com/products/u-s-solid-motorized-ball-valve-3-4-stainless-steel-electrical-ball-valve-with-full-port-9-24-v-ac-dc-2-wire-auto-return-html?variant=46919075365119",
+    "sha256": "b962d10612511d8f22fb0891fe6899da74121ac0c478586daffa51528f88741f"
+  },
+  "absolute_maximum": [
+    {
+      "param": "PMAX",
+      "max": 5,
+      "unit": "W",
+      "conditions": "Max Power (specification table)",
+      "page": 18
+    },
+    {
+      "param": "MEDIUM_PRESSURE",
+      "max": 1.0,
+      "unit": "MPa",
+      "conditions": "Max Medium Pressure",
+      "page": 18
+    },
+    {
+      "param": "MEDIUM_TEMP",
+      "min": 0,
+      "max": 90,
+      "unit": "C",
+      "conditions": "Temperature Range for Flow Medium",
+      "page": 18
+    },
+    {
+      "param": "TAMBIENT",
+      "min": -10,
+      "max": 40,
+      "unit": "C",
+      "conditions": "Ambient Temperature Range",
+      "page": 18
+    },
+    {
+      "param": "TORQUE",
+      "max": 2,
+      "unit": "N.m",
+      "conditions": "Max Torque",
+      "page": 18
+    }
+  ],
+  "recommended_operating": [
+    {
+      "param": "VSUPPLY",
+      "min": 9,
+      "max": 24,
+      "unit": "V",
+      "conditions": "Working Voltage 9-24 V AC/DC",
+      "page": 18
+    },
+    {
+      "param": "T_OPERATE",
+      "min": 3,
+      "max": 5,
+      "unit": "s",
+      "conditions": "Operating Time 3-5 seconds",
+      "page": 18
+    },
+    {
+      "param": "T_ON_MIN",
+      "typ": 60,
+      "unit": "s",
+      "conditions": "power the valve for approximately one minute to charge the internal capacitor so the 2-wire auto return works when power is removed (FAQ 5 and note under 'Other models')",
+      "page": 19
+    },
+    {
+      "param": "LIFE",
+      "min": 80000,
+      "max": 100000,
+      "unit": "cycles",
+      "conditions": "Life Expectancy",
+      "page": 18
+    }
+  ],
+  "pins": [
+    {
+      "number": "1",
+      "name": "+",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "2 Wire Auto Return wiring schematic: + to power through the switch (p21). Wire colours are not legible in the page images; lead numbering is not in the source (assigned here for mapping only).",
+      "page": 21
+    },
+    {
+      "number": "2",
+      "name": "-",
+      "type": "power_in",
+      "requirement": "must_connect",
+      "notes": "2 Wire Auto Return wiring schematic: - to power return (p21).",
+      "page": 21
+    }
+  ],
+  "layout_notes": [
+    {
+      "text": "Normally closed, 2-wire auto return: open while powered, closes automatically when power is switched off or lost (p17, p18 Operating State 'Normally Closed', p20).",
+      "page": 17
+    },
+    {
+      "text": "'Once the valve opens, it mostly stops consuming power' (2-Wire Automatic Return Setup feature); designed with power-limiting features allowing continuous powering without overheating (Warning 5, p20).",
+      "page": 17
+    },
+    {
+      "text": "Auto return relies on an internal capacitor charged while powered: keep the valve powered about one minute before switching off to guarantee the return to closed.",
+      "page": 19
+    },
+    {
+      "text": "Enclosure IP65; enclose in a protective housing if permanently installed outdoors.",
+      "page": 20
+    },
+    {
+      "text": "Derived bound, not a source value: I = Pmax / V with Pmax 5 W (p18) gives about 0.42 A at 12 V and 0.56 A at the 9 V minimum.",
+      "page": 18
+    },
+    {
+      "text": "Warning 1: 2-wire reverse polarity and 3-wire models are de-energized when fully open or closed; other models (including this 2-wire auto return) may draw a negligible amount of power when fully open. Expect a small continuous draw while the valve is held open.",
+      "page": 20
+    }
+  ],
+  "extraction": {
+    "critic_score": 7,
+    "attempts": 2,
+    "gaps": [
+      "Source is a retail product web page printed to PDF (25 pages, image only, no extractable text); no manufacturer datasheet and no revision. Values read from rendered images (p14 title/SKU, p17, p18 specification table, p19 FAQ, p20 warnings, p21 wiring schematics).",
+      "No current rating: neither moving nor holding current is given, only 'Max Power 5 W' (p18).",
+      "No inrush current, no motor/capacitor charging current profile, and no statement on how much power is drawn once open beyond 'mostly stops consuming power' (p17).",
+      "Polarity sensitivity of the 2-wire auto return model not stated explicitly; the p21 schematic shows + and - marks. Behaviour with a freewheel diode or with reverse polarity is not documented.",
+      "Wire colours and lead lengths not legible/stated.",
+      "Spec table model is 'USS-MSV00008' (p18); SKU JFMSV00008 shown on the product title block (p14). Treated as the same product.",
+      "No AC vs DC difference in ratings given (single 9-24 V AC/DC range, p18)."
+    ],
+    "human_validated": false,
+    "pages_used": [
+      14,
+      15,
+      17,
+      18,
+      19,
+      20,
+      21
+    ]
+  }
+}

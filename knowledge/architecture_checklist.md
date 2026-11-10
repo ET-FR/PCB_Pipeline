@@ -18,6 +18,8 @@ Priorities: `must`, `should`, `nice`. IDs are stable; retired items stay, marked
 - **A-PWR-007** [should] Sequencing, enables and power-good are defined for parts that need them. _Checked by: agent, from the datasheets._
 - **A-PWR-008** [should] Sleep current budget meets the battery life target. _Checked by: agent (pipeline rule planned)._
 - **A-PWR-009** [should] Every rail has a test point and a way to measure its current at bring-up. _Checked by: agent._
+- **A-PWR-010** [must] Every motor or inductive load switch survives the start-up inrush and the stall current: an eFuse whose current limit is active during start-up, or whose thermal shutdown is fast, may never start a brushed motor; check the start-up behaviour or use a MOSFET or a smart high-side switch. _Checked by: agent._ Added from: FRONT_BOARD phase 1, 2026-11-10.
+- **A-PWR-011** [should] A PTC or series resistor behind a regulator with foldback current limiting has a minimum resistance high enough (R_min >= VOUT / I_limit) for the regulator to stay in regulation and the PTC to trip on a short. _Checked by: agent._ Added from: FRONT_BOARD phase 1, 2026-11-10.
 
 ## Interfaces
 
@@ -25,12 +27,14 @@ Priorities: `must`, `should`, `nice`. IDs are stable; retired items stay, marked
 - **A-INT-002** [must] Connectors that can be swapped or plugged backwards are keyed or survive it. _Checked by: agent._
 - **A-INT-003** [should] Hot-plugged connectors have inrush and ESD protection. _Checked by: agent._
 - **A-INT-004** [must] Programming and debug access is planned (SWD, UART, boot mode pins reachable). _Checked by: agent._
+- **A-INT-005** [should] A PTC or series element on the supply of a ratiometric sensor adds a gain error (I x R / Vref) when the ADC reference is taken before it; size it or measure the sensor-side supply. _Checked by: agent._ Added from: FRONT_BOARD phase 1, 2026-11-10.
 
 ## Buses and MCU
 
 - **A-BUS-001** [must] Every I2C device has an address, no conflict on a bus. _Checked by: BUS-001, BUS-002._
 - **A-BUS-002** [should] I2C pull-ups are sized for the bus capacitance and speed. _Checked by: agent._
 - **A-BUS-003** [should] Level translation exists where bus voltages differ. _Checked by: agent._
+- **A-BUS-004** [must] Buffers with a static level offset (PCA9617A port B, PCA9517 B side...) never face another offset buffer: across a cable two PCA9617A face each other with port A, and devices on a port B segment pull below its VIL (0.4 V). _Checked by: agent._ Added from: FRONT_BOARD phase 1, 2026-11-10.
 - **A-MCU-001** [must] Every MCU pin is assigned once and supports its function (alternate function table). _Checked by: MCU-001, agent for the alternate functions._
 - **A-MCU-002** [must] Boot and strapping pins have a defined state at reset. _Checked by: agent._
 - **A-MCU-003** [should] Outputs that drive actuators have a safe state during reset and firmware crash. _Checked by: agent._
@@ -69,3 +73,4 @@ Priorities: `must`, `should`, `nice`. IDs are stable; retired items stay, marked
 | Date | Change | Origin |
 |---|---|---|
 | 2026-11-10 | Initial list | Pipeline design |
+| 2026-11-10 | Add A-PWR-010, A-PWR-011, A-BUS-004, A-INT-005 | FRONT_BOARD phase 1 |
