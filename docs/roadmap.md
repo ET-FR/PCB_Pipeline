@@ -6,6 +6,7 @@ Ordered by value: the earlier phases catch the most expensive errors.
 
 - [x] **Foundations**: repo structure, `pipeline.yaml`, `kicad-cli` import, pre-commit hook.
 - [x] **Formats (first draft)**: JSON Schemas for component sheets and findings.
+- [x] **Phase 0 question list** (`knowledge/phase0_questions.md`) and interviewer prompt.
 - [x] **Deterministic schematic core**: netlist graph, functional groups, rules
   SYM-001, PIN-001/002, CAP-001, ABS-001, EQ-001, trapped project, Markdown report.
 
@@ -15,7 +16,8 @@ Ordered by value: the earlier phases catch the most expensive errors.
   `datasheets/`, `kicad/`, `review/`) and a `pcb-pipeline init` command.
 - [ ] **2. Spec format**: JSON Schema for `design/spec.yaml` (blocks, parts and choice
   reasons, power tree, interfaces, I2C map, MCU pins, mechanical, design rules).
-- [ ] **3. Phase 0**: interviewer agent and `/define` command, PRD template.
+- [ ] **3. Phase 0**: `/define` command to run the interviewer agent, first real use to
+  refine `knowledge/phase0_questions.md`.
 - [ ] **4. Phase 1**: architect and component selector agents, `/architecture` command,
   datasheet download with index and manual fallback, deterministic spec checks
   (I2C conflicts, power budget, ratings), PDF rendering, PRD change impact analysis.

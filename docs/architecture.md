@@ -78,10 +78,15 @@ The pipeline is a separate tool. Each board has its own repo:
 ### Phase 0: product definition
 
 The user gives documents to the `interviewer` agent (in `inputs/`), then they discuss.
-The agent asks questions until nothing important is left open: function, interfaces,
-power sources, environment (temperature, humidity, vibrations), standards, size,
-quantities, cost target, manufacturer constraints. Output: `design/prd.md`, with the
-open questions listed explicitly when some answers are not known yet.
+The agent works from `knowledge/phase0_questions.md`, the shared list of questions and
+data it needs (function, power, interfaces, mechanical, environment, standards,
+manufacturing, reliability). Each question has a stable ID, a priority and what the
+answer drives in the design.
+
+The agent first answers what it can from the documents, then asks the user only what is
+missing, a few questions at a time. Output: `design/prd.md`, where every requirement is
+tagged with its question ID, and the assumptions and open questions are listed
+explicitly. At the end, the agent proposes improvements to the question list.
 
 ### Phase 1: architecture (paper design)
 
@@ -150,6 +155,8 @@ The pipeline must get better with every project. Four sources of lessons:
 |---|---|---|
 | Rejected finding (false positive) | `review/decisions.yaml` | Rule tuning, or an exception documented in the agent prompt |
 | Problem found later (bring-up, another review, fabrication) | `review/missed.yaml` | A new trap in the trapped project, plus a deterministic rule if the check is mechanical, or a checklist item for the agent if it needs judgment |
+| Problem caused by a missing or wrong requirement | `review/missed.yaml` | A new or reworded question in `knowledge/phase0_questions.md` |
+| Phase 0 interview | `design/prd.md` | Questions added, lowered or retired, user defaults |
 | Validated component sheet | `library/component_sheets/` | Reused as is by the next projects |
 | Component choice and its reasons | `design/spec.yaml` | Preferred parts list for the next selections |
 
@@ -164,7 +171,7 @@ per rule and per agent, issues missed per phase.
 
 | Agent | Phase | Role |
 |---|---|---|
-| Interviewer (planned) | 0 | Reads the user's documents, asks questions, writes the PRD |
+| Interviewer | 0 | Reads the user's documents, asks questions from `knowledge/phase0_questions.md`, writes the PRD |
 | Architect (planned) | 1 | Block diagram, power tree, interfaces, design rules |
 | Component selector (planned) | 1 | Proposes candidates per block with reasons |
 | Datasheet locator | 1 | Finds the useful pages from the table of contents |

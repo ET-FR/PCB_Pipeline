@@ -37,9 +37,11 @@ phases:
     title: "Phase 0: product definition"
     kind: agent
     agents: [interviewer]
+    knowledge: [knowledge/phase0_questions.md]
     description: >
-      Read the documents in inputs/, interview the user until the PRD has no open
-      question left, write design/prd.md.
+      Read the documents in inputs/, answer the questions of phase0_questions.md from
+      them, interview the user for the rest, write design/prd.md, then propose
+      improvements to the question list.
     outputs: [design/prd.md]
 
   - id: architecture
@@ -145,6 +147,7 @@ learning:
     - missed_issue_to_trap        # always: a new trap in the trapped project tests
     - missed_issue_to_checklist   # an agent checklist item when it needs judgment
     - false_positive_to_rule_tuning
+    - missed_issue_to_question    # when the issue came from a missing phase 0 answer
     - validated_sheet_to_library  # component sheets are shared across projects
   changes_to_pipeline: pull_request   # proposed by the agent, accepted by the user
 
