@@ -37,3 +37,10 @@ def test_cli_check_with_spec_rails(tmp_path, capsys):
           "--spec", "examples/spec/sensor_node.spec.yaml", "--out", str(tmp_path)])
     out = capsys.readouterr().out
     assert "CAP-001" in out and "EQ-001" in out
+
+
+def test_init_refuses_a_board_inside_the_pipeline_repo():
+    import pytest
+    from pcb_pipeline.template import REPO
+    with pytest.raises(RuntimeError):
+        init_project(REPO / "my_board")

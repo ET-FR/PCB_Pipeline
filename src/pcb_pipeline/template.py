@@ -5,23 +5,27 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from .paths import REPO, data_home, is_inside
-
+REPO = Path(__file__).resolve().parents[2]
 TEMPLATE = REPO / "templates" / "project"
+
+
+def _inside(path: Path, parent: Path) -> bool:
+    try:
+        Path(path).resolve().relative_to(Path(parent).resolve())
+        return True
+    except ValueError:
+        return False
 
 
 def init_project(target: Path, name: str | None = None) -> tuple[list[Path], list[Path]]:
     """Copy the template into target. Existing files are never overwritten."""
     target = Path(target)
-    if is_inside(target, REPO):
+    if _inside(target, REPO):
         raise RuntimeError(f"a board repo must not be inside the pipeline repo ({REPO}): "
                            f"create it next to it, e.g. pcb-pipeline init ../my_board")
-    if is_inside(target, data_home()):
-        raise RuntimeError(f"a board repo must not be inside the knowledge base ({data_home()})")
     values = {
         "{{name}}": name or target.resolve().name,
         "{{pipeline}}": str(REPO),
-        "{{data_home}}": str(data_home()),
         "{{date}}": dt.date.today().isoformat(),
     }
     created, skipped = [], []

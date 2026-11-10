@@ -1,2 +1,0 @@
-# Datasheet PDFs stay in each board repo (datasheets/, not committed there either).
-*.pdf

@@ -1,6 +1,6 @@
 """Command line interface.
 
-pcb-pipeline setup | where | init | check-spec | fetch-datasheets | render-spec | spec-diff | check |
+pcb-pipeline init | check-spec | fetch-datasheets | render-spec | spec-diff | check |
 dashboard | validate-sheet | validate-notes | report
 """
 
@@ -25,7 +25,6 @@ from .datasheet.fetch import fetch_datasheets
 from .render import build_sections, render_markdown as render_spec_markdown, render_pdf
 from .spec import check_spec, load_spec, spec_rails
 from .spec_diff import impact, load_from_git, render_impact
-from .paths import config_file, data_home, default_library_dirs, knowledge_dir, library_dir, setup_data_home
 from .template import init_project
 
 REPO = Path(__file__).resolve().parents[2]
@@ -73,7 +72,7 @@ def cmd_check(args) -> int:
     graph_cfg = _stage_params(cfg, "graph")
     groups = functional_groups(netlist, graph_cfg.get("neighborhood_depth", 2), graph_cfg.get("ignore_nets"))
 
-    lib_dirs = [Path(d) for d in args.library] if args.library else default_library_dirs()
+    lib_dirs = [Path(d) for d in (args.library or [REPO / "library" / "component_sheets"])]
     library = SheetLibrary(*lib_dirs)
     for path, errs in library.errors.items():
         print(f"warning: invalid sheet {path}: {errs[0]}", file=sys.stderr)
@@ -118,7 +117,7 @@ def _fails(doc: dict, fail_on: str | None) -> bool:
 
 
 def _library(dirs: list[str] | None) -> SheetLibrary:
-    library = SheetLibrary(*([Path(d) for d in dirs] if dirs else default_library_dirs()))
+    library = SheetLibrary(*[Path(d) for d in (dirs or [REPO / "library" / "component_sheets"])])
     for path, errs in library.errors.items():
         print(f"warning: invalid sheet {path}: {errs[0]}", file=sys.stderr)
     return library
@@ -218,27 +217,7 @@ def cmd_dashboard(args) -> int:
     return 0
 
 
-def cmd_setup(args) -> int:
-    target, created, kept = setup_data_home(Path(args.path) if args.path else None)
-    print(f"knowledge base in {target} ({len(created)} files created, {len(kept)} kept)")
-    print(f"saved in {config_file()}. Tip: make it a private git repo (git init {target}).")
-    return 0
-
-
-def cmd_where(args) -> int:
-    home = data_home()
-    print(f"pipeline repo:   {REPO}")
-    print(f"knowledge base:  {home}{'' if home.exists() else '  (missing: run pcb-pipeline setup)'}")
-    print(f"  sheets:        {library_dir()}")
-    print(f"  knowledge:     {knowledge_dir()}")
-    print(f"config:          {config_file()}")
-    return 0 if home.exists() else 1
-
-
 def cmd_init(args) -> int:
-    if not data_home().exists():
-        target, _, _ = setup_data_home()
-        print(f"knowledge base created in {target} (run `pcb-pipeline setup <path>` to move it)")
     created, skipped = init_project(Path(args.path), args.name)
     for p in created:
         print(f"  created {p}")
@@ -303,13 +282,6 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--spec", help="design/spec.yaml: rail voltages are taken from its power tree")
     c.add_argument("--fail-on", choices=list(SEVERITY_ORDER), help="non-zero exit at this severity or worse")
     c.set_defaults(fn=cmd_check)
-
-    su = sub.add_parser("setup", help="create your knowledge base (sheets, notes, checklists) outside the pipeline repo")
-    su.add_argument("path", nargs="?", help=f"default: $PCB_PIPELINE_DATA or ~/pcb-pipeline-data")
-    su.set_defaults(fn=cmd_setup)
-
-    wh = sub.add_parser("where", help="show where the pipeline, the knowledge base and the config are")
-    wh.set_defaults(fn=cmd_where)
 
     i = sub.add_parser("init", help="create a hardware project repo from the template")
     i.add_argument("path")

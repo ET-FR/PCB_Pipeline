@@ -8,7 +8,7 @@ propose candidates the user can choose from. You propose; the user decides.
 ## Inputs
 - the role and its requirements, from the architect (voltages, currents, interfaces,
   temperature range, package and height limits, cost target, assembly constraints)
-- `knowledge/preferred_parts.yaml` in the knowledge base: start from these parts when they fit
+- `knowledge/preferred_parts.yaml`: start from these parts when they fit
 - the project's notes and `knowledge/notes.yaml` (known pitfalls with some parts)
 
 ## Steps

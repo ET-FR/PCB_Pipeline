@@ -50,9 +50,6 @@ New traps are added here each time a real review misses something.
 ```bash
 pip install -e ".[dev]"
 
-# Once: create your knowledge base outside this repo (then make it a private git repo)
-pcb-pipeline setup ~/pcb-pipeline-data
-
 # Create a hardware project repo (inputs/, design/, datasheets/, kicad/, review/)
 pcb-pipeline init ../my_board
 
@@ -75,7 +72,7 @@ pcb-pipeline check path/to/project.kicad_sch
 pcb-pipeline check --netlist path/to/netlist.xml
 
 # Validate a component sheet against the schema
-pcb-pipeline validate-sheet ~/pcb-pipeline-data/library/component_sheets/MY-MPN.json
+pcb-pipeline validate-sheet library/component_sheets/MY-MPN.json
 ```
 
 The full agent review is launched from Claude Code with the `/review` command
@@ -109,16 +106,12 @@ Every symbol should carry these fields, otherwise most automatic checks are impo
 
 ## Where the data lives
 
-Three places, never mixed:
+| Place | What |
+|---|---|
+| This repo | The code, and the shared knowledge that improves with every board: `knowledge/` (phase 0 questions, architecture checklist, preferred parts, accepted agent notes) and `library/component_sheets/` |
+| One repo per board, created with `pcb-pipeline init ../my_board` | Everything about that board: inputs, PRD, spec and power tree, datasheet PDFs, KiCad schematic and layout, reviews, notes, dashboard |
 
-| Place | What | Created by |
-|---|---|---|
-| This repo | Code, schemas, rules, agent prompts, templates, seed knowledge. **No board data, no user data.** | `git clone` |
-| Your knowledge base | Your shared data, improved with every board: component sheets, accepted agent notes, preferred parts, the living phase 0 questions and architecture checklist. Keep it as its own private git repo. | `pcb-pipeline setup [path]` (default `~/pcb-pipeline-data`, or `$PCB_PIPELINE_DATA`) |
-| One repo per board | Inputs, PRD, spec, datasheets, KiCad files, reviews, notes, dashboard | `pcb-pipeline init <path>` |
-
-`pcb-pipeline where` prints the three locations. `init` refuses to create a board inside
-this repo or inside the knowledge base.
+`init` refuses to create a board inside this repo.
 
 ## Repository layout
 
@@ -127,9 +120,10 @@ this repo or inside the knowledge base.
 | `pipeline.yaml` | Pipeline definition: phases, stages, gates, learning loop |
 | `schemas/` | JSON Schemas for the spec, component sheets, findings and agent notes |
 | `agents/` | Agent prompts (interviewer, architect, component selector, orchestrator, datasheet, conformity) |
+| `knowledge/` | Shared knowledge that improves with use: phase 0 questions, architecture checklist, preferred parts, accepted agent notes |
 | `rules/` | Deterministic rule configuration (derating, etc.) |
-| `templates/project/` | Template of a board repo, used by `pcb-pipeline init` |
-| `templates/knowledge_base/` | Seed of your knowledge base, used by `pcb-pipeline setup` |
+| `library/component_sheets/` | Shared, cached component sheets (one per MPN + revision) |
+| `templates/project/` | Template of a hardware project repo, used by `pcb-pipeline init` |
 | `examples/` | Example component sheet and example `spec.yaml` |
 | `src/pcb_pipeline/` | Python core: KiCad import, netlist graph, rules engine, findings |
 | `tests/` | Unit tests and fixtures |

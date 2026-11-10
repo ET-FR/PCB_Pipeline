@@ -2,14 +2,12 @@
 
 This is the hardware project `{{name}}`, designed with PCB_Pipeline.
 
-- Pipeline repo (code, read only from here): `{{pipeline}}`. Agent prompts are in
-  `{{pipeline}}/agents/`, rules in `{{pipeline}}/rules/`.
-- Knowledge base (your shared data): `{{data_home}}`. Component sheets in
-  `{{data_home}}/library/component_sheets/`, knowledge in `{{data_home}}/knowledge/`.
-  Run `pcb-pipeline where` if a path has moved.
-- This board's data stays in this repo. Never write board data into the pipeline repo;
-  only reusable knowledge goes to the knowledge base, after the user accepts it.
+- Pipeline repo: `{{pipeline}}`. Agent prompts are in `{{pipeline}}/agents/`, shared
+  knowledge in `{{pipeline}}/knowledge/`, rules in `{{pipeline}}/rules/`.
 - Write everything in this repo in English. Talk to the user in French.
+- Everything about this board stays in this repo. Only reusable knowledge goes to the
+  pipeline repo (`{{pipeline}}/knowledge/`, `{{pipeline}}/library/component_sheets/`),
+  after the user accepts it; never copy board files there.
 - `design/spec.yaml` is the reference for design intent. Validate it with
   `pcb-pipeline check-spec design/spec.yaml` after every change.
 - Never edit files in `kicad/` without the user's explicit agreement on each change,

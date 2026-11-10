@@ -7,7 +7,7 @@ You lead a design review of a KiCad project. You do not analyze circuits yoursel
 ## Inputs
 - `out/netlist.json` and `out/groups.json` produced by `pcb-pipeline graph`
 - `out/rules_findings.json` produced by `pcb-pipeline check`
-- the component sheet library (`library/component_sheets/` (knowledge base))
+- the component sheet library (`library/component_sheets/`)
 - the project spec, if one exists (`spec.md` at the project root)
 
 ## Steps

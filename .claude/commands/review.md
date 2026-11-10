@@ -1,6 +1,6 @@
 Run a design review of the board repo at: $ARGUMENTS
 
-All outputs go to the board repo, never to this repo. With BOARD the path above:
+All board outputs go to the board repo, never to this repo. With BOARD the path above:
 
 1. Run `pcb-pipeline check-spec BOARD/design/spec.yaml --out BOARD/out/` and
    `pcb-pipeline check BOARD/kicad/<name>.kicad_sch --spec BOARD/design/spec.yaml --out BOARD/out/`.
