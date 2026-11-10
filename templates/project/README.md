@@ -6,7 +6,7 @@ Hardware project designed with [PCB_Pipeline](https://github.com/ET-FR/PCB_Pipel
 |---|---|---|
 | 0. Definition | `/define` | `design/prd.md` |
 | 1. Architecture | `/architecture` | `design/spec.yaml`, `design/spec.pdf`, `datasheets/` |
-| 2. Schematic | `/review` | `review/<run>/` |
+| 2. Schematic | `/schematic` (draft), `/review` | `kicad/`, `review/<run>/` |
 | 3. Layout | `/review` | `review/<run>/` |
 
 Working loop: edit in KiCad 10, save, run the command, accept or reject each proposed fix.

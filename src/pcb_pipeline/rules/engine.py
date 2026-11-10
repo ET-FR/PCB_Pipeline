@@ -28,6 +28,9 @@ class RuleEngine:
         self.f = findings
         self.rules = rules["rules"]
         self.rails = {**rules.get("rails", {}), **(rails or {})}
+        # spec nets are written /NET (root sheet) while power symbols and global labels give NET:
+        # match both ways
+        self.rails.update({k.lstrip("/"): v for k, v in list(self.rails.items()) if k.lstrip("/") not in self.rails})
 
     # helpers ---------------------------------------------------------------
 

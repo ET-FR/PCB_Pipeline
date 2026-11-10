@@ -12,6 +12,7 @@ dependencies = ["jsonschema>=4.20", "pyyaml>=6.0", "networkx>=3.0", "markdown>=3
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "reportlab>=4.0"]
 pdf = ["reportlab>=4.0"]
+schematic = ["kicad-sch-api>=0.5.5,<0.6"]
 
 [project.scripts]
 pcb-pipeline = "pcb_pipeline.cli:main"
