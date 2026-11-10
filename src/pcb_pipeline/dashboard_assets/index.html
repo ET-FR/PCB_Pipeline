@@ -65,6 +65,22 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--soft); }
 .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
 .refs a { margin-right: 6px; font-family: ui-monospace, monospace; font-size: 12px; }
 .ev { font-size: 12px; color: var(--muted); margin: 2px 0; }
+/* block diagram */
+.bdiag-wrap { overflow: auto; padding: 6px 2px; }
+.bdiag .frame { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; opacity: .7; }
+.bdiag .fname { font-weight: 700; font-size: 13px; fill: var(--accent); }
+.bdiag .blk rect { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+.bdiag .blk.crit-power rect { stroke: var(--warn); } .bdiag .blk.crit-mains rect { stroke: var(--over); stroke-width: 2.5; }
+.bdiag .blk:hover rect { stroke: var(--accent); stroke-width: 2.5; }
+.bdiag .t1 { font-weight: 700; font-size: 13px; fill: var(--ink); } .bdiag .t2 { font-size: 11px; fill: var(--muted); }
+.bdiag .conn rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; } .bdiag .conn text { font-weight: 700; font-size: 12px; fill: var(--accent); }
+.bdiag .ext rect { fill: var(--soft); stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; } .bdiag .ext text { font-size: 12px; fill: var(--ink); }
+.bdiag .edge { fill: none; stroke-width: 2; opacity: .75; }
+.bdiag .power { stroke: var(--over); } .bdiag .comm { stroke: var(--accent); } .bdiag .mix { stroke: #8a4fd0; } .bdiag .other { stroke: var(--muted); stroke-dasharray: 4 4; }
+.bdiag .edge:hover { stroke-width: 4; opacity: 1; }
+.bdiag .legend line { stroke-width: 3; } .bdiag .legend text { font-size: 12px; fill: var(--muted); }
+.bdiag .elabel { font-size: 10px; stroke: none; }
+.bdiag .elabel.power { fill: var(--over); } .bdiag .elabel.comm { fill: var(--accent); }
 /* power tree */
 .ptree-wrap { overflow: auto; padding: 6px 2px; }
 .ptree .edge { fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .6; }
@@ -127,7 +143,7 @@ for (const f of open) for (const r of f.kicad_refs || []) (findingsByRef[r] ||= 
 const worst = r => (findingsByRef[r] || []).reduce((a, f) => a === "none" || sevRank(f.severity) < sevRank(a) ? f.severity : a, "none");
 
 const TABS = [
-  ["status", "Status"], ["prd", "PRD"], ["power", "Power tree"], ["datasheets", "Datasheets"],
+  ["status", "Status"], ["prd", "PRD"], ["blocks", "Block diagram"], ["power", "Power tree"], ["datasheets", "Datasheets"],
   ["schematic", "Schematic"], ["layout", "Layout"], ["findings", "Findings"], ["memory", "Notes and lessons"],
 ];
 
@@ -151,7 +167,7 @@ function go(tab, opts = {}) { state.tab = tab; Object.assign(state, opts); save(
 
 function render() {
   const m = $("#main"); m.className = ["schematic", "layout"].includes(state.tab) ? "full" : "";
-  ({ status, prd, power, datasheets, schematic, layout, findings, memory })[state.tab](m);
+  ({ status, prd, blocks, power, datasheets, schematic, layout, findings, memory })[state.tab](m);
 }
 
 /* ---------- status ---------- */
@@ -189,6 +205,13 @@ function status(m) {
 /* ---------- PRD ---------- */
 function prd(m) {
   m.innerHTML = D.prd_html ? `<div class="card prd">${D.prd_html}</div>` : `<div class="empty">No PRD yet. Run <code>/define</code> in Claude Code.</div>`;
+}
+
+/* ---------- block diagram ---------- */
+function blocks(m) {
+  if (!D.block_diagram_svg) { m.innerHTML = `<div class="empty">No valid spec yet. Run <code>/architecture</code> in Claude Code.</div>`; return; }
+  m.innerHTML = `<h1>Block diagram</h1><div class="muted">Drawn from the spec: blocks, connectors on the board edge, off-board devices, power lines (rails), communication lines (buses). Hover a line or a box for details.</div>
+    <div class="card bdiag-wrap" style="margin-top:12px">${D.block_diagram_svg}</div>`;
 }
 
 /* ---------- power tree ---------- */

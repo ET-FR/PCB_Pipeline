@@ -86,6 +86,10 @@ def test_dashboard_data_without_kicad(project, tmp_path):
     assert [s["name"] for s in data["schematic"]] == ["root", "power"]
     assert {i["ref"] for i in data["board"]["items"]} == {"R1", "U1"}
     assert 'data-rail="5v"' in data["power_tree_svg"]
+    bd = data["block_diagram_svg"]
+    assert 'data-block="mcu"' in bd and 'data-block="power/buck_5v"' in bd
+    assert 'class="edge power"' in bd and 'class="edge comm"' in bd      # rails and the i2c1 bus
+    assert ">J1<" in bd                                                   # connector on the board edge
     buck = next(d for d in data["datasheets"] if d["mpn"] == "EXAMPLE-BUCK-01")
     assert buck["pdf"].endswith("datasheets/EXAMPLE-BUCK-01@A.pdf") and buck["sheet"] and buck["score"] == 9
     # spec findings are mapped to KiCad references through parts[].ref (ldo_3v3 -> U3)

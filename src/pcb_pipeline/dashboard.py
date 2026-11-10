@@ -1,4 +1,4 @@
-"""Project dashboard: one HTML page with status, PRD, power tree, datasheets, findings,
+"""Project dashboard: one HTML page with status, PRD, block diagram, power tree, datasheets, findings,
 schematic and layout (exported by kicad-cli), with findings highlighted on the drawings.
 
 Read only. Generated into out/dashboard/ of the hardware project; open index.html in a
@@ -20,6 +20,7 @@ from pathlib import Path
 
 import yaml
 
+from .block_diagram import block_diagram_svg
 from .datasheet.library import SheetLibrary
 from .findings import SEVERITY_ORDER, Findings
 from .kicad_files import read_board, read_schematic
@@ -409,6 +410,7 @@ def build_data(project_dir: Path, out: Path, kicad_cli: str = "kicad-cli", use_k
         "prd_html": _markdown(prd_text) if prd_text else "",
         "prd_open": prd_open,
         "open_questions": open_questions,
+        "block_diagram_svg": block_diagram_svg(spec) if spec and not spec_errors else "",
         "power_tree_svg": _power_tree_svg(spec, currents) if spec and not spec_errors else "",
         "rails": [dict(r, budget_a=currents.get(r["id"])) for r in (spec or {}).get("power_tree", {}).get("rails", [])]
         if not spec_errors else [],
