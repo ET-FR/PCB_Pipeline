@@ -24,6 +24,7 @@ IDs are stable: never reuse or renumber an ID, mark removed questions as `[retir
 - **Q-PRD-005** [should] Deadline for the first prototype and for production? _Drives: part availability, lead times, risk taken._
 - **Q-PRD-006** [should] Is there a previous version or a reference design? What was wrong with it? _Drives: reuse, known pitfalls._
 - **Q-PRD-007** [nice] Who uses the product and how (end user, technician, lab)? _Drives: user interface, protection against misuse._
+- **Q-PRD-008** [should] Should the BOM be optimized for cost: fewer distinct parts, reuse of the same values and packages, assembler basic or preferred parts, cost per board at the target volume? _Drives: part selection, BOM consolidation, assembly cost._ Added from: FRONT_BOARD phase 0, 2026-11-10.
 
 ## 2. Functions and performance
 
@@ -38,6 +39,7 @@ IDs are stable: never reuse or renumber an ID, mark removed questions as `[retir
 - **Q-PWR-001** [must] Power sources: battery (chemistry, cells), adapter, USB (which power level, PD?), PoE, vehicle 12 or 24 V, mains? _Drives: input stage, power tree._
 - **Q-PWR-002** [must] Input voltage range, including transients (load dump, cold crank, hot plug surge). _Drives: regulator ratings, TVS, capacitor ratings._
 - **Q-PWR-003** [must] Power or current budget per mode, peak and average. _Drives: regulators, connectors, track widths, thermal._
+- **Q-PWR-010** [should] For every motor, pump, solenoid or other inductive load: inrush current and duration, stall or locked-rotor current, in addition to the rated current. If unknown, plan a bench measurement. _Drives: eFuse current limit, switch rating, fuses, connector and track sizing._ Added from: FRONT_BOARD phase 0, 2026-11-10 (user did not know the drain pump inrush or stall current).
 - **Q-PWR-004** [must] Protection required: reverse polarity, overvoltage, overcurrent, short circuit on outputs. _Drives: input protection, eFuses._
 - **Q-PWR-005** [should] Battery life target and sleep current target. _Drives: regulator quiescent current, power gating._
 - **Q-PWR-006** [should] Charging: chemistry, charge current, charging while operating, temperature limits. _Drives: charger IC, NTC._
@@ -54,6 +56,7 @@ IDs are stable: never reuse or renumber an ID, mark removed questions as `[retir
 - **Q-INT-005** [should] User interface: buttons, LEDs, display, buzzer. _Drives: GPIO count, front panel layout._
 - **Q-INT-006** [must] Programming and debug access: SWD or JTAG, UART console, USB DFU, test pads or connector? _Drives: debug connector, boot strapping._
 - **Q-INT-007** [should] Harness: who makes it, wire gauge, pinout already defined? _Drives: connector pinout, current per pin._
+- **Q-INT-008** [should] Which connectors share the same housing and pin count and could be plugged into each other? Is that acceptable, or must they be keyed differently? _Drives: connector choice, keying, pin counts, protection against swapped cables._ Added from: FRONT_BOARD phase 0, 2026-11-10 (valve and switch both on JST PA 2-pin).
 
 ## 5. Processing, buses and wireless
 
@@ -61,7 +64,7 @@ IDs are stable: never reuse or renumber an ID, mark removed questions as `[retir
 - **Q-PRC-002** [should] Memory needs: flash, RAM, external storage, logging. _Drives: MCU, external flash, SD card._
 - **Q-PRC-003** [should] Devices on shared buses (I2C, SPI, CAN, RS-485): list, and fixed addresses if known. _Drives: I2C address map, bus count, pull-ups._
 - **Q-PRC-004** [should] Wireless: which (BLE, Wi-Fi, LoRa, cellular, GNSS), module or chip-down, antenna internal or external? _Drives: RF layout, certification, keep-outs._
-- **Q-PRC-005** [nice] Security needs: secure boot, encrypted storage, secure element? _Drives: MCU features, extra parts._
+- **Q-PRC-005** [nice] Security needs: secure boot, encrypted storage, secure element? Skip when the board has no processor or firmware. _Drives: MCU features, extra parts._
 
 ## 6. Mechanical
 
@@ -126,10 +129,11 @@ The pipeline adds, rewrites or retires questions from real use:
 Answers that are usually true for this user's projects. The interviewer states them as
 assumptions and asks for confirmation instead of asking from scratch.
 
-_None yet._
+- **Q-MFG-001**: JLCPCB makes and assembles the board (fabrication and assembly). Confirmed on FRONT_BOARD, 2026-11-10.
 
 ### Changelog
 
 | Date | Change | Origin |
 |---|---|---|
 | 2026-11-10 | Initial list | Pipeline design |
+| 2026-11-10 | Add Q-PRD-008, Q-PWR-010, Q-INT-008; Q-PRC-005 skipped without a processor; user default Q-MFG-001 = JLCPCB | FRONT_BOARD phase 0 |
