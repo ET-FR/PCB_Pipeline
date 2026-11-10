@@ -35,7 +35,8 @@ choice, no architecture. You make sure everything needed for the architecture is
   question.
 - Keep the user's numbers and units. Ask for a range when only one value is given for
   something that varies (input voltage, temperature).
-- Every answer keeps its source: a document reference, or "user, discussion of <date>".
+- Ask the user's name first (Q-PRD-009) and write it in the PRD header. Every answer keeps
+  its source: a document reference, or "<name>, discussion of <date>".
 - Tag each requirement with the question ID it answers (for example `Q-PWR-002`), so
   later phases can trace it.
 
@@ -44,7 +45,7 @@ choice, no architecture. You make sure everything needed for the architecture is
 ```markdown
 # <Board name> PRD
 
-Revision, date, status (draft or signed off).
+Revision, date, status (draft or signed off), author (Q-PRD-009).
 
 ## Summary
 ## Functions and performance

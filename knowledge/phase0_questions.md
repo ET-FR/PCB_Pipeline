@@ -25,6 +25,7 @@ IDs are stable: never reuse or renumber an ID, mark removed questions as `[retir
 - **Q-PRD-006** [should] Is there a previous version or a reference design? What was wrong with it? _Drives: reuse, known pitfalls._
 - **Q-PRD-007** [nice] Who uses the product and how (end user, technician, lab)? _Drives: user interface, protection against misuse._
 - **Q-PRD-008** [should] Should the BOM be optimized for cost: fewer distinct parts, reuse of the same values and packages, assembler basic or preferred parts, cost per board at the target volume? _Drives: part selection, BOM consolidation, assembly cost._ Added from: FRONT_BOARD phase 0, 2026-11-10.
+- **Q-PRD-009** [must] Name of the person defining the board (PRD author and owner), and of anyone else who signs phases off. _Drives: PRD author field, gate sign-off, traceability of answers._ Added from: FRONT_BOARD phase 0, 2026-11-10.
 
 ## 2. Functions and performance
 
@@ -137,3 +138,4 @@ assumptions and asks for confirmation instead of asking from scratch.
 |---|---|---|
 | 2026-11-10 | Initial list | Pipeline design |
 | 2026-11-10 | Add Q-PRD-008, Q-PWR-010, Q-INT-008; Q-PRC-005 skipped without a processor; user default Q-MFG-001 = JLCPCB | FRONT_BOARD phase 0 |
+| 2026-11-10 | Add Q-PRD-009 (PRD author and sign-off names) | FRONT_BOARD phase 0 |
