@@ -91,3 +91,41 @@ def test_flat_page_power_symbols_vertical_and_global_consistency(tmp_path):
     rots = re.findall(r'\(lib_id "power:(?:\+5V|GND)"\)\s*\(at [\d.\-]+ [\d.\-]+ (\d+)\)', t)
     assert rots and all(r in ("0", "180") for r in rots)              # vertical power symbols only
     assert not prj.issues()
+
+
+@pytest.mark.skipif(not KICAD_CLI, reason="KiCad not installed")
+def test_wires_junctions_net_names_and_frames(tmp_path):
+    prj = sd.Project(tmp_path, "W", power_nets={"GND": "power:GND", "+5V": "power:+5V"}, paper="A4")
+    s = prj.page()
+    s.block("Divider")
+    s.part("Device:R", "R1", "10k", (101.6, 60.96), "Resistor_SMD:R_0603_1608Metric")
+    s.part("Device:R", "R2", "10k", (101.6, 76.2), "Resistor_SMD:R_0603_1608Metric")
+    s.part("Device:C", "C1", "100n", (127.0, 76.2), "Capacitor_SMD:C_0603_1608Metric")
+    s.pins("R1", {"1": "+5V"})
+    s.pins("R2", {"2": "GND"})
+    s.pins("C1", {"2": "GND"})
+    s.wire(("R1", "2"), ("R2", "1"), "MID")
+    y = (s.pin_point("R1", "2")[1] + s.pin_point("R2", "1")[1]) / 2
+    s.wire((101.6, y), ("C1", "1"), "MID", via=[(127.0, y)])     # T on the R1-R2 wire: junction
+    prj.save()
+    assert not prj.issues()
+    t = (tmp_path / "W.kicad_sch").read_text(encoding="utf-8")
+    assert "(junction" in t
+    assert '(label "MID"' in t                                      # net name on a wire, not a pin name
+    assert '(stroke' in t and "dash" in t and "Divider" in t         # framed block with its title
+    net = tmp_path / "w.net"
+    subprocess.run([KICAD_CLI, "sch", "export", "netlist", "--format", "kicadsexpr", "-o", str(net),
+                    str(tmp_path / "W.kicad_sch")], check=True, capture_output=True)
+    n = net.read_text(encoding="utf-8")
+    m = re.search(r'\(name "/?MID"\)(.*?)\n\s*\)\s*(?=\(net|\))', n, re.S)
+    assert m and set(re.findall(r'\(ref "([^"]+)"\)\s*\(pin "([^"]+)"\)', m.group(1))) == \
+        {("R1", "2"), ("R2", "1"), ("C1", "1")}
+
+
+def test_short_between_nets_is_reported(tmp_path):
+    prj = sd.Project(tmp_path, "S", power_nets={"GND": "power:GND"}, paper="A4")
+    s = prj.page()
+    s.wire((50.8, 50.8), (76.2, 50.8), "A")
+    s.wire((63.5, 50.8), (63.5, 63.5), "B")                          # ends on the middle of net A
+    prj.save()
+    assert any("short" in b for _, _, b in prj.issues())

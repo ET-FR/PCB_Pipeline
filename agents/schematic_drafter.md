@@ -43,8 +43,12 @@ prj.save()
    `Voltage` on every capacitor, `LCSC` when known, and a JLCPCB-compatible footprint. Show
    short values (`100nF`, `4.7k`); tolerance, voltage and dielectric go in hidden fields.
    Place the parts by function (input on the left, output on the right, feedback below).
+   Start each block with `s.block("Title")` and write it as a function that takes its
+   origin, so the whole block can be moved (layout rules 6 and 7).
 4. **Check before the commit.** `Project.save()` then `Project.issues()` must be empty (no
-   overlap, nothing on the page frame or the title block). Then `kicad-cli sch erc` and
+   overlap, no short, no frame overlap, every wired net named, nothing on the page frame or
+   the title block). Compare the netlist with the previous one after a layout rework: same
+   nets, same names. Then `kicad-cli sch erc` and
    `pcb-pipeline check <sch> --spec design/spec.yaml`. Fix what is yours. Add `PWR_FLAG` on
    rails that come from a connector or through a passive part (fuse, inductor, filter).
    Look at an SVG export of the page: the overlap check is an approximation.
@@ -69,6 +73,32 @@ prj.save()
    page would be unreadable, and then by function.
 5. **Compact.** 100 mil (2.54 mm) between items is enough as long as nothing overlaps: short
    wire stubs (2.54 mm), parts in clusters, no large empty areas.
+
+## Layout rules, wires and frames (from the user, FRONT_BOARD review, 2026-11-10)
+6. **Wires inside a block, labels between blocks.** A net label that only joins two pins a
+   few millimetres apart is useless: draw a wire. The resistors, capacitors and inductor of
+   a regulator (feedback divider, EN divider, boot capacitor, input and output capacitors)
+   are wired to the IC. Decoupling capacitors are always wired to the supply pin of their
+   IC. Protection parts (ESD diodes on I2C or other signals, TVS, pull-ups) are wired on the
+   signal they protect. Net labels are for nets that leave the block (connector nets, buses,
+   control signals between blocks).
+   - `s.wire(a, b, net, via=[...])`: orthogonal wire between pins `(ref, pin)` or points
+     `(x, y)`; mark wired pins `"~"` in the block helpers so `pins()` draws no stub.
+   - `s.power(net, at)`: a power symbol standing on a wire point (still vertical);
+     `s.label(net, at, angle, offset)`: a label at a wire end.
+   - The module adds the junction dots, reports a wire ending on another net (short) and a
+     pin lying on the middle of a wire, and puts one small net-name label on a wire of every
+     net drawn only with wires, so the netlist keeps the spec names (otherwise KiCad calls
+     the net `Net-(U1-FB)`). If it reports "no room for a net-name label", lengthen a
+     straight segment of that net (net name length x 1.17 mm + 2.5 mm).
+   - Avoid crossings: on a side with several pins, the top pin goes to the nearest column;
+     two rails with branches up and down cross as wires (no dot), never through a label.
+7. **Framed blocks with a legend.** Each block is framed by a dashed rectangle with its title
+   on top (the module draws it from `s.block()`): the function, the main part and what the
+   reader must know (`5 V buck - TPS54202 (SLVSD26C Table 7-2)`, `place U4, D1, D2 next to
+   J1`). Frames never overlap each other, other blocks' parts or the title block;
+   `Project.issues()` checks it. Plan the page as rows of blocks; the bottom-right corner
+   is the title block.
 
 ## Rules
 - A value without a source is not drafted: it comes from a component sheet (with its page),

@@ -85,6 +85,12 @@ class Sheet:
     field_pos: dict[str, dict[str, tuple]] = field(default_factory=dict)
     boxes: list = field(default_factory=list)
     issues: list = field(default_factory=list)
+    routes: list = field(default_factory=list)     # (points, net, group) drawn as wires
+    powers: list = field(default_factory=list)     # (net, at, rise, group)
+    groups: dict = field(default_factory=dict)     # group -> title
+    group_of: dict = field(default_factory=dict)   # ref / owner -> group
+    current: str | None = None
+    segments: list = field(default_factory=list)   # (p, q, net, owner) of every wire
 
     def part(self, lib_id: str, ref: str, value: str, at: tuple[float, float], footprint: str = "",
              rotation: float = 0, mpn: str = "", fields: str = "auto", **fields_):
@@ -100,7 +106,63 @@ class Sheet:
             w, hgt = x1 - x0, y1 - y0
             fields = "right" if w < 10.5 else "corners"     # two-pin parts, transistors, connectors: right
         self.placed[ref] = Placed(lib_id, at, rotation, fields, value)
+        if self.current:
+            self.group_of[ref] = self.current
         return c
+
+    # ---- blocks, wires, power symbols on wires ----
+    def block(self, title: str):
+        """Start a functional block: what follows is framed with this title (drafting rule: framed blocks)."""
+        self.current = title
+        self.groups[title] = title
+
+    def pin_point(self, ref: str, pin: str | int) -> tuple[float, float]:
+        return self._outward(ref, str(pin))[0]
+
+    def wire(self, a, b, net: str, via=(), route: str = "hv"):
+        """Orthogonal wire between two pins ((ref, pin)) or points ((x, y)), through optional via points.
+
+        Use it for local connections (an IC and its resistors, decoupling capacitors, protection
+        diodes): drafting rule, wires rather than net labels inside a block.
+        """
+        pts = [self._end(a)] + [(snap(x), snap(y)) for x, y in via] + [self._end(b)]
+        if not via and pts[0][0] != pts[1][0] and pts[0][1] != pts[1][1]:
+            corner = (pts[1][0], pts[0][1]) if route == "hv" else (pts[0][0], pts[1][1])
+            pts.insert(1, corner)
+        self.routes.append((pts, net.lstrip("/"), self.current))
+        for end in (a, b):
+            if isinstance(end[0], str):
+                self.wired.add((end[0], str(end[1])))
+
+    def label(self, net: str, at, angle: int = 0, offset: float = 2.54, glob: bool = False):
+        """Net label on a wire point; offset > 0 first draws a short wire in the label direction."""
+        at = (snap(at[0]), snap(at[1]))
+        d = {0: (1, 0), 90: (0, -1), 180: (-1, 0), 270: (0, 1)}[angle]
+        end = (snap(at[0] + d[0] * offset), snap(at[1] + d[1] * offset))
+        if offset:
+            self.routes.append(([at, end], net.lstrip("/"), self.current))
+        self.labels_at.append((net.lstrip("/"), end, angle, glob, self.current))
+
+    @property
+    def labels_at(self):
+        if not hasattr(self, "_labels_at"):
+            self._labels_at = []
+        return self._labels_at
+
+    def power(self, net: str, at, rise: float = 2.54):
+        """Power symbol standing vertically on a point of a wire (rail up, ground down)."""
+        self.powers.append((net.lstrip("/"), (snap(at[0]), snap(at[1])), rise, self.current))
+
+    def _end(self, e):
+        if isinstance(e[0], str):
+            return self.pin_point(e[0], str(e[1]))
+        return (snap(e[0]), snap(e[1]))
+
+    @property
+    def wired(self):
+        if not hasattr(self, "_wired"):
+            self._wired = set()
+        return self._wired
 
     def connect(self, ref: str, pin: str | int, net: str, stub: float | None = None, label: bool = False):
         self.conns.append(Conn(ref, str(pin), net.lstrip("/"), stub, label))
@@ -126,6 +188,8 @@ class Sheet:
             pos = (snap(x), snap(y + k * 2.54))
             self.sch.add_text(line, pos, size=size)
             self.boxes.append((f"note:{line[:12]}", text_box(line, pos, size, 0, "center"), "note"))
+            if self.current:
+                self.group_of[f"note:{line[:12]}"] = self.current
 
     # ---- geometry ----
     def _outward(self, ref: str, pin: str) -> tuple[tuple[float, float], tuple[int, int]]:
@@ -183,6 +247,7 @@ class Sheet:
             length = c.stub if c.stub is not None else self.project.stub
             ex, ey = snap(px + dx * length), snap(py + dy * length)
             self.sch.add_wire((px, py), (ex, ey))
+            self.segments.append(((px, py), (ex, ey), c.net, own))
             self.boxes.append((f"wire {c.ref}.{c.pin}", (min(px, ex) - 0.15, min(py, ey) - 0.15,
                                                           max(px, ex) + 0.15, max(py, ey) + 0.15), own))
             if c.net in power and not c.label:
@@ -211,8 +276,181 @@ class Sheet:
                     self.sch.add_label(c.net, position=(ex, ey), rotation=rot)
                 self.boxes.append((f"label {c.net} ({c.ref}.{c.pin})",
                                    text_box(c.net, (ex, ey), 1.27, rot, label="global" if glob else "local"), own))
-        self.issues = overlaps(self.boxes) + self._outside_page()
+        for i, (pts, net, grp) in enumerate(self.routes):
+            own = f"route:{i}"
+            if grp:
+                self.group_of[own] = grp
+            for p0, p1 in zip(pts, pts[1:]):
+                if p0 == p1:
+                    continue
+                self.sch.add_wire(p0, p1)
+                self.segments.append((p0, p1, net, own))
+                self.boxes.append((f"wire route {net}", (min(p0[0], p1[0]) - 0.15, min(p0[1], p1[1]) - 0.15,
+                                                        max(p0[0], p1[0]) + 0.15, max(p0[1], p1[1]) + 0.15), own))
+        for i, (net, at, rise, grp) in enumerate(self.powers):
+            own = f"pw:{i}"
+            if grp:
+                self.group_of[own] = grp
+            lib = power_lib.get(net) or ("power:GND" if net.upper().endswith("GND") else "power:VCC")
+            ground = lib in GROUND_LIBS
+            top = (at[0], snap(at[1] + rise if ground else at[1] - rise))
+            self.sch.add_wire(at, top)
+            self.segments.append((at, top, net, own))
+            self.project.pwr += 1
+            pref = f"#PWR{self.project.pwr:03d}"
+            self.sch.components.add(lib, reference=pref, value=net, position=top, rotation=0)
+            bx0, by0, bx1, by1 = screen_box(lib, top, 0)
+            vy = by1 + 1.524 if ground else by0 - 1.524
+            self.field_pos[pref] = {"Value": (top[0], vy, 0, "center"), "Reference": (top[0], vy, 0, "center")}
+            self.boxes.append((f"{pref}({net})", (bx0, by0, bx1, by1), own))
+            self.boxes.append((f"{pref}.Value({net})", text_box(net, (top[0], vy), 1.27, 0, "center"), own))
+        for i, (net, at, angle, glob, grp) in enumerate(self.labels_at):
+            own = f"lbl:{i}"
+            if grp:
+                self.group_of[own] = grp
+            g = glob or net in globals_ or net in power
+            if g:
+                globals_out.append((net, at[0], at[1], angle))
+            else:
+                self.sch.add_label(net, position=at, rotation=angle)
+            self.boxes.append((f"label {net}", text_box(net, at, 1.27, angle, label="global" if g else "local"), own))
+        name_issues = self._name_nets(power)
+        conn_issues = self._junctions() + name_issues
+        for c in self.conns:
+            if c.ref in self.group_of:
+                self.group_of[f"conn:{c.ref}.{c.pin}"] = self.group_of[c.ref]
+        for ref in list(self.group_of):
+            if ref in self.placed:
+                self.group_of[ref + ":f"] = self.group_of[ref]
+        frame_issues = self._frames()
+        self.issues = overlaps(self.boxes) + self._outside_page() + conn_issues + frame_issues
         return globals_out
+
+    def _name_nets(self, power) -> list:
+        """One small net-name label sitting on a wire of each net drawn only with wires.
+
+        Without it KiCad names the net after a pin (Net-(U1-FB)) and the netlist loses the spec names.
+        The label goes on the longest free segment, horizontal first, where it overlaps nothing.
+        """
+        named = set(power) | {n for n, *_ in self.labels_at} | {c.net for c in self.conns if c.net}
+        named |= {n for n, *_ in self.powers}
+        issues = []
+        for net in sorted({n for _, n, _ in self.routes} - named):
+            if net.startswith("Net-"):
+                continue
+            segs = [s for s in self.segments if s[2] == net and s[3].startswith("route:")]
+            segs.sort(key=lambda s: (s[0][1] != s[1][1], -abs(s[1][0] - s[0][0]) - abs(s[1][1] - s[0][1])))
+            w = len(net) * 1.27 * CHAR_W + 0.3
+            spot = None
+            for p0, p1, _, own in segs:
+                horiz = p0[1] == p1[1]
+                a, b = sorted((p0[0], p1[0]) if horiz else (p0[1], p1[1]))
+                lo, hi = a + 1.27, b - 1.27 - w          # range of the text start along the segment
+                if hi < lo:
+                    continue
+                n = int((hi - lo) / 1.27)
+                starts = sorted((snap(lo + k * 1.27) for k in range(n + 1)), key=lambda t: abs(t - (lo + hi) / 2))
+                for t in starts:
+                    if horiz:
+                        at, ang = (t, p0[1]), 0
+                    else:
+                        at, ang = (p0[0], snap(t + w)), 90     # reads upwards from the anchor
+                    box = text_box(net, at, 1.27, ang, label="local")
+                    # the text sits above (left of) its wire: a branch leaving on the other side is no clash
+                    chk = (box[0], box[1], box[2], at[1] - 0.1) if horiz else (box[0], box[1], at[0] - 0.1, box[3])
+                    if not self._hits(chk, own):
+                        spot = (at, ang, chk, own)
+                        break
+                if spot:
+                    break
+            if not spot:
+                issues.append((f"net {net}", "no room for a net-name label on its wires"))
+                continue
+            at, ang, box, own = spot
+            self.sch.add_label(net, position=at, rotation=ang)
+            self.boxes.append((f"label {net} (net name)", box, own))
+        return issues
+
+    def _hits(self, box, skip_owner, margin: float = 0.25) -> bool:
+        for _, b, o in self.boxes:
+            if o == skip_owner:
+                continue
+            if box[0] < b[2] - margin and b[0] < box[2] - margin and box[1] < b[3] - margin and b[1] < box[3] - margin:
+                return True
+        return False
+
+    def _junctions(self):
+        """Junction dots on T connections; a wire touching another net, or a pin in its middle, is an issue."""
+        def on_inside(pt, seg):
+            (x0, y0), (x1, y1) = seg[0], seg[1]
+            if x0 == x1 == pt[0]:
+                return min(y0, y1) + 0.01 < pt[1] < max(y0, y1) - 0.01
+            if y0 == y1 == pt[1]:
+                return min(x0, x1) + 0.01 < pt[0] < max(x0, x1) - 0.01
+            return False
+        issues, junctions = [], set()
+        ends: dict[tuple, int] = {}
+        for p0, p1, _, _ in self.segments:
+            for q in (p0, p1):
+                key = (round(q[0], 2), round(q[1], 2))
+                ends[key] = ends.get(key, 0) + 1
+        for a in self.segments:
+            for q in (a[0], a[1]):
+                for b in self.segments:
+                    if b is a or not on_inside(q, b):
+                        continue
+                    if a[2] == b[2]:
+                        junctions.add((round(q[0], 2), round(q[1], 2)))
+                    else:
+                        issues.append((f"wire {a[2]}", f"touches wire {b[2]} at {q} (short)"))
+        for key, n in ends.items():
+            if n >= 3:
+                junctions.add(key)
+        pins = []
+        for ref, p in self.placed.items():
+            for sp in ksa.get_symbol_info(p.lib_id).pins:
+                pins.append((ref, sp.number, self._outward(ref, sp.number)[0]))
+        for ref, num, pt in pins:
+            for seg in self.segments:
+                if on_inside(pt, seg):
+                    issues.append((f"pin {ref}.{num}", f"on the middle of wire {seg[2]}"))
+        for x, y in sorted(junctions):
+            self.sch.junctions.add(position=(x, y))
+        return issues
+
+    def _frames(self):
+        """Dashed frame with a title around each block; frames must not overlap or swallow other blocks."""
+        frames, issues = {}, []
+        for g in self.groups:
+            bs = [b for n, b, o in self.boxes if self.group_of.get(o) == g or self.group_of.get(n) == g]
+            if not bs:
+                continue
+            x0 = min(b[0] for b in bs) - 2.54
+            y0 = min(b[1] for b in bs) - 2.54 - 3.81
+            x1 = max(b[2] for b in bs) + 2.54
+            y1 = max(b[3] for b in bs) + 2.54
+            x0, y0 = math.floor(x0 / GRID) * GRID, math.floor(y0 / GRID) * GRID
+            x1, y1 = math.ceil(x1 / GRID) * GRID, math.ceil(y1 / GRID) * GRID
+            frames[g] = (x0, y0, x1, y1)
+            self.sch.add_rectangle((x0, y0), (x1, y1), stroke_width=0.254, stroke_type="dash")
+            tpos = (snap((x0 + x1) / 2), snap(y0 + 2.54))
+            self.sch.add_text(g, tpos, size=1.524, bold=True)
+            tb = text_box(g, tpos, 1.524, 0, "center")
+            if tb[2] - tb[0] > x1 - x0:
+                issues.append((f"frame {g}", "title wider than the frame"))
+        names = list(frames)
+        for i, a in enumerate(names):
+            fa = frames[a]
+            for b in names[i + 1:]:
+                fb = frames[b]
+                if fa[0] < fb[2] and fb[0] < fa[2] and fa[1] < fb[3] and fb[1] < fa[3]:
+                    issues.append((f"frame {a}", f"frame {b}"))
+            for n, bx, o in self.boxes:
+                g = self.group_of.get(o) or self.group_of.get(n)
+                if g and g != a and bx[0] < fa[2] and fa[0] < bx[2] and bx[1] < fa[3] and fa[1] < bx[3]:
+                    issues.append((f"frame {a}", n))
+        self.frames = frames
+        return issues
 
     def _outside_page(self):
         """Items crossing the page frame or the title block (KiCad default frame: 10 mm margin)."""
@@ -620,6 +858,8 @@ def overlaps(boxes: list[tuple[str, tuple[float, float, float, float], str]], ma
             nb, b, ob = boxes[j]
             if oa and oa == ob:
                 continue
+            if na.startswith("wire") and nb.startswith("wire"):
+                continue                                     # wires may cross (no junction, no connection)
             if a[0] < b[2] - margin and b[0] < a[2] - margin and a[1] < b[3] - margin and b[1] < a[3] - margin:
                 out.append((na, nb))
     return out
