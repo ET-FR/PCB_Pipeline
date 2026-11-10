@@ -1,30 +1,32 @@
 # PCB_Pipeline
 
-Multi-agent design review pipeline for KiCad hardware projects.
+Multi-agent pipeline that helps design PCBs in KiCad faster and with fewer errors.
 
-The pipeline reads a KiCad project, builds a structured component sheet for every
-part from its datasheet, then checks the schematic against those sheets. Deterministic
-checks run in Python; AI agents (driven from Claude Code) handle judgment calls.
-Every finding must cite its evidence: **no proof, no finding.**
+It follows the real design flow, from product definition to layout. At each phase it
+checks the work against the datasheets and the design intent, proposes fixes, and
+applies the ones the user accepts. Deterministic checks run in Python; AI agents
+(driven from Claude Code) handle judgment calls. Every finding must cite its evidence:
+**no proof, no finding.**
 
 ## Status
 
-Step 1 of the [roadmap](docs/roadmap.md): foundations, data formats, deterministic core.
-Agents are defined (prompts in [`agents/`](agents/)) but not yet wired to an orchestrator.
+The deterministic schematic core works. Phases 0 and 1, the fix loop and the learning
+loop are designed but not built yet: see the [roadmap](docs/roadmap.md).
 
 ## How it works
 
-```
-KiCad project ──kicad-cli──> netlist + BOM ──> netlist graph ──> functional groups
-                                                     │
-MPN list ──> Datasheet agent ──> component sheets ───┤
-             (locate > extract > critique)           │
-                                                     v
-                         Deterministic rules + Conformity agent
-                                                     │
-                                                     v
-                              findings.json ──> report (Markdown / HTML)
-```
+| Phase | What happens | Output |
+|---|---|---|
+| 0. Definition | The user gives documents and discusses with the agent | `design/prd.md` |
+| 1. Architecture | Block diagram, component selection, datasheets, power tree, interfaces, I2C map, size, design rules | `design/spec.yaml`, `design/spec.pdf`, `datasheets/` |
+| 2. Schematic | The user draws in KiCad, the pipeline checks it against the spec and the datasheets | findings, report, accepted fixes |
+| 3. Layout | Design rules exported to KiCad, DRC, layout review | findings, report, accepted fixes |
+| 4. Simulation | Not developed yet | |
+
+Working loop: edit in KiCad, save, run the pipeline, accept or reject each proposed
+fix, the accepted ones are applied and committed. Every decision and every issue missed
+by the pipeline feeds back into its rules, traps and agent checklists, so it improves
+with each project.
 
 See [docs/architecture.md](docs/architecture.md) for the full design.
 
@@ -73,7 +75,7 @@ Every symbol should carry these fields, otherwise most automatic checks are impo
 
 | Path | Content |
 |---|---|
-| `pipeline.yaml` | Pipeline definition: stages, triggers, thresholds |
+| `pipeline.yaml` | Pipeline definition: phases, stages, gates, learning loop |
 | `schemas/` | JSON Schemas for component sheets and findings |
 | `agents/` | Agent prompts (orchestrator, datasheet, critic, conformity) |
 | `rules/` | Deterministic rule configuration (derating, etc.) |

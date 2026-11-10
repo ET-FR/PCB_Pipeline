@@ -1,13 +1,40 @@
 # Roadmap
 
-- [ ] **1. Foundations**: repo structure, `pipeline.yaml`, `kicad-cli` import, pre-commit hook.
-- [ ] **2. Test existing tools**: run kicad-happy and pcbsight on a finished project, note what they find and what they miss. Use the misses as seed requirements and as the "trapped project" test suite.
-- [ ] **3. Formats**: JSON Schemas for component sheets and `findings.json`, aligned with kicad-happy outputs; MPN and Voltage fields in all symbols.
-- [ ] **4. Datasheet and Conformity agents** on top of kicad-happy extraction, plus the rule checklist. First test on 5 to 10 parts known by heart.
-- [ ] **5. Critic, multi-run consensus and trapped project**, benchmark against Traceformer.
-- [ ] **6. Footprint agent**: parse `.kicad_mod`, compare to land pattern.
-- [ ] **7. SPICE agent**: simple subcircuits with ngspice, then LTspice for converters.
-- [ ] **8. Layout agent** with pcbsight measurements and per-layer renders.
-- [ ] **9. Theorist agent** and document base.
-- [ ] **10. HTML report, `/review` command, pull request review.**
-- [ ] **11. KiCad highlight plugin** (optional).
+Ordered by value: the earlier phases catch the most expensive errors.
+
+## Done
+
+- [x] **Foundations**: repo structure, `pipeline.yaml`, `kicad-cli` import, pre-commit hook.
+- [x] **Formats (first draft)**: JSON Schemas for component sheets and findings.
+- [x] **Deterministic schematic core**: netlist graph, functional groups, rules
+  SYM-001, PIN-001/002, CAP-001, ABS-001, EQ-001, trapped project, Markdown report.
+
+## Next
+
+- [ ] **1. Project template**: the hardware project repo layout (`inputs/`, `design/`,
+  `datasheets/`, `kicad/`, `review/`) and a `pcb-pipeline init` command.
+- [ ] **2. Spec format**: JSON Schema for `design/spec.yaml` (blocks, parts and choice
+  reasons, power tree, interfaces, I2C map, MCU pins, mechanical, design rules).
+- [ ] **3. Phase 0**: interviewer agent and `/define` command, PRD template.
+- [ ] **4. Phase 1**: architect and component selector agents, `/architecture` command,
+  datasheet download with index and manual fallback, deterministic spec checks
+  (I2C conflicts, power budget, ratings), PDF rendering, PRD change impact analysis.
+- [ ] **5. Datasheet agents wired**: locator, extractor, critic on 5 to 10 parts known by heart.
+- [ ] **6. Working loop**: proposed fixes in findings, `review/decisions.yaml`, apply
+  accepted fixes (symbol fields, values, footprints first), one commit per run.
+- [ ] **7. Phase 2 complete**: `spec_conformity` checks, conformity agent, consensus,
+  orchestrator, `/review` command end to end.
+- [ ] **8. Learning loop**: `review/missed.yaml`, promotion of lessons into rules, traps
+  and checklists by pull request, metrics per rule and per agent.
+- [ ] **9. Test existing tools**: kicad-happy and pcbsight on a finished project; what
+  they miss becomes traps.
+- [ ] **10. Phase 3**: net classes and `.kicad_dru` export from the spec, DRC through
+  `kicad-cli`, layout agent with pcbsight.
+- [ ] **11. Footprint agent**.
+- [ ] **12. HTML report**.
+
+## Later
+
+- [ ] Phase 4: SPICE agent (ngspice, then LTspice).
+- [ ] Theorist agent and document base.
+- [ ] KiCad highlight plugin (optional).

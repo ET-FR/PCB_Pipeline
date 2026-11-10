@@ -1,77 +1,153 @@
 # PCB_Pipeline definition.
-# The orchestrator reads this file to decide which stages run, when, and how.
+# The orchestrator reads this file to decide which phases and stages run, when, and how.
+# See docs/architecture.md for the reasoning behind each phase.
 
-version: 1
+version: 2
 
 inputs:
   kicad_cli: kicad-cli            # path to kicad-cli
   required_symbol_fields: [MPN]   # missing fields are reported as findings
   recommended_symbol_fields: [Voltage, Tolerance]
 
+# Files expected in the hardware project repo (not in this repo).
+project_layout:
+  inputs_dir: inputs/             # documents given by the user for phase 0
+  prd: design/prd.md
+  spec: design/spec.yaml          # single source of truth for design intent
+  spec_pdf: design/spec.pdf       # generated from spec.yaml, never edited by hand
+  datasheets_dir: datasheets/     # local PDFs, named {mpn}@{revision}.pdf, not committed
+  datasheets_index: datasheets/index.yaml   # committed: mpn, url, revision, sha256
+  kicad_dir: kicad/
+  review_dir: review/             # findings and decisions, one folder per run
+
 library:
   component_sheets: library/component_sheets
   cache_key: "{mpn}@{datasheet_revision}"
 
-triggers:
-  deterministic:                  # fast layer, seconds, no tokens
-    - pre_commit
-    - on_save                     # optional watcher on *.kicad_sch
-  agents:                         # slow layer, minutes, uses tokens
-    - on_demand                   # /review in Claude Code
-    - pull_request                # report posted as PR comment
-    - pre_fabrication             # full review, mandatory design gate
-  datasheet:
-    - new_mpn_in_bom              # build a sheet once per MPN, then cache
-  incremental: true               # only re-review functional groups whose netlist changed
+# Working loop: the user stops, saves, runs the pipeline. Nothing runs while KiCad edits.
+loop:
+  steps: [run, findings, proposals, user_decision, apply_accepted, commit]
+  apply_requires:
+    - git_clean_tree              # every change is a separate, revertable commit
+    - kicad_file_saved            # warn if a KiCad lock file is present
+  decisions_file: review/decisions.yaml
 
-stages:
-  - id: import
-    kind: deterministic
-    description: Export netlist and BOM with kicad-cli, parse symbol fields.
-    outputs: [netlist.xml, bom.csv]
-
-  - id: graph
-    kind: deterministic
-    description: Build the netlist graph and propose functional groups.
-    params:
-      neighborhood_depth: 2       # hops around an active part
-      ignore_nets: [GND, "/GND"]  # nets too connected to be useful for grouping
-
-  - id: datasheet
+phases:
+  - id: definition
+    title: "Phase 0: product definition"
     kind: agent
-    agents: [datasheet_locator, datasheet_extractor, datasheet_critic]
-    description: Build or refresh one component sheet per MPN.
-    params:
-      critic_min_score: 7
-      max_attempts: 5
-      human_validation_for: [power, mains]
+    agents: [interviewer]
+    description: >
+      Read the documents in inputs/, interview the user until the PRD has no open
+      question left, write design/prd.md.
+    outputs: [design/prd.md]
 
-  - id: rules
-    kind: deterministic
-    description: Run the rule engine (rules/checklist.yaml) against sheets and netlist.
-
-  - id: conformity
+  - id: architecture
+    title: "Phase 1: architecture (paper design)"
     kind: agent
-    agents: [conformity]
-    description: Compare each functional group to its component sheets.
-    params:
-      consensus_runs:
-        default: 1
-        power: 3
-        mains: 3
-      consensus_min_agreement: 2  # findings seen in >= 2 of 3 runs keep high confidence
+    rerun_on: [prd_changed]       # impact analysis against the previous spec.yaml
+    stages:
+      - id: block_diagram
+        description: Functional blocks and interfaces between them.
+      - id: component_selection
+        agents: [component_selector]
+        description: Propose candidates per block, the user chooses, record the reasons.
+      - id: datasheet_fetch
+        kind: deterministic
+        description: Download every selected datasheet into datasheets/, update the index.
+        params:
+          fallback: ask_user        # list missing PDFs for manual download
+      - id: datasheet
+        agents: [datasheet_locator, datasheet_extractor, datasheet_critic]
+        description: Build or refresh one component sheet per MPN.
+        params:
+          critic_min_score: 7
+          max_attempts: 5
+          human_validation_for: [power, mains]
+      - id: power_tree
+        description: Rails, currents, efficiency, dissipation, sequencing.
+      - id: interfaces
+        description: Connectors, harness pinout, I2C address map, MCU pin allocation.
+      - id: mechanical
+        description: Board size, mounting holes, keep-outs, stackup.
+      - id: design_rules
+        description: Electrical rules (derating, margins) and routing rules (width per current, impedance, clearances, diff pairs).
+      - id: spec_checks
+        kind: deterministic
+        description: Validate spec.yaml (schema, I2C conflicts, power budget, ratings versus sheets).
+      - id: spec_pdf
+        kind: deterministic
+        description: Render spec.yaml to design/spec.pdf.
+    outputs: [design/spec.yaml, design/spec.pdf, datasheets/index.yaml]
+    gate: architecture_review     # the user signs off before schematic work starts
 
-  - id: merge
-    kind: agent
-    agents: [orchestrator]
-    description: Deduplicate, group by root cause, rank by severity.
-    outputs: [findings.json]
+  - id: schematic
+    title: "Phase 2: schematic"
+    stages:
+      - id: import
+        kind: deterministic
+        description: Export netlist and BOM with kicad-cli, parse symbol fields.
+        outputs: [netlist.xml, bom.csv]
+      - id: graph
+        kind: deterministic
+        description: Build the netlist graph and propose functional groups.
+        params:
+          neighborhood_depth: 2       # hops around an active part
+          ignore_nets: [GND, "/GND"]  # nets too connected to be useful for grouping
+      - id: spec_conformity
+        kind: deterministic
+        description: Schematic versus spec (BOM MPNs, rails, I2C addresses, connector pinouts).
+      - id: rules
+        kind: deterministic
+        description: Run the rule engine (rules/checklist.yaml) against sheets and netlist.
+      - id: conformity
+        kind: agent
+        agents: [conformity]
+        description: Compare each functional group to its component sheets.
+        params:
+          consensus_runs: { default: 1, power: 3, mains: 3 }
+          consensus_min_agreement: 2
+      - id: merge
+        kind: agent
+        agents: [orchestrator]
+        description: Deduplicate, group by root cause, rank by severity, attach a proposed fix.
+        outputs: [findings.json]
+      - id: report
+        kind: deterministic
+        outputs: [report.md]
+    gate: schematic_review
 
-  - id: report
-    kind: deterministic
-    description: Render findings.json to Markdown (now) and HTML (later).
-    outputs: [report.md]
+  - id: layout
+    title: "Phase 3: layout"
+    stages:
+      - id: rules_export
+        kind: deterministic
+        description: Generate KiCad net classes and a .kicad_dru file from spec.yaml design rules.
+      - id: drc
+        kind: deterministic
+        description: kicad-cli pcb drc plus the pipeline's own layout rules.
+      - id: layout_review
+        kind: agent
+        agents: [layout]
+        description: Placement, return paths, decoupling, thermal, with pcbsight measurements.
+    gate: pre_fabrication
+
+  - id: simulation
+    title: "Phase 4: simulation"
+    enabled: false                # placeholder, not developed yet
+
+# Every run feeds the pipeline itself. See docs/architecture.md, "Learning loop".
+learning:
+  record_decisions: true          # accepted, rejected (false positive), deferred
+  missed_issues: review/missed.yaml   # problems found later (bring-up, other review)
+  promote:
+    - missed_issue_to_rule        # a deterministic rule when the check is mechanical
+    - missed_issue_to_trap        # always: a new trap in the trapped project tests
+    - missed_issue_to_checklist   # an agent checklist item when it needs judgment
+    - false_positive_to_rule_tuning
+    - validated_sheet_to_library  # component sheets are shared across projects
+  changes_to_pipeline: pull_request   # proposed by the agent, accepted by the user
 
 models:
-  extraction: high_capability     # datasheet extraction and conformity
+  extraction: high_capability     # datasheet extraction, conformity, architecture
   triage: low_cost                # page location, deduplication

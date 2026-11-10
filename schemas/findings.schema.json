@@ -44,6 +44,18 @@
             }
           },
           "suggestion": { "type": "string" },
+          "fix": {
+            "type": "object",
+            "description": "Proposed fix. Applied only after the user accepts it.",
+            "required": ["kind", "change"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": { "type": "string", "enum": ["symbol_field", "value", "footprint", "add_component", "wiring", "layout", "spec", "manual"] },
+              "target": { "type": "string", "description": "Reference, net or spec path the fix applies to" },
+              "change": { "type": "string", "description": "What changes, e.g. C1 Voltage 10V -> 25V, MPN X -> Y" },
+              "auto_applicable": { "type": "boolean", "description": "True when the pipeline can edit the KiCad or spec file itself" }
+            }
+          },
           "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
           "consensus": {
             "type": "object",
@@ -51,7 +63,7 @@
             "properties": { "runs": { "type": "integer" }, "seen_in": { "type": "integer" } }
           },
           "root_cause": { "type": "string", "description": "Findings sharing a root cause are grouped in the report." },
-          "source": { "type": "string", "enum": ["import", "rules", "conformity", "footprint", "spice", "layout"] }
+          "source": { "type": "string", "enum": ["import", "architecture", "spec_conformity", "rules", "conformity", "footprint", "spice", "layout"] }
         }
       }
     }

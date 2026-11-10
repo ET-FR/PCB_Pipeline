@@ -26,6 +26,15 @@ def _pipeline_config() -> dict:
     return yaml.safe_load(p.read_text()) if p.exists() else {}
 
 
+def _stage_params(cfg: dict, stage_id: str) -> dict:
+    """Params of a stage, searched in every phase of pipeline.yaml."""
+    for phase in cfg.get("phases", []):
+        for stage in phase.get("stages", []):
+            if stage.get("id") == stage_id:
+                return stage.get("params", {})
+    return {}
+
+
 def _parse_rails(items: list[str]) -> dict[str, float]:
     rails = {}
     for item in items or []:
@@ -51,7 +60,7 @@ def cmd_check(args) -> int:
         return 2
 
     netlist = parse_netlist_xml(netlist_path)
-    graph_cfg = next((s.get("params", {}) for s in cfg.get("stages", []) if s.get("id") == "graph"), {})
+    graph_cfg = _stage_params(cfg, "graph")
     groups = functional_groups(netlist, graph_cfg.get("neighborhood_depth", 2), graph_cfg.get("ignore_nets"))
 
     lib_dirs = [Path(d) for d in (args.library or [REPO / "library" / "component_sheets"])]
