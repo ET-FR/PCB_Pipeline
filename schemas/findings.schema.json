@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ET-FR/PCB_Pipeline/schemas/findings.schema.json",
+  "title": "Review findings",
+  "type": "object",
+  "required": ["schema_version", "project", "generated_at", "findings"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "project": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "netlist_hash": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "refs", "evidence", "confidence", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Z]+-[0-9]{3,}$" },
+          "severity": { "type": "string", "enum": ["critical", "major", "minor", "info"] },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "block": { "type": "string", "description": "Functional group, e.g. power/buck_5v" },
+          "refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "nets": { "type": "array", "items": { "type": "string" } },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "description": "No proof, no finding.",
+            "items": {
+              "type": "object",
+              "required": ["kind"],
+              "additionalProperties": false,
+              "properties": {
+                "kind": { "type": "string", "enum": ["datasheet", "netlist", "calculation", "rule"] },
+                "mpn": { "type": "string" },
+                "page": { "type": "integer", "minimum": 1 },
+                "summary": { "type": "string" },
+                "net": { "type": "string" },
+                "calculation": { "type": "string" },
+                "rule_id": { "type": "string" }
+              }
+            }
+          },
+          "suggestion": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+          "consensus": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": { "runs": { "type": "integer" }, "seen_in": { "type": "integer" } }
+          },
+          "root_cause": { "type": "string", "description": "Findings sharing a root cause are grouped in the report." },
+          "source": { "type": "string", "enum": ["import", "rules", "conformity", "footprint", "spice", "layout"] }
+        }
+      }
+    }
+  }
+}

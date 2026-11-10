@@ -1,0 +1,12 @@
+# Deterministic layer on every commit, in the hardware project repo.
+# Copy this into your KiCad project and adjust the path to the schematic.
+repos:
+  - repo: local
+    hooks:
+      - id: pcb-pipeline-check
+        name: pcb-pipeline deterministic checks
+        entry: pcb-pipeline check
+        args: ["project.kicad_sch", "--fail-on", "critical"]
+        language: system
+        files: '\.kicad_sch$'
+        pass_filenames: false

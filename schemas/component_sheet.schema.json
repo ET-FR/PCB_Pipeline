@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ET-FR/PCB_Pipeline/schemas/component_sheet.schema.json",
+  "title": "Component sheet",
+  "description": "Structured extraction of one datasheet. Every value carries the page it comes from.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "mpn",
+    "manufacturer",
+    "datasheet",
+    "category",
+    "pins",
+    "extraction"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "page": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "limit": {
+      "type": "object",
+      "required": [
+        "param",
+        "unit",
+        "page"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "param": {
+          "type": "string",
+          "description": "Parameter name, ideally a pin or rail name (VIN, VEN, IOUT)."
+        },
+        "min": {
+          "type": "number"
+        },
+        "typ": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "string"
+        },
+        "page": {
+          "$ref": "#/$defs/page"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "min"
+          ]
+        },
+        {
+          "required": [
+            "typ"
+          ]
+        },
+        {
+          "required": [
+            "max"
+          ]
+        }
+      ]
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "mpn": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manufacturer": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "regulator",
+        "mcu",
+        "interface",
+        "power_switch",
+        "sensor",
+        "passive",
+        "connector",
+        "protection",
+        "other"
+      ]
+    },
+    "criticality": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "power",
+        "mains"
+      ],
+      "default": "standard"
+    },
+    "datasheet": {
+      "type": "object",
+      "required": [
+        "revision",
+        "source_url"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "source_url": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        }
+      }
+    },
+    "absolute_maximum": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/limit"
+      }
+    },
+    "recommended_operating": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/limit"
+      }
+    },
+    "pins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "number",
+          "name",
+          "type",
+          "page"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "power_in",
+              "power_out",
+              "ground",
+              "input",
+              "output",
+              "bidirectional",
+              "analog",
+              "open_drain",
+              "nc",
+              "passive"
+            ]
+          },
+          "requirement": {
+            "type": "string",
+            "enum": [
+              "none",
+              "must_connect",
+              "no_float",
+              "must_not_connect",
+              "pull_up",
+              "pull_down",
+              "tie_to_ground"
+            ],
+            "default": "none"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "page": {
+            "$ref": "#/$defs/page"
+          }
+        }
+      }
+    },
+    "external_components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "between_pins",
+          "page"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "e.g. input capacitor, bootstrap capacitor, feedback divider"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "capacitor",
+              "resistor",
+              "inductor",
+              "diode",
+              "other"
+            ]
+          },
+          "between_pins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "constraints": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "min_value": {
+                "type": "number"
+              },
+              "max_value": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "dielectric": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "max_distance_mm": {
+                "type": "number"
+              }
+            }
+          },
+          "page": {
+            "$ref": "#/$defs/page"
+          }
+        }
+      }
+    },
+    "equations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "expression",
+          "page"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string",
+            "description": "Python-evaluable expression, e.g. VREF * (1 + R_TOP / R_BOTTOM)"
+          },
+          "constants": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "variables": {
+            "type": "object",
+            "description": "Maps each variable (a part value) to the two endpoints it sits between. An endpoint is a pin name of this part, '@GND' for any ground net, or '@TARGET' for the regulated net whose rail voltage the equation result is compared to.",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "page": {
+            "$ref": "#/$defs/page"
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "layout_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "text",
+          "page"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "page": {
+            "$ref": "#/$defs/page"
+          }
+        }
+      }
+    },
+    "extraction": {
+      "type": "object",
+      "required": [
+        "critic_score",
+        "attempts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "critic_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "human_validated": {
+          "type": "boolean",
+          "default": false
+        },
+        "pages_used": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/page"
+          }
+        }
+      }
+    }
+  }
+}

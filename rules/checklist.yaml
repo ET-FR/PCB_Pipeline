@@ -1,0 +1,37 @@
+# Deterministic rules. Each rule has an id used in findings evidence.
+version: 1
+
+rules:
+  - id: SYM-001
+    description: Every non-passive symbol has an MPN field.
+    severity: major
+
+  - id: PIN-001
+    description: Pins marked no_float or must_connect are connected to a net with at least one other node.
+    severity: critical
+
+  - id: PIN-002
+    description: Pins marked must_not_connect have no other node on their net.
+    severity: major
+
+  - id: CAP-001
+    description: Ceramic capacitor voltage rating versus applied rail voltage.
+    severity: major
+    params:
+      min_ratio: 1.5        # rated voltage >= 1.5 x applied voltage
+      recommended_ratio: 2.0
+
+  - id: ABS-001
+    description: Rail voltage stays below the absolute maximum of every pin connected to it.
+    severity: critical
+
+  - id: EQ-001
+    description: Datasheet equations (e.g. feedback divider) give the target value within tolerance.
+    severity: major
+    params:
+      tolerance_percent: 2
+
+# Rail voltages are not in the netlist. Declare them here or in the project spec.
+rails: {}
+#  "/+5V": 5.0
+#  "/VIN": 12.0

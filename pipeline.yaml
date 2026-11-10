@@ -1,0 +1,77 @@
+# PCB_Pipeline definition.
+# The orchestrator reads this file to decide which stages run, when, and how.
+
+version: 1
+
+inputs:
+  kicad_cli: kicad-cli            # path to kicad-cli
+  required_symbol_fields: [MPN]   # missing fields are reported as findings
+  recommended_symbol_fields: [Voltage, Tolerance]
+
+library:
+  component_sheets: library/component_sheets
+  cache_key: "{mpn}@{datasheet_revision}"
+
+triggers:
+  deterministic:                  # fast layer, seconds, no tokens
+    - pre_commit
+    - on_save                     # optional watcher on *.kicad_sch
+  agents:                         # slow layer, minutes, uses tokens
+    - on_demand                   # /review in Claude Code
+    - pull_request                # report posted as PR comment
+    - pre_fabrication             # full review, mandatory design gate
+  datasheet:
+    - new_mpn_in_bom              # build a sheet once per MPN, then cache
+  incremental: true               # only re-review functional groups whose netlist changed
+
+stages:
+  - id: import
+    kind: deterministic
+    description: Export netlist and BOM with kicad-cli, parse symbol fields.
+    outputs: [netlist.xml, bom.csv]
+
+  - id: graph
+    kind: deterministic
+    description: Build the netlist graph and propose functional groups.
+    params:
+      neighborhood_depth: 2       # hops around an active part
+      ignore_nets: [GND, "/GND"]  # nets too connected to be useful for grouping
+
+  - id: datasheet
+    kind: agent
+    agents: [datasheet_locator, datasheet_extractor, datasheet_critic]
+    description: Build or refresh one component sheet per MPN.
+    params:
+      critic_min_score: 7
+      max_attempts: 5
+      human_validation_for: [power, mains]
+
+  - id: rules
+    kind: deterministic
+    description: Run the rule engine (rules/checklist.yaml) against sheets and netlist.
+
+  - id: conformity
+    kind: agent
+    agents: [conformity]
+    description: Compare each functional group to its component sheets.
+    params:
+      consensus_runs:
+        default: 1
+        power: 3
+        mains: 3
+      consensus_min_agreement: 2  # findings seen in >= 2 of 3 runs keep high confidence
+
+  - id: merge
+    kind: agent
+    agents: [orchestrator]
+    description: Deduplicate, group by root cause, rank by severity.
+    outputs: [findings.json]
+
+  - id: report
+    kind: deterministic
+    description: Render findings.json to Markdown (now) and HTML (later).
+    outputs: [report.md]
+
+models:
+  extraction: high_capability     # datasheet extraction and conformity
+  triage: low_cost                # page location, deduplication

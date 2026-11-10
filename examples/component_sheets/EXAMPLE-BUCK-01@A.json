@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "mpn": "EXAMPLE-BUCK-01",
+  "manufacturer": "Example (fictional part, illustrative values only)",
+  "category": "regulator",
+  "criticality": "power",
+  "datasheet": { "revision": "A", "date": "2026-01", "source_url": "https://example.com/EXAMPLE-BUCK-01.pdf" },
+  "absolute_maximum": [
+    { "param": "VIN", "max": 18, "unit": "V", "page": 3 },
+    { "param": "EN", "max": 6, "unit": "V", "page": 3 },
+    { "param": "FB", "max": 3.6, "unit": "V", "page": 3 }
+  ],
+  "recommended_operating": [
+    { "param": "VIN", "min": 4.5, "max": 16, "unit": "V", "page": 3 },
+    { "param": "IOUT", "max": 2, "unit": "A", "page": 3 }
+  ],
+  "pins": [
+    { "number": "1", "name": "VIN", "type": "power_in", "requirement": "must_connect", "page": 2 },
+    { "number": "2", "name": "EN", "type": "input", "requirement": "no_float", "notes": "pull up to VIN or drive", "page": 2 },
+    { "number": "3", "name": "GND", "type": "ground", "requirement": "tie_to_ground", "page": 2 },
+    { "number": "4", "name": "SW", "type": "power_out", "requirement": "must_connect", "page": 2 },
+    { "number": "5", "name": "FB", "type": "analog", "requirement": "must_connect", "page": 2 },
+    { "number": "6", "name": "BOOT", "type": "passive", "requirement": "must_connect", "notes": "100 nF to SW", "page": 2 }
+  ],
+  "external_components": [
+    { "role": "input capacitor", "kind": "capacitor", "between_pins": ["VIN", "GND"],
+      "constraints": { "min_value": 10e-6, "unit": "F", "dielectric": ["X5R", "X7R"], "max_distance_mm": 3 }, "page": 10 },
+    { "role": "bootstrap capacitor", "kind": "capacitor", "between_pins": ["BOOT", "SW"],
+      "constraints": { "min_value": 100e-9, "unit": "F" }, "page": 10 }
+  ],
+  "equations": [
+    { "name": "output voltage", "expression": "VREF * (1 + R_TOP / R_BOTTOM)", "unit": "V",
+      "constants": { "VREF": 0.8 },
+      "variables": { "R_TOP": ["@TARGET", "FB"], "R_BOTTOM": ["FB", "@GND"] }, "page": 11 }
+  ],
+  "layout_notes": [
+    { "text": "Place input capacitor as close as possible to VIN and GND pins.", "page": 14 }
+  ],
+  "extraction": { "critic_score": 9, "attempts": 1, "gaps": [], "human_validated": true, "pages_used": [2, 3, 10, 11, 14] }
+}
