@@ -8,7 +8,9 @@ Rules (parameters in `LayoutRules`):
   and a ground, sits within `decoupling_mm` of that IC supply pin.
 - LAY esd: an ESD diode sharing a net with a connector pin sits within `esd_mm` of that pin.
 - LAY width: a track of a net class with `max_current_a` is at least the class width, except
-  the track chains that end on an IC pin (sense lines such as a shunt Kelvin pair).
+  the track chains that end on an IC pin (sense lines such as a shunt Kelvin pair) or on a small
+  one- or two-pad part (test point, 0603 pull-down, SOD-523 clamp): those branches carry no path
+  current.
 - LAY placement: parts still outside the board outline (info, placement progress).
 - DRC: the KiCad DRC violations, grouped by type.
 """
@@ -147,6 +149,9 @@ def check_layout(board: dict, comps: dict, pintypes: dict, blocks: dict, spec: d
     # ---- current path width
     classes = {nc["name"]: nc for nc in spec.get("design_rules", {}).get("net_classes", []) if nc.get("max_current_a")}
     ic_pads = [(p, u) for u, fp in fps.items() if u.startswith("U") for ps in fp["pads"].values() for p in ps]
+    # branches to small parts (test point, 0603 pull-down, SOD-523 clamp) carry no path current
+    ic_pads += [(p, r) for r, fp in fps.items() if len(fp["pads"]) <= 2
+                for ps in fp["pads"].values() for p in ps if 2 * p["r"] < 1.6]
     by_net: dict[str, list] = {}
     for t in board["tracks"]:
         if t["cls"] in classes:

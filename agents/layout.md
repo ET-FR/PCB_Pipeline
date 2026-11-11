@@ -50,6 +50,26 @@ or a track on a board the user has edited, unless they accept that change.
    accepted, JLCPCB limits met (track, clearance, drill, annular ring from the spec). Then the
    user signs `pre_fabrication`.
 
+## When the user asks you to place and route (FRONT_BOARD, 2026-11-11)
+- Board scripts in `kicad/draft/` of the project, run with KiCad's Python: `place.py` (placement
+  by block, passives next to the pin they serve), `route_prep.py` (what the autorouter must not
+  decide), `route.py` (Freerouting, then the post-steps). Re-runnable only while the user has
+  not edited the board.
+- Before routing, draw yourself: high-current paths as pours (one per net), separate grounds,
+  Kelvin pairs (locked), stitching vias. Put a track keepout (rule area) over each pour,
+  otherwise Freerouting crosses and splits them; leave open the pours that sense lines or
+  gate parts must reach. Put test points of pump or rail nets on their pour, not in a far row.
+- Freerouting: `freerouting-<v>.jar` on the Java it needs (2.5.0 needs Java 25; the native CLI
+  2.5.0 crashed in routing), from the GitHub release, checksum checked, installed under the
+  user profile with the user's agreement. It sends analytics by default: always run with
+  `--gui.enabled=false --usage_and_diagnostic_data.disable_analytics=true` and the environment
+  variable `FREEROUTING__USAGE_AND_DIAGNOSTIC_DATA__DISABLE_ANALYTICS=true`, and check the log
+  has no URL.
+- After the import: widen neck-downs below the manufacturer minimum, add a GND pour on the other
+  layer and grid stitching vias, solid zone connection on small through-hole connector ground
+  pins, refill the zones (after any rule change too: DRC does not refill), then
+  `layout-check`.
+
 ## Rules
 - No proof, no finding: a layout finding cites the spec path, the datasheet page or the
   measured distance or width.

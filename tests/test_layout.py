@@ -118,3 +118,12 @@ def test_layout_init_from_drafted_schematic(tmp_path):
     assert pro["net_settings"]["classes"][0]["name"] == "Pump"
     assert pro["text_variables"] == {"REV": "A"}                     # kept although pcbnew rewrote the file
     assert ld.schematic_blocks(tmp_path / "B.kicad_sch") == {"R1": "Load", "C1": "Load"}
+
+
+def test_current_path_width_skips_small_part_branches():
+    to_tp = {"net": "/PUMP_SW", "w": 0.5, "cls": "Pump", "layer": "F.Cu", "a": [30, 20], "b": [45, 20]}
+    board = _board(12, 48, [to_tp])
+    board["footprints"]["TP1"] = {"x": 45, "y": 20, "value": "TP", "pads": {"1": [_pad(45, 20, "/PUMP_SW", 0.75)]}}
+    assert _rules(board) == set()
+    board["footprints"]["TP1"]["pads"]["1"][0]["r"] = 1.85                # a J3-size pad: real current path
+    assert _rules(board) == {"LAY-WIDTH"}

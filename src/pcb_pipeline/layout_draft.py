@@ -216,6 +216,14 @@ def write_dru(path: Path, spec: dict):
                   " && B.Type != 'Footprint' && B.Layer != 'Edge.Cuts'\")",
                   "\t(constraint hole_clearance (min 2mm))",
                   "\t(constraint physical_clearance (min 2mm)))", ""]
+    mf = spec.get("design_rules", {}).get("manufacturer", {})
+    if mf.get("min_clearance_mm"):
+        # fine-pitch fanout (QFN 0.5 mm, TSSOP 0.65 mm): next to an IC the net class clearance cannot
+        # hold between neighbour pins; the manufacturer minimum still does (tested: a compound
+        # condition with A.Type/B.Type did not match the fanout tracks, this one does)
+        lines += ['(rule "IC fanout clearance"',
+                  "\t(condition \"A.intersectsCourtyard('U*')\")",
+                  f"\t(constraint clearance (min {mf['min_clearance_mm']}mm)))", ""]
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
