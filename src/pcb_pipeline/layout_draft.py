@@ -248,8 +248,11 @@ for c in job["comps"]:
     for k, v in c["fields"].items():
         try:
             fp.SetField(k, v)
-        except Exception:
-            pass
+            fld = fp.GetField(k)                        # BOM data, not silkscreen
+            fld.SetVisible(False)
+            fld.SetLayer(pcbnew.F_Fab)
+        except Exception as exc:
+            print("FIELD", c["ref"], k, exc)
     fp.SetPosition(pcbnew.VECTOR2I(mm(c["x"]), mm(c["y"])))
     fp.SetExcludedFromBOM(c["no_bom"])     # follow the symbol (schematic parity)
     fp.SetDNP(c["dnp"])
