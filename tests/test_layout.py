@@ -103,6 +103,10 @@ def test_layout_init_from_drafted_schematic(tmp_path):
     s.pins("R1", {"1": "+5V", "2": "GND"})
     s.pins("C1", {"1": "+5V", "2": "GND"})
     prj.save()
+    pro_file = tmp_path / "B.kicad_pro"
+    pro0 = json.loads(pro_file.read_text()) if pro_file.exists() else {"meta": {"version": 3}}
+    pro0["text_variables"] = {"REV": "A"}                            # a user project setting
+    pro_file.write_text(json.dumps(pro0))
     pcb = ld.layout_init(tmp_path, "B", SPEC, KICAD_CLI)
     assert pcb.exists()
     with pytest.raises(FileExistsError):
@@ -112,4 +116,5 @@ def test_layout_init_from_drafted_schematic(tmp_path):
     assert set(counts) <= {"unconnected_items"}, counts           # schematic parity clean, holes board-only
     pro = json.loads((tmp_path / "B.kicad_pro").read_text())
     assert pro["net_settings"]["classes"][0]["name"] == "Pump"
+    assert pro["text_variables"] == {"REV": "A"}                     # kept although pcbnew rewrote the file
     assert ld.schematic_blocks(tmp_path / "B.kicad_sch") == {"R1": "Load", "C1": "Load"}

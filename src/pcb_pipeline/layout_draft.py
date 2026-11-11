@@ -393,6 +393,8 @@ def layout_init(project_dir: Path, name: str, spec: dict, kicad_cli: str, force:
         hname = f"MountingHole_{d:g}mm_M{round(d - 0.2):d}" + ("_Pad" if h.get("plated") else "")
         job["holes"].append({"lib": str(share / "footprints" / "MountingHole.pretty"), "name": hname,
                              "x": h["x_mm"], "y": h["y_mm"]})
+    pro = kdir / f"{name}.kicad_pro"
+    before = json.loads(pro.read_text(encoding="utf-8")) if pro.exists() else None
     jf = tmp / "job.json"
     jf.write_text(json.dumps(job), encoding="utf-8")
     sf = tmp / "make_board.py"
@@ -403,7 +405,15 @@ def layout_init(project_dir: Path, name: str, spec: dict, kicad_cli: str, force:
     missing = [ln for ln in r.stdout.splitlines() if ln.startswith("MISSING")]
     if missing:
         raise RuntimeError("footprints not found:\n" + "\n".join(missing))
-    write_project_rules(kdir / f"{name}.kicad_pro", spec, nets)
+    # pcbnew rewrites the project file: keep every setting the project had (schematic, ERC,
+    # text variables...), take only the new board section when the project had none
+    if before is not None:
+        after = json.loads(pro.read_text(encoding="utf-8")) if pro.exists() else {}
+        merged = dict(before)
+        if "board" not in before and "board" in after:
+            merged["board"] = after["board"]
+        pro.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
+    write_project_rules(pro, spec, nets)
     write_dru(kdir / f"{name}.kicad_dru", spec)
     return pcb
 
