@@ -269,6 +269,48 @@ def cmd_report(args) -> int:
     return 0
 
 
+def _kicad_cli(args) -> str:
+    return args.kicad_cli or _pipeline_config().get("inputs", {}).get("kicad_cli", "kicad-cli")
+
+
+def _board_name(kdir: Path, name: str | None) -> str:
+    if name:
+        return name
+    pros = sorted(kdir.glob("*.kicad_pro"))
+    if len(pros) != 1:
+        raise RuntimeError(f"give --name: {len(pros)} .kicad_pro files in {kdir}")
+    return pros[0].stem
+
+
+def cmd_layout_init(args) -> int:
+    from .layout_draft import drc_summary, layout_init, run_drc
+
+    kdir, spec = Path(args.kicad), load_spec(Path(args.spec))
+    name, kicad_cli = _board_name(kdir, args.name), _kicad_cli(args)
+    try:
+        pcb = layout_init(kdir, name, spec, kicad_cli, force=args.force)
+    except FileExistsError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"board written to {pcb} (rules in {name}.kicad_pro and {name}.kicad_dru)")
+    counts = drc_summary(run_drc(pcb, kicad_cli, Path(args.out) / "drc.json"))
+    print("DRC: " + (", ".join(f"{k} {v}" for k, v in sorted(counts.items())) or "clean"))
+    return 0
+
+
+def cmd_layout_check(args) -> int:
+    from .layout_check import run_layout_check
+
+    kdir, spec = Path(args.kicad), load_spec(Path(args.spec))
+    name = _board_name(kdir, args.name)
+    res = run_layout_check(kdir, name, spec, _kicad_cli(args), Path(args.out))
+    doc = res["doc"]
+    (Path(args.out) / "layout_report.md").write_text(render_markdown(doc), encoding="utf-8")
+    _print_findings(doc)
+    print(f"outputs in {args.out}/")
+    return 1 if _fails(doc, args.fail_on) else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="pcb-pipeline")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -337,6 +379,21 @@ def main(argv: list[str] | None = None) -> int:
     n = sub.add_parser("validate-notes", help="validate agent notes (YAML) against the schema")
     n.add_argument("paths", nargs="+")
     n.set_defaults(fn=cmd_validate_notes)
+
+    for cmd, fn, hlp in (("layout-init", cmd_layout_init, "create the board from the schematic and the spec "
+                                                         "(outline, holes, net classes, rules); never overwrites"),
+                         ("layout-check", cmd_layout_check, "DRC and layout rules (decoupling, ESD, current paths)")):
+        lp = sub.add_parser(cmd, help=hlp)
+        lp.add_argument("--kicad", default="kicad", help="KiCad project folder (default kicad/)")
+        lp.add_argument("--name", help="board name (default: the .kicad_pro in the folder)")
+        lp.add_argument("--spec", default="design/spec.yaml")
+        lp.add_argument("--out", default="out/layout")
+        lp.add_argument("--kicad-cli", help="kicad-cli path (default from pipeline.yaml)")
+        if cmd == "layout-init":
+            lp.add_argument("--force", action="store_true", help="replace an existing board (asks nothing)")
+        else:
+            lp.add_argument("--fail-on", choices=list(SEVERITY_ORDER))
+        lp.set_defaults(fn=fn)
 
     r = sub.add_parser("report", help="render findings.json to Markdown")
     r.add_argument("findings")
