@@ -287,6 +287,11 @@ def cmd_layout_init(args) -> int:
 
     kdir, spec = Path(args.kicad), load_spec(Path(args.spec))
     name, kicad_cli = _board_name(kdir, args.name), _kicad_cli(args)
+    if args.rules_only:
+        from .layout_draft import export_rules
+        export_rules(kdir, name, spec, kicad_cli)
+        print(f"rules written to {name}.kicad_pro and {name}.kicad_dru (board untouched)")
+        return 0
     try:
         pcb = layout_init(kdir, name, spec, kicad_cli, force=args.force)
     except FileExistsError as exc:
@@ -391,6 +396,8 @@ def main(argv: list[str] | None = None) -> int:
         lp.add_argument("--kicad-cli", help="kicad-cli path (default from pipeline.yaml)")
         if cmd == "layout-init":
             lp.add_argument("--force", action="store_true", help="replace an existing board (asks nothing)")
+            lp.add_argument("--rules-only", action="store_true",
+                            help="only re-export net classes and rules from the spec (after a spec change)")
         else:
             lp.add_argument("--fail-on", choices=list(SEVERITY_ORDER))
         lp.set_defaults(fn=fn)

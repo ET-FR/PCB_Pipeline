@@ -84,6 +84,10 @@ rules:
     description: Each load's supply range covers the rail it is powered from.
     severity: major       # absolute maximum exceeded is always critical
 
+  - id: LAY-001
+    description: Net class vias keep the manufacturer annular ring and drill limits (design_rules).
+    severity: major
+
   - id: RAT-004
     description: Every selected part has a component sheet, otherwise its ratings are not checked.
     severity: minor

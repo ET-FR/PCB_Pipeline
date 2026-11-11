@@ -421,6 +421,17 @@ def layout_init(project_dir: Path, name: str, spec: dict, kicad_cli: str, force:
     return pcb
 
 
+def export_rules(kdir: Path, name: str, spec: dict, kicad_cli: str):
+    """Re-export net classes, manufacturer minimums and custom rules; the board is not touched."""
+    tmp = Path(tempfile.mkdtemp(prefix="pcbpipe_"))
+    netfile = tmp / "board.net"
+    subprocess.run([kicad_cli, "sch", "export", "netlist", "--format", "kicadsexpr", "-o", str(netfile),
+                    str(kdir / f"{name}.kicad_sch")], check=True, capture_output=True)
+    _, nets = read_netlist(netfile)
+    write_project_rules(kdir / f"{name}.kicad_pro", spec, nets)
+    write_dru(kdir / f"{name}.kicad_dru", spec)
+
+
 # ---------------------------------------------------------------- DRC
 
 def run_drc(pcb: Path, kicad_cli: str, out: Path, parity: bool = True) -> dict:

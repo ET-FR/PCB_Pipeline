@@ -65,9 +65,34 @@ class SpecChecker:
         self.mcu_pins()
         self.rail_voltages()
         self.power_budget()
+        self.net_class_vias()
         if self.lib is not None:
             self.ratings()
         return self.f
+
+    # LAY-001: net class vias within the manufacturer limits -------------------------
+
+    def net_class_vias(self):
+        rid = "LAY-001"
+        dr = self.s.get("design_rules", {})
+        mf = dr.get("manufacturer", {})
+        ring_min, drill_min = mf.get("min_annular_ring_mm"), mf.get("min_drill_mm")
+        for nc in dr.get("net_classes", []):
+            d, h = nc.get("via_diameter_mm"), nc.get("via_drill_mm")
+            if d is None or h is None:
+                continue
+            path = f"design_rules/net_classes/{nc.get('name')}"
+            ring = (d - h) / 2
+            if ring_min is not None and ring + 1e-9 < ring_min:
+                self.f.add("ARC", self.sev(rid), f"net class {nc.get('name')}: via {d}/{h} mm has a {ring:.3f} mm "
+                           f"annular ring, below the {ring_min} mm limit", [nc.get("name", "?")],
+                           _ev(path, f"ring = ({d} - {h}) / 2 = {ring:.3f} mm < {ring_min} mm "
+                               f"(design_rules/manufacturer)", rid), "architecture")
+            if drill_min is not None and h + 1e-9 < drill_min:
+                self.f.add("ARC", self.sev(rid), f"net class {nc.get('name')}: via drill {h} mm below the "
+                           f"{drill_min} mm limit", [nc.get("name", "?")],
+                           _ev(path, f"via drill {h} mm < {drill_min} mm (design_rules/manufacturer)", rid),
+                           "architecture")
 
     # SPEC-001: every reference points to something that exists --------------------
 

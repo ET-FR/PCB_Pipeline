@@ -108,3 +108,14 @@ def test_example_ratings():
     serious = {e["rule_id"] for f in findings if f["severity"] in ("critical", "major")
                for e in f["evidence"] if e.get("rule_id")}
     assert serious == {"RAT-003"}
+
+
+def test_net_class_via_ring_below_manufacturer_limit():
+    import copy
+    spec = copy.deepcopy(EXAMPLE)
+    spec.setdefault("design_rules", {})["manufacturer"] = {"min_annular_ring_mm": 0.254, "min_drill_mm": 0.3}
+    spec["design_rules"]["net_classes"] = [
+        {"name": "Pump", "nets": ["/P"], "track_width_mm": 4, "via_diameter_mm": 0.8, "via_drill_mm": 0.4},
+        {"name": "Ok", "nets": ["/Q"], "track_width_mm": 0.3, "via_diameter_mm": 1.0, "via_drill_mm": 0.4}]
+    f = [x for x in run(spec) if "LAY-001" in rule_ids([x])]
+    assert len(f) == 1 and f[0]["refs"] == ["Pump"] and "0.200 mm" in f[0]["title"]
