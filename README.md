@@ -11,8 +11,11 @@ applies the ones the user accepts. Deterministic checks run in Python; AI agents
 ## Status
 
 Phases 0 and 1 are built (agents, commands, deterministic spec checks, datasheet fetch,
-spec rendering, change impact), as is the deterministic schematic core. Not built yet:
-the fix loop, the learning loop automation, phase 2 agents end to end, phase 3. See the
+spec rendering, change impact), as is the deterministic schematic core and the schematic
+drafter (phase 2). Phase 3 has its first part: `pcb-pipeline layout-init` (board from the
+schematic and the spec, net classes, keepout rules) and `pcb-pipeline layout-check` (DRC,
+decoupling, ESD and current path rules), with the `layout` agent. Not built yet: the fix
+loop, the learning loop automation, layout measurements with pcbsight. See the
 [roadmap](docs/roadmap.md).
 
 ## How it works
